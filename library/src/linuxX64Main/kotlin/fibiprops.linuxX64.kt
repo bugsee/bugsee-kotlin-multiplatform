@@ -1,0 +1,4 @@
+package com.bugsee.kmp
+
+actual val firstElement: Int = 3
+actual val secondElement: Int = 5

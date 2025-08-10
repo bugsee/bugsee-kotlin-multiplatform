@@ -1,0 +1,512 @@
+package com.bugsee.kmp
+
+import android.app.Application;
+import android.view.View;
+import com.bugsee.library.attachment.CustomAttachment
+import com.bugsee.library.data.IssueSeverity
+import com.bugsee.library.send.ReportFieldsFilter
+import com.bugsee.library.attachment.ExtendedReport
+import com.bugsee.library.attachment.Report
+import com.bugsee.library.attachment.ReportAttachmentsProvider
+import com.bugsee.library.lifecycle.LifecycleEventTypes
+import com.bugsee.library.logs.BugseeLog
+import com.bugsee.library.logs.LogListener
+import com.bugsee.library.network.NetworkEventListener
+import com.bugsee.library.network.data.BugseeNetworkEvent
+import com.bugsee.library.send.OnChangeReportFieldsListener
+import com.bugsee.library.send.ReportFields
+import java.util.ArrayList
+import java.util.HashMap
+
+private typealias BugseeSDK = com.bugsee.library.Bugsee
+
+public actual class Bugsee {
+    private var reportFieldsFiller: BugseeReportFieldsFiller? = null
+    private var reportFieldsFilter: BugseeReportFieldsFilter? = null
+
+
+    public actual val appearance: BugseeAppearance
+        // TODO: implement this properly!
+        get() = BugseeAppearance()
+
+
+    // Launch methods - these are already working
+    public actual fun launch(apiKey: String, options: Map<String, Any>) {
+        val app: Application = applicationContext as Application
+        BugseeSDK.launch(app, apiKey, HashMap(options))
+    }
+
+    public actual fun launch(apiKey: String) {
+        val app: Application = applicationContext as Application
+        BugseeSDK.launch(app, apiKey)
+    }
+
+    public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
+        val app: Application = applicationContext as Application
+        BugseeSDK.launch(app, apiKey, HashMap(options.toMap()))
+    }
+
+    public actual fun stop() {
+        BugseeSDK.stop()
+    }
+
+    public actual fun relaunch() {
+        BugseeSDK.relaunch()
+    }
+
+    public actual fun relaunch(options: BugseeLaunchOptions) {
+        BugseeSDK.relaunch(HashMap(options.toMap()))
+    }
+
+    public actual fun relaunch(options: Map<String, Any>) {
+        BugseeSDK.relaunch(HashMap(options))
+    }
+
+
+    // Feedback methods
+    public actual fun showFeedback() {
+        val app: Application = applicationContext as Application
+        BugseeSDK.showFeedbackActivity(app)
+    }
+
+    public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
+        BugseeSDK.setOnNewFeedbackListener(listener)
+    }
+
+    public actual fun setDefaultFeedbackGreeting(greeting: String) {
+        BugseeSDK.setDefaultFeedbackGreeting(greeting)
+    }
+
+    // Network logging methods
+//    public actual fun addNetworkLoggingToOkHttpBuilder(clientBuilder: OkHttpClient.Builder): OkHttpClient.Builder {
+//        return BugseeSDK.addNetworkLoggingToOkHttpBuilder(clientBuilder)
+//    }
+//
+//    public actual fun addNetworkLoggingToOkHttpClient(client: com.squareup.okhttp.OkHttpClient) {
+//        BugseeSDK.addNetworkLoggingToOkHttpClient(client)
+//    }
+//
+//    public actual fun addNetworkLoggingToKtorHttpClient(client: HttpClient) {
+//        BugseeSDK.addNetworkLoggingToKtorHttpClient(client)
+//    }
+//
+//    public actual fun addNetworkLoggingToPicassoDownloader(downloader: OkHttp3Downloader): Boolean {
+//        return BugseeSDK.addNetworkLoggingToPicassoDownloader(downloader)
+//    }
+//
+//    public actual fun newOkHttpWrappedWebSocket(
+//        okHttpClient: OkHttpClient,
+//        request: Request,
+//        listener: WebSocketListener
+//    ): WebSocket {
+//        return BugseeSDK.newOkHttpWrappedWebSocket(okHttpClient, request, listener)
+//    }
+
+
+    // Logging methods
+    public actual fun log(message: String) {
+        BugseeSDK.log(message)
+    }
+
+    public actual fun log(message: String, level: BugseeLogLevel) {
+        BugseeSDK.log(
+            message,
+            BugseeAndroidUtils.convertLogLevel(level)
+        )
+    }
+
+    public actual fun trace(traceName: String, value: Any) {
+        BugseeSDK.trace(traceName, value)
+    }
+
+
+    // Event methods
+    public actual fun event(eventName: String) {
+        BugseeSDK.event(eventName)
+    }
+
+    public actual fun event(eventName: String, params: Map<String, Any>?) {
+        if (params == null) {
+            event(eventName)
+            return
+        }
+
+        BugseeSDK.event(eventName, HashMap(params))
+    }
+
+
+    // Report dialog methods
+    public actual fun showReportDialog() {
+        BugseeSDK.showReportDialog()
+    }
+
+    public actual fun showReportDialog(
+        summary: String,
+        description: String,
+        severity: BugseeSeverity
+    ) {
+        BugseeSDK.showReportDialog(
+            summary,
+            description,
+            BugseeAndroidUtils.convertSeverity(severity)
+        )
+    }
+
+    public actual fun showReportDialog(
+        summary: String,
+        description: String,
+        severity: BugseeSeverity,
+        labels: List<String>?
+    ) {
+        if (labels == null) {
+            showReportDialog(summary, description, severity)
+            return
+        }
+
+        BugseeSDK.showReportDialog(
+            summary,
+            description,
+            IssueSeverity.fromIntValue(severity.getLevel()),
+            ArrayList(labels)
+        )
+    }
+
+
+    // Bug report upload methods
+    public actual fun upload(summary: String, description: String, severity: BugseeSeverity) {
+        BugseeSDK.upload(summary, description, BugseeAndroidUtils.convertSeverity(severity))
+    }
+
+    public actual fun upload(
+        summary: String,
+        description: String,
+        severity: BugseeSeverity,
+        labels: List<String>?
+    ) {
+        if (labels == null) {
+            upload(summary, description, severity)
+            return
+        }
+
+        BugseeSDK.upload(
+            summary,
+            description,
+            BugseeAndroidUtils.convertSeverity(severity),
+            ArrayList(labels)
+        )
+    }
+
+    public actual fun upload(
+        summary: String,
+        description: String,
+        severity: BugseeSeverity,
+        labels: List<String>?,
+        includeVideo: Boolean
+    ) {
+        BugseeSDK.upload(
+            summary,
+            description,
+            BugseeAndroidUtils.convertSeverity(severity),
+            if (labels == null) ArrayList() else ArrayList(labels),
+            includeVideo
+        )
+    }
+
+
+    // Exception logging methods
+    public actual fun logException(ex: Throwable) {
+        BugseeSDK.logException(ex)
+    }
+
+    public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
+        BugseeSDK.logException(ex, BugseeAndroidUtils.convertExceptionLoggingOptions(options))
+    }
+
+    // Security methods
+    public actual fun addSecureViewClass(className: String) {
+        BugseeSDK.addSecureActivity(className)
+    }
+
+    public actual fun removeSecureViewClass(className: String) {
+        BugseeSDK.removeSecureActivity(className)
+    }
+
+
+    // Privacy control methods
+    public actual fun pause() {
+        BugseeSDK.pause()
+    }
+
+    public actual fun resume() {
+        BugseeSDK.resume()
+    }
+
+
+    // Status checks
+    public actual fun isLaunched(): Boolean {
+        // TODO: Do we need this API?
+        return true
+    }
+
+
+    // Secure rectangle methods
+    public actual fun addSecureRectangle(rect: BugseeSecureRectangle) {
+        BugseeSDK.addSecureRectangle(BugseeAndroidUtils.convertSecureRect(rect))
+    }
+
+    public actual fun removeSecureRectangle(rect: BugseeSecureRectangle) {
+        BugseeSDK.removeSecureRectangle(BugseeAndroidUtils.convertSecureRect(rect))
+    }
+
+    public actual fun removeAllSecureRectangles() {
+        BugseeSDK.removeAllSecureRectangles()
+    }
+
+    public actual fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
+        val originalRects = BugseeSDK.getAllSecureRectangles()
+        if (originalRects == null) {
+            return emptyList()
+        }
+
+        return originalRects.map(BugseeAndroidUtils::convertSecureRect)
+    }
+
+
+    // Secure view methods
+    public actual fun addSecureView(view: Any?) {
+        if (view is View) {
+            BugseeSDK.addSecureView(view)
+        }
+    }
+
+    public actual fun removeSecureView(view: Any?) {
+        if (view is View) {
+            BugseeSDK.removeSecureView(view)
+        }
+    }
+
+    public actual fun addSecureWebView(view: Any?) {
+        if (view is android.webkit.WebView) {
+            BugseeSDK.addSecureWebView(view)
+        }
+    }
+
+
+    // Filter and listener methods
+    public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
+        if (filter == null) {
+            BugseeSDK.setNetworkEventFilter(null)
+            return
+        }
+
+        BugseeSDK.setNetworkEventFilter(
+            object : com.bugsee.library.network.NetworkEventFilter {
+                override fun filter(
+                    p0: BugseeNetworkEvent?,
+                    p1: NetworkEventListener?
+                ) {
+                    if (p0 == null || p1 == null) {
+                        p1?.onEvent(p0);
+                        return
+                    }
+
+                    val filteredEvent = filter.invoke(BugseeNetworkEvent(p0))
+                    if (filteredEvent == null) {
+                        return
+                    }
+
+                    p1.onEvent(filteredEvent.underlyingEvent)
+                }
+            }
+        )
+    }
+
+    public actual fun setLogFilter(filter: BugseeLogFilter?) {
+        if (filter == null) {
+            BugseeSDK.setLogFilter(null)
+            return
+        }
+
+        BugseeSDK.setLogFilter(
+            object : com.bugsee.library.logs.LogFilter {
+                override fun filter(
+                    p0: BugseeLog?,
+                    p1: LogListener?
+                ) {
+                    if (p0 == null || p1 == null) {
+                        p1?.onLog(p0);
+                        return
+                    }
+
+                    val filteredEvent = filter.invoke(BugseeLogEvent(p0))
+                    if (filteredEvent == null) {
+                        return
+                    }
+
+                    p1.onLog(filteredEvent.underlyingEvent)
+                }
+            }
+        )
+    }
+
+    public actual fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?) {
+        if (listener == null) {
+            BugseeSDK.setLifecycleEventsListener(null)
+            return
+        }
+
+        BugseeSDK.setLifecycleEventsListener(
+            object : com.bugsee.library.lifecycle.LifecycleEventListener {
+                override fun onEvent(p0: LifecycleEventTypes?) {
+                    if (p0 == null) {
+                        return
+                    }
+
+                    listener.invoke(BugseeAndroidUtils.convertLifecycleEvent(p0))
+                }
+            }
+        )
+    }
+
+    // User management methods
+    public actual fun setEmail(email: String) {
+        BugseeSDK.setEmail(email)
+    }
+
+    public actual fun getEmail(): String? {
+        return BugseeSDK.getEmail()
+    }
+
+    public actual fun clearEmail() {
+        BugseeSDK.setEmail(null)
+    }
+
+
+    // Attribute methods
+    public actual fun setAttribute(name: String, value: Any) {
+        BugseeSDK.setAttribute(name, value)
+    }
+
+    public actual fun clearAttribute(name: String) {
+        BugseeSDK.clearAttribute(name)
+    }
+
+    public actual fun getAttribute(name: String): Any? {
+        return BugseeSDK.getAttribute(name)
+    }
+
+    public actual fun clearAllAttributes() {
+        BugseeSDK.clearAllAttributes()
+    }
+
+
+    // Report attachments provider
+    public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
+        if (provider == null) {
+            BugseeSDK.setReportAttachmentsProvider(null)
+            return
+        }
+
+        BugseeSDK.setReportAttachmentsProvider(
+            object : ReportAttachmentsProvider {
+                override fun getAttachments(p0: Report?): ArrayList<CustomAttachment?>? {
+                    if (p0 == null) {
+                        return null
+                    }
+
+                    val gatheredAttachments = provider.invoke(BugseeAndroidUtils.convertReport(p0))
+                    if (gatheredAttachments == null) {
+                        return null
+                    }
+
+                    return ArrayList(gatheredAttachments.map(BugseeAndroidUtils::convertAttachment))
+                }
+            }
+        )
+    }
+
+
+    // Data management
+    public actual fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
+        BugseeSDK.deleteCollectedDataOnDevice(deletionEventListener)
+    }
+
+
+    // Extended report methods
+    public actual fun createReport(provider: BugseeExtendedReportProvider) {
+        BugseeSDK.createReport(
+            object : com.bugsee.library.Bugsee.ExtendedReportCreatedListener {
+                override fun onCreated(p0: ExtendedReport?) {
+                    if (p0 == null) {
+                        return
+                    }
+
+                    provider.invoke(BugseeAndroidUtils.convertExtendedReport(p0))
+                }
+            }
+        )
+    }
+
+    public actual fun upload(report: BugseeExtendedReport) {
+        BugseeSDK.upload(BugseeAndroidUtils.convertExtendedReport(report))
+    }
+
+
+    // Report fields filter
+    public actual fun setReportFieldsPreFiller(filler: BugseeReportFieldsFiller?) {
+        reportFieldsFiller = filler
+        synchronizeReportFilter()
+    }
+
+    public actual fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?) {
+        reportFieldsFilter = filter
+        synchronizeReportFilter()
+    }
+
+    private fun synchronizeReportFilter() {
+        if (reportFieldsFiller == null && reportFieldsFilter == null) {
+            BugseeSDK.setReportFieldsFilter(null)
+            return
+        }
+
+        BugseeSDK.setReportFieldsFilter(
+            object : ReportFieldsFilter {
+                override fun addFieldsBeforeReportCreated(
+                    p0: ReportFields?,
+                    p1: OnChangeReportFieldsListener?
+                ) {
+                    // Use copy here to avoid race conditions
+                    // in the logic below
+                    val filler = reportFieldsFiller
+
+                    if (filler == null || p0 == null) {
+                        p1?.onChanged(p0);
+                        return
+                    }
+
+                    filler.invoke(BugseeAndroidUtils.convertReportFields(p0))
+                }
+
+                override fun changeFieldsAfterReportCreated(
+                    p0: ReportFields?,
+                    p1: OnChangeReportFieldsListener?
+                ) {
+                    val filter = reportFieldsFilter
+
+                    if (filter == null || p0 == null) {
+                        p1?.onChanged(p0);
+                        return
+                    }
+
+                    filter.invoke(BugseeAndroidUtils.convertReportFields(p0))
+                }
+            }
+        )
+    }
+
+
+    // View hierarchy management
+    public actual fun captureViewHierarchy() {
+        BugseeSDK.captureViewHierarchy()
+    }
+}
