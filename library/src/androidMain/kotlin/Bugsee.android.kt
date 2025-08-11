@@ -26,8 +26,7 @@ public actual class Bugsee {
 
 
     public actual val appearance: BugseeAppearance
-        // TODO: implement this properly!
-        get() = BugseeAppearance()
+        get() = BugseeAppearance(BugseeSDK.getAppearance())
 
 
     // Launch methods - these are already working
