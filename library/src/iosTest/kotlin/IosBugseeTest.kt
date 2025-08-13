@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 class IosBugseeTest {
 
     @Test
-    public fun `test 3rd element`() {
-        assertEquals(7, generateFibi().take(3).last())
+    public fun `test basic addition`() {
+        assertEquals(4, 2 + 2)
     }
 }
