@@ -9,8 +9,6 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/library.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '11.0'
-    spec.osx.deployment_target    = '11.0'
-    spec.watchos.deployment_target    = '4.0'
     spec.dependency 'Bugsee', '5.5.7'
                 
     if !Dir.exist?('build/cocoapods/framework/library.framework') || Dir.empty?('build/cocoapods/framework/library.framework')

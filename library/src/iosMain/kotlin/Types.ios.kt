@@ -1,5 +1,5 @@
 package com.bugsee.kmp
 
-public actual enum class BugseeNetworkType {
+public enum class BugseeNetworkType {
     BugseeNetwork, BugseeWebSocket, BugseeUDPSocket
 }

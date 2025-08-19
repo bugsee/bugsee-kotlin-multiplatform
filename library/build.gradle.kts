@@ -31,7 +31,8 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
-    iosArm64()
+
+    iosArm64() // Declares a target that corresponds to 64-bit iPhones
 
     // These are simulators targets. Commented out
     // iosX64()
@@ -111,9 +112,6 @@ kotlin {
         }
 
         ios.deploymentTarget = "11.0"
-        osx.deploymentTarget = "10.13"
-        osx.deploymentTarget = "11.0"
-        watchos.deploymentTarget = "4.0"
     }
 
     // Fix for Xcode 16.4 compatibility issues

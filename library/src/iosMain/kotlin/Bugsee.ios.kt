@@ -22,25 +22,44 @@ public actual class Bugsee {
         bugsee?.setDelegate(bugseeDelegate)
     }
 
+    // Execution control methods
     public actual fun launch(apiKey: String) {
         BugseeSDK.launchWithToken(apiKey)
     }
 
-    public actual fun launch(apiKey: String, options: Map<Any?, Any?>) {
-        BugseeSDK.launchWithToken(apiKey, options)
+    public actual fun launch(apiKey: String, options: Map<String, Any>) {
+        @Suppress("UNCHECKED_CAST")
+        BugseeSDK.launchWithToken(apiKey, options as Map<Any?, *>)
+    }
+
+    public actual fun stop() {
+        BugseeSDK.stop({})
+    }
+
+    public actual fun relaunch() {
+        BugseeSDK.relaunchWithOptions(null)
+    }
+
+    public actual fun relaunch(options: BugseeLaunchOptions) {
+//        BugseeSDK.relaunchWithOptions(options)
+        // TODO: Implement BugseeLaunchOptions class
+    }
+
+    public actual fun relaunch(options: Map<String, Any>) {
+        // TODO: Implement
     }
 
     // Feedback methods
-    public fun showFeedback() {
+    public actual fun showFeedback() {
         BugseeSDK.showFeedbackController()
     }
 
-    public fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
+    public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
         BugseeSDK //.setOnNewFeedbackListener(listener)
         // TODO: Implement through delegate wrapper!
     }
 
-    public fun setDefaultFeedbackGreeting(greeting: String) {
+    public actual fun setDefaultFeedbackGreeting(greeting: String) {
         BugseeSDK.setDefaultFeedbackGreeting(greeting)
     }
 
@@ -49,37 +68,38 @@ public actual class Bugsee {
     }
 
     // Logging methods
-    public fun log(message: String) {
+    public actual fun log(message: String) {
         BugseeSDK.log(message)
     }
 
-    public fun log(message: String, level: BugseeLogLevel) {
+    public actual fun log(message: String, level: BugseeLogLevel) {
         BugseeSDK.log(message, level.getLevelLong())
     }
 
-    public fun trace(traceName: String, value: Any) {
+    public actual fun trace(traceName: String, value: Any) {
         BugseeSDK.traceKey(traceName, value)
     }
 
     // Event methods
-    public fun event(eventName: String) {
+    public actual fun event(eventName: String) {
         BugseeSDK.registerEvent(eventName)
     }
 
-    public fun event(eventName: String, params: Map<Any?, Any>) {
-        BugseeSDK.registerEvent(eventName, params)
+    public actual fun event(eventName: String, params: Map<String, Any>?) {
+        @Suppress("UNCHECKED_CAST")
+        BugseeSDK.registerEvent(eventName, params as Map<Any?, *>)
     }
 
     // Report dialog methods
-    public fun showReportDialog() {
+    public actual fun showReportDialog() {
         BugseeSDK.showReportController()
     }
 
-    public fun showReportDialog(summary: String, description: String, severity: BugseeSeverity) {
+    public actual fun showReportDialog(summary: String, description: String, severity: BugseeSeverity) {
         BugseeSDK.showReportControllerWithSummary(summary, description, severity.getLevelLong())
     }
 
-    public fun showReportDialog(
+    public actual fun showReportDialog(
         summary: String,
         description: String,
         severity: BugseeSeverity,
@@ -93,24 +113,24 @@ public actual class Bugsee {
         )
     }
 
-    public fun upload(summary: String, description: String, severity: BugseeSeverity) {
+    public actual fun upload(summary: String, description: String, severity: BugseeSeverity) {
         BugseeSDK.uploadWithSummary(summary, description, severity.getLevelLong())
     }
 
-    public fun upload(
+    public actual fun upload(
         summary: String,
         description: String,
         severity: BugseeSeverity,
-        labels: List<String>
+        labels: List<String>?
     ) {
         BugseeSDK.uploadWithSummary(summary, description, severity.getLevelLong(), labels)
     }
 
-    public fun upload(
+    public actual fun upload(
         summary: String,
         description: String,
         severity: BugseeSeverity,
-        labels: List<String>,
+        labels: List<String>?,
         includeVideo: Boolean
     ) {
         BugseeSDK.uploadWithSummary(
@@ -123,53 +143,63 @@ public actual class Bugsee {
     }
 
     // Exception logging methods
-    public fun logException(ex: NSException, options: ExceptionLoggingOptions?) {
-        BugseeSDK.logException(ex, options, null)
+    public actual fun logException(ex: Throwable) {
+        // TODO: Implement NSException instance from Throwable
+//        BugseeSDK.logException(ex, options, null)
     }
 
-    public fun logException(
-        ex: NSException,
-        options: ExceptionLoggingOptions?,
-        completion: (() -> Unit)?
-    ) {
-        BugseeSDK.logException(ex, options, completion)
+    public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
+        // TODO: Implement NSException instance from Throwable
+//        BugseeSDK.logException(ex, options, null)
     }
+
+    // TODO: Do we need logException with completion?
+//    public actual fun logException(
+//        ex: Throwable,
+//        options: BugseeExceptionLoggingOptions?,
+//        completion: (() -> Unit)?
+//    ) {
+//        // TODO: Implement NSException instance from Throwable
+////        BugseeSDK.logException(ex, options, completion)
+//    }
 
     // Lifecycle methods
-    public fun pause() {
+    public actual fun pause() {
         BugseeSDK.pause()
     }
 
-    public fun resume() {
+    public actual fun resume() {
         BugseeSDK.resume()
     }
 
     // Secure rectangle methods
-    public fun addSecureRectangle(pixelRect: BugseeSecureRectangle) {
+    public actual fun addSecureRectangle(rect: BugseeSecureRectangle) {
         val cgRect = CGRectMake(
-            pixelRect.x,
-            pixelRect.y,
-            pixelRect.width,
-            pixelRect.height
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height
         )
+
         BugseeSDK.addSecureRect(cgRect)
     }
 
-    public fun removeSecureRectangle(pixelRect: BugseeSecureRectangle) {
+    public actual fun removeSecureRectangle(rect: BugseeSecureRectangle) {
         val cgRect = CGRectMake(
-            pixelRect.x,
-            pixelRect.y,
-            pixelRect.width,
-            pixelRect.height
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height
         )
+
         BugseeSDK.removeSecureRect(cgRect)
     }
 
-    public fun removeAllSecureRectangles() {
+    public actual fun removeAllSecureRectangles() {
         BugseeSDK.removeAllSecureRects()
     }
 
-    public fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
+    public actual fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
         val rectsList = BugseeSDK.getAllSecureRects()
         if (rectsList == null) {
             return emptyList()
@@ -194,94 +224,120 @@ public actual class Bugsee {
     }
 
     // Secure view methods
-    public fun addSecureWebView(view: UIWebView) {
+    public actual fun addSecureWebView(view: Any?) {
+        // TODO: Test webview class
         BugseeSDK.addSecureWebView(view)
     }
 
-    public fun addSecureWebView(view: WKWebView) {
-        BugseeSDK.addSecureWebView(view)
-    }
+//    public fun addSecureWebView(view: WKWebView) {
+//        BugseeSDK.addSecureWebView(view)
+//    }
 
     // Filter and listener methods
-    public fun setNetworkEventFilter(filter: NetworkEventFilter) {
+    public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         // TODO: Implement through delegate wrapper!
     }
 
-    public fun setLogFilter(filter: LogFilter) {
+    public actual fun setLogFilter(filter: BugseeLogFilter?) {
         // TODO: Implement through delegate wrapper!
     }
 
-    public fun setLifecycleEventsListener(listener: LifecycleEventListener) {
+    public actual fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?) {
         // TODO: Implement through delegate wrapper!
     }
 
     // User management methods
-    public fun setEmail(email: String) {
+    public actual fun setEmail(email: String) {
         BugseeSDK.setEmail(email)
     }
 
-    public fun getEmail(): String? {
+    public actual fun getEmail(): String? {
         return BugseeSDK.getEmail()
     }
 
+    public actual fun clearEmail() {
+        BugseeSDK.clearEmail()
+    }
+
     // Attribute methods
-    public fun setAttribute(name: String, value: Any) {
+    public actual fun setAttribute(name: String, value: Any) {
         BugseeSDK.setAttribute(name, value)
     }
 
-    public fun clearAttribute(name: String) {
+    public actual fun clearAttribute(name: String) {
         BugseeSDK.clearAttribute(name)
     }
 
-    public fun getAttribute(name: String): Any? {
+    public actual fun getAttribute(name: String): Any? {
         return BugseeSDK.getAttribute(name)
     }
 
-    public fun clearAllAttributes() {
+    public actual fun clearAllAttributes() {
         BugseeSDK.clearAllAttributes()
     }
 
     // Report attachments provider
-    public fun setReportAttachmentsProvider(provider: ReportAttachmentsProvider) {
-        // TODO: Implement through delegate wrapper!
-    }
+//    public fun setReportAttachmentsProvider(provider: ReportAttachmentsProvider) {
+//        // TODO: Implement through delegate wrapper!
+//    }
 
-    // Control methods
-    public fun stop() {
-        BugseeSDK.stop({})
-    }
-
-    public fun deleteCollectedDataOnDevice(deletionEventListener: CompletionHandler<Boolean>?) {
+//    // Control methods
+    public actual fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
         BugseeSDK.deleteCollectedDataOnDevice(deletionEventListener)
     }
 
-    public fun relaunch() {
-        BugseeSDK.relaunchWithOptions(null)
-    }
+//    public fun getDeviceId(): String? {
+//        return BugseeSDK.getDeviceId()
+//    }
 
-    public fun relaunch(options: LaunchOptions) {
-        BugseeSDK.relaunchWithOptions(options)
-    }
-
-    public fun getDeviceId(): String? {
-        return BugseeSDK.getDeviceId()
-    }
-
-    // Extended report methods
-    public fun createReport(listener: CompletionHandler<ExtendedReport?>?) {
-        BugseeSDK.createReportWithCompletion(listener)
+//    // Extended report methods
+    public actual fun createReport(provider: BugseeExtendedReportProvider) {
+        // TODO
     }
 
     public fun upload(report: ExtendedReport) {
         BugseeSDK.uploadReport(report)
     }
 
-    // Report fields filter
-    public fun setReportFieldsFilter(filter: ReportFieldsFilter) {
+//    // Report fields filter
+    public actual fun setReportFieldsPreFiller(filler: BugseeReportFieldsFiller?) {
         // TODO: Implement through delegate wrapper!
     }
 
-    public fun captureViewHierarchy() {
+    public actual fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?) {
+    }
+
+    // View hierarchy capture
+    public actual fun captureViewHierarchy() {
         BugseeSDK.captureViewHierarchy()
+    }
+
+    public actual val appearance: BugseeAppearance
+        get() = TODO("Not yet implemented")
+
+    public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
+    }
+
+    public actual fun upload(report: BugseeExtendedReport) {
+    }
+
+    public actual fun addSecureViewClass(className: String) {
+    }
+
+    public actual fun removeSecureViewClass(className: String) {
+    }
+
+    public actual fun addSecureView(view: Any?) {
+    }
+
+    public actual fun removeSecureView(view: Any?) {
+    }
+
+    public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
+    }
+
+    public actual fun isLaunched(): Boolean {
+        // TODO: Do we need this API?
+        return true
     }
 }
