@@ -21,9 +21,6 @@ kotlin {
     explicitApi()
     applyDefaultHierarchyTemplate()
 
-    // Intermediate JVM target
-    // jvm()
-
     androidTarget {
         publishLibraryVariants("release")
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -82,20 +79,6 @@ kotlin {
                  compileOnly(libs.ktor.client.core)
             }
         }
-
-//        val commonJvmMain by creating {
-//            dependsOn(commonMain)
-//            dependencies {
-//            }
-//        }
-
-//        val iosMain by creating {
-//            dependsOn(commonJvmMain)
-//            dependencies {
-//            }
-//        }
-
-//        jvmMain.get().dependsOn(commonJvmMain)
 
         androidMain.get().dependsOn(commonMain)
         iosArm64Main.get().dependsOn(iosMain.get())
