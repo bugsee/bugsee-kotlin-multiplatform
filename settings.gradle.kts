@@ -13,6 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "bugsee-kotlin-multiplatform-sdk"
+rootProject.name = "bugsee-kotlin-multiplatform"
 include(":library")
-include(":sample:composeApp")
