@@ -1,0 +1,23 @@
+PODS:
+  - Bugsee (5.5.7)
+  - composeApp (1.0-SNAPSHOT):
+    - Bugsee (= 5.5.7)
+
+DEPENDENCIES:
+  - composeApp (from `../composeApp`)
+
+SPEC REPOS:
+  trunk:
+    - Bugsee
+
+EXTERNAL SOURCES:
+  composeApp:
+    :path: "../composeApp"
+
+SPEC CHECKSUMS:
+  Bugsee: 39937eb3f338b758bbf13d02000239d9db198f5b
+  composeApp: 6be896372be36de091d3bb4dff1bb8b560338e43
+
+PODFILE CHECKSUM: 4cd416da3d21d86625a8d4558f1d10d6a1c5e370
+
+COCOAPODS: 1.16.2
