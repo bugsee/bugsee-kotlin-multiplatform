@@ -31,17 +31,32 @@ public actual class Bugsee {
 
     // Launch methods - these are already working
     public actual fun launch(apiKey: String, options: Map<String, Any>) {
-        val app: Application = applicationContext as Application
+        val context = applicationContext ?: run {
+            // TODO: add logging later
+            return
+        }
+
+        val app: Application = context as Application
         BugseeSDK.launch(app, apiKey, HashMap(options))
     }
 
     public actual fun launch(apiKey: String) {
-        val app: Application = applicationContext as Application
+        val context = applicationContext ?: run {
+            // TODO: add logging later
+            return
+        }
+
+        val app: Application = context as Application
         BugseeSDK.launch(app, apiKey)
     }
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
-        val app: Application = applicationContext as Application
+        val context = applicationContext ?: run {
+            // TODO: add logging later
+            return
+        }
+
+        val app: Application = context as Application
         BugseeSDK.launch(app, apiKey, HashMap(options.toMap()))
     }
 
@@ -64,7 +79,12 @@ public actual class Bugsee {
 
     // Feedback methods
     public actual fun showFeedback() {
-        val app: Application = applicationContext as Application
+        val context = applicationContext ?: run {
+            // TODO: add logging later
+            return
+        }
+
+        val app: Application = context as Application
         BugseeSDK.showFeedbackActivity(app)
     }
 
