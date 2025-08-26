@@ -79,9 +79,6 @@ kotlin {
                  compileOnly(libs.ktor.client.core)
             }
         }
-
-        androidMain.get().dependsOn(commonMain)
-        iosArm64Main.get().dependsOn(iosMain.get())
     }
 
     cocoapods {
