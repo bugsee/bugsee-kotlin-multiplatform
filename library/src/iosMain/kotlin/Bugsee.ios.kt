@@ -316,24 +316,38 @@ public actual class Bugsee {
         get() = TODO("Not yet implemented")
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
+        // TODO: Implement BugseeLaunchOptions conversion
+        launch(apiKey)
     }
 
     public actual fun upload(report: BugseeExtendedReport) {
+        // Convert our type to the native type
+        val nativeReport = report as? ExtendedReport
+        if (nativeReport != null) {
+            BugseeSDK.uploadReport(nativeReport)
+        }
     }
 
     public actual fun addSecureViewClass(className: String) {
+        // iOS doesn't have activity classes like Android
+        // This method is a no-op for iOS
     }
 
     public actual fun removeSecureViewClass(className: String) {
+        // iOS doesn't have activity classes like Android
+        // This method is a no-op for iOS
     }
 
     public actual fun addSecureView(view: Any?) {
+        // TODO: Implement view security for iOS
     }
 
     public actual fun removeSecureView(view: Any?) {
+        // TODO: Implement view security for iOS
     }
 
     public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
+        // TODO: Implement through delegate wrapper
     }
 
     public actual fun isLaunched(): Boolean {
