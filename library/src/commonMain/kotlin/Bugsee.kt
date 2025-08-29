@@ -1,6 +1,7 @@
 package com.bugsee.kmp
 
-public expect class Bugsee {
+public expect class Bugsee() {
+
     public val appearance: BugseeAppearance
 
     // Execution control methods
