@@ -1,5 +1,8 @@
 package com.bugsee.kmp
 
+import com.bugsee.kmp.internal.Platform
+import com.bugsee.kmp.internal.PlatformInfo
+
 public open class BugseeLaunchOptions {
     protected val options: HashMap<String, Any> = HashMap()
     private val customOptions: HashMap<String, Any> = HashMap()
@@ -26,9 +29,10 @@ public open class BugseeLaunchOptions {
     }
 
     private fun getWrapperInfo(): Map<String, Any> {
-        val runtime = mapOf("version" to KotlinVersion.CURRENT.toString())
+//        val runtime = mapOf("version" to KotlinVersion.CURRENT.toString())
+        val runtime = KotlinVersion.CURRENT.toString()
 
-        return mapOf("type" to "kmp", "version" to "", "runtime" to runtime)
+        return mapOf("type" to "kmp", "version" to "0.0.1-beta", "runtime" to runtime)
     }
 
     protected open fun setDefaults() {
@@ -55,9 +59,13 @@ public open class BugseeLaunchOptions {
         }
 
     public var shakeToReport: Boolean
-        get() = getBooleanOption("ShakeToReport")
+        get() {
+            val key = if (PlatformInfo.getPlatformType() == Platform.ANDROID) "ShakeToTrigger" else "ShakeToReport"
+            return getBooleanOption(key)
+        }
         set(value) {
-            options["ShakeToReport"] = value
+            val key = if (PlatformInfo.getPlatformType() == Platform.ANDROID) "ShakeToTrigger" else "ShakeToReport"
+            options[key] = value
         }
 
     public var crashReport: Boolean
@@ -125,7 +133,7 @@ public open class BugseeLaunchOptions {
         }
 
     public var defaultBugPriority: BugseeSeverity
-        get() = BugseeSeverity.fromLevel(options["BugseeDefaultBugPriority"] as? Int, BugseeSeverity.VeryLow)
+        get() = BugseeSeverity.fromLevel(options["BugseeDefaultBugPriority"] as? Int, BugseeSeverity.High)
         set(value) {
             options["BugseeDefaultBugPriority"] = value.getLevel()
         }
@@ -170,5 +178,29 @@ public open class BugseeLaunchOptions {
         get() = getBooleanOption("ReportEmailRequired")
         set(value) {
             options["ReportEmailRequired"] = value
+        }
+
+    public var reportLabelsRequired: Boolean
+        get() = getBooleanOption("ReportLabelsRequired")
+        set(value) {
+            options["ReportLabelsRequired"] = value
+        }
+
+    public var reportLabelsEnabled: Boolean
+        get() = getBooleanOption("ReportLabelsEnabled")
+        set(value) {
+            options["ReportLabelsEnabled"] = value
+        }
+
+    public var viewHierarchyEnabled: Boolean
+        get() = getBooleanOption("ViewHierarchyEnabled")
+        set(value) {
+            options["ViewHierarchyEnabled"] = value
+        }
+
+    public var detectAppExit: Boolean
+        get() = getBooleanOption("DetectAppExit")
+        set(value) {
+            options["DetectAppExit"] = value
         }
 }
