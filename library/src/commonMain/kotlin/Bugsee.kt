@@ -121,7 +121,7 @@ public expect class Bugsee() {
     public fun upload(report: BugseeExtendedReport)
 
     // Report fields filter
-    public fun setReportFieldsPreFiller(filler: BugseeReportFieldsFiller?)
+    public fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?)
 
     public fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?)
 

@@ -472,7 +472,7 @@ public actual class Bugsee {
 
 
     // Report fields filter
-    public actual fun setReportFieldsPreFiller(filler: BugseeReportFieldsFiller?) {
+    public actual fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?) {
         reportFieldsFiller = filler
         synchronizeReportFilter()
     }

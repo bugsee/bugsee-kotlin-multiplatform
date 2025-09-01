@@ -299,8 +299,8 @@ public actual class Bugsee {
         BugseeSDK.uploadReport(report)
     }
 
-//    // Report fields filter
-    public actual fun setReportFieldsPreFiller(filler: BugseeReportFieldsFiller?) {
+    // Report fields filter
+    public actual fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?) {
         // TODO: Implement through delegate wrapper!
     }
 
