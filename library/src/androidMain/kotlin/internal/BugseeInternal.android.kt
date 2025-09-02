@@ -1,13 +1,13 @@
-package com.bugsee.kmp
+package com.bugsee.kmp.internal
 
-import android.app.Application;
-import android.view.View;
+import android.app.Application
+import android.view.View
+import com.bugsee.kmp.*
 import com.bugsee.library.attachment.CustomAttachment
-import com.bugsee.library.data.IssueSeverity
-import com.bugsee.library.send.ReportFieldsFilter
 import com.bugsee.library.attachment.ExtendedReport
 import com.bugsee.library.attachment.Report
 import com.bugsee.library.attachment.ReportAttachmentsProvider
+import com.bugsee.library.data.IssueSeverity
 import com.bugsee.library.lifecycle.LifecycleEventTypes
 import com.bugsee.library.logs.BugseeLog
 import com.bugsee.library.logs.LogListener
@@ -15,12 +15,11 @@ import com.bugsee.library.network.NetworkEventListener
 import com.bugsee.library.network.data.BugseeNetworkEvent
 import com.bugsee.library.send.OnChangeReportFieldsListener
 import com.bugsee.library.send.ReportFields
-import java.util.ArrayList
-import java.util.HashMap
+import com.bugsee.library.send.ReportFieldsFilter
 
 private typealias BugseeSDK = com.bugsee.library.Bugsee
 
-public actual class Bugsee {
+public actual class BugseeInternal {
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
     private var reportFieldsFilter: BugseeReportFieldsFilter? = null
 
@@ -130,7 +129,7 @@ public actual class Bugsee {
     public actual fun log(message: String, level: BugseeLogLevel) {
         BugseeSDK.log(
             message,
-            BugseeAndroidUtils.convertLogLevel(level)
+            BugseeAndroidUtils.Companion.convertLogLevel(level)
         )
     }
 
@@ -167,7 +166,7 @@ public actual class Bugsee {
         BugseeSDK.showReportDialog(
             summary,
             description,
-            BugseeAndroidUtils.convertSeverity(severity)
+            BugseeAndroidUtils.Companion.convertSeverity(severity)
         )
     }
 
@@ -193,7 +192,7 @@ public actual class Bugsee {
 
     // Bug report upload methods
     public actual fun upload(summary: String, description: String, severity: BugseeSeverity) {
-        BugseeSDK.upload(summary, description, BugseeAndroidUtils.convertSeverity(severity))
+        BugseeSDK.upload(summary, description, BugseeAndroidUtils.Companion.convertSeverity(severity))
     }
 
     public actual fun upload(
@@ -210,7 +209,7 @@ public actual class Bugsee {
         BugseeSDK.upload(
             summary,
             description,
-            BugseeAndroidUtils.convertSeverity(severity),
+            BugseeAndroidUtils.Companion.convertSeverity(severity),
             ArrayList(labels)
         )
     }
@@ -225,7 +224,7 @@ public actual class Bugsee {
         BugseeSDK.upload(
             summary,
             description,
-            BugseeAndroidUtils.convertSeverity(severity),
+            BugseeAndroidUtils.Companion.convertSeverity(severity),
             if (labels == null) ArrayList() else ArrayList(labels),
             includeVideo
         )
@@ -238,7 +237,7 @@ public actual class Bugsee {
     }
 
     public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
-        BugseeSDK.logException(ex, BugseeAndroidUtils.convertExceptionLoggingOptions(options))
+        BugseeSDK.logException(ex, BugseeAndroidUtils.Companion.convertExceptionLoggingOptions(options))
     }
 
     // Security methods
@@ -270,11 +269,11 @@ public actual class Bugsee {
 
     // Secure rectangle methods
     public actual fun addSecureRectangle(rect: BugseeSecureRectangle) {
-        BugseeSDK.addSecureRectangle(BugseeAndroidUtils.convertSecureRect(rect))
+        BugseeSDK.addSecureRectangle(BugseeAndroidUtils.Companion.convertSecureRect(rect))
     }
 
     public actual fun removeSecureRectangle(rect: BugseeSecureRectangle) {
-        BugseeSDK.removeSecureRectangle(BugseeAndroidUtils.convertSecureRect(rect))
+        BugseeSDK.removeSecureRectangle(BugseeAndroidUtils.Companion.convertSecureRect(rect))
     }
 
     public actual fun removeAllSecureRectangles() {
@@ -287,7 +286,7 @@ public actual class Bugsee {
             return emptyList()
         }
 
-        return originalRects.map(BugseeAndroidUtils::convertSecureRect)
+        return originalRects.map(BugseeAndroidUtils.Companion::convertSecureRect)
     }
 
 
@@ -329,7 +328,11 @@ public actual class Bugsee {
                         return
                     }
 
-                    val filteredEvent = filter.invoke(BugseeNetworkEvent(p0))
+                    val filteredEvent = filter.invoke(
+                        BugseeNetworkEvent(
+                            p0
+                        )
+                    )
                     if (filteredEvent == null) {
                         return
                     }
@@ -357,7 +360,11 @@ public actual class Bugsee {
                         return
                     }
 
-                    val filteredEvent = filter.invoke(BugseeLogEvent(p0))
+                    val filteredEvent = filter.invoke(
+                        BugseeLogEvent(
+                            p0
+                        )
+                    )
                     if (filteredEvent == null) {
                         return
                     }
@@ -381,7 +388,7 @@ public actual class Bugsee {
                         return
                     }
 
-                    listener.invoke(BugseeAndroidUtils.convertLifecycleEvent(p0))
+                    listener.invoke(BugseeAndroidUtils.Companion.convertLifecycleEvent(p0))
                 }
             }
         )
@@ -433,12 +440,12 @@ public actual class Bugsee {
                         return null
                     }
 
-                    val gatheredAttachments = provider.invoke(BugseeAndroidUtils.convertReport(p0))
+                    val gatheredAttachments = provider.invoke(BugseeAndroidUtils.Companion.convertReport(p0))
                     if (gatheredAttachments == null) {
                         return null
                     }
 
-                    return ArrayList(gatheredAttachments.map(BugseeAndroidUtils::convertAttachment))
+                    return ArrayList(gatheredAttachments.map(BugseeAndroidUtils.Companion::convertAttachment))
                 }
             }
         )
@@ -460,14 +467,14 @@ public actual class Bugsee {
                         return
                     }
 
-                    provider.invoke(BugseeAndroidUtils.convertExtendedReport(p0))
+                    provider.invoke(BugseeAndroidUtils.Companion.convertExtendedReport(p0))
                 }
             }
         )
     }
 
     public actual fun upload(report: BugseeExtendedReport) {
-        BugseeSDK.upload(BugseeAndroidUtils.convertExtendedReport(report))
+        BugseeSDK.upload(BugseeAndroidUtils.Companion.convertExtendedReport(report))
     }
 
 
@@ -503,7 +510,7 @@ public actual class Bugsee {
                         return
                     }
 
-                    filler.invoke(BugseeAndroidUtils.convertReportFields(p0))
+                    filler.invoke(BugseeAndroidUtils.Companion.convertReportFields(p0))
                 }
 
                 override fun changeFieldsAfterReportCreated(
@@ -517,7 +524,7 @@ public actual class Bugsee {
                         return
                     }
 
-                    filter.invoke(BugseeAndroidUtils.convertReportFields(p0))
+                    filter.invoke(BugseeAndroidUtils.Companion.convertReportFields(p0))
                 }
             }
         )

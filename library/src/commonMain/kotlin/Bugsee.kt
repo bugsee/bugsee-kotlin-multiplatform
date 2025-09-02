@@ -1,130 +1,244 @@
 package com.bugsee.kmp
 
-public expect class Bugsee() {
+import com.bugsee.kmp.internal.BugseeInternal
 
-    public val appearance: BugseeAppearance
+public object Bugsee {
+    private val bugseeInternal = BugseeInternal()
 
-    // Execution control methods
-    public fun launch(apiKey: String)
 
-    public fun launch(apiKey: String, options: Map<String, Any>)
+    public fun launch(apiKey: String) {
+        bugseeInternal.launch(apiKey)
+    }
 
-    public fun launch(apiKey: String, options: BugseeLaunchOptions)
+    public fun launch(apiKey: String, options: Map<String, Any>) {
+        bugseeInternal.launch(apiKey, options)
+    }
 
-    public fun stop()
+    public fun launch(apiKey: String, options: BugseeLaunchOptions) {
+        bugseeInternal.launch(apiKey, options)
+    }
 
-    public fun relaunch()
+    public fun stop() {
+        bugseeInternal.stop()
+    }
 
-    public fun relaunch(options: BugseeLaunchOptions)
+    public fun relaunch() {
+        bugseeInternal.relaunch()
+    }
 
-    public fun relaunch(options: Map<String, Any>)
+    public fun relaunch(options: BugseeLaunchOptions) {
+        bugseeInternal.relaunch(options)
+    }
+
+    public fun relaunch(options: Map<String, Any>) {
+        bugseeInternal.relaunch(options)
+    }
 
     // Feedback methods
-    public fun showFeedback()
+    public fun showFeedback() {
+        bugseeInternal.showFeedback()
+    }
 
-    public fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener)
+    public fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
+        bugseeInternal.setOnNewFeedbackListener(listener)
+    }
 
-    public fun setDefaultFeedbackGreeting(greeting: String)
+    public fun setDefaultFeedbackGreeting(greeting: String) {
+        bugseeInternal.setDefaultFeedbackGreeting(greeting)
+    }
 
     // Logging methods
-    public fun log(message: String)
+    public fun log(message: String) {
+        bugseeInternal.log(message)
+    }
 
-    public fun log(message: String, level: BugseeLogLevel)
+    public fun log(message: String, level: BugseeLogLevel) {
+        bugseeInternal.log(message, level)
+    }
 
-    public fun trace(traceName: String, value: Any)
+    public fun trace(traceName: String, value: Any) {
+        bugseeInternal.trace(traceName, value)
+    }
 
     // Event methods
-    public fun event(eventName: String)
+    public fun event(eventName: String) {
+        bugseeInternal.event(eventName)
+    }
 
-    public fun event(eventName: String, params: Map<String, Any>?)
+    public fun event(eventName: String, params: Map<String, Any>?) {
+        bugseeInternal.event(eventName, params)
+    }
 
     // Report dialog methods
-    public fun showReportDialog()
+    public fun showReportDialog() {
+        bugseeInternal.showReportDialog()
+    }
 
-    public fun showReportDialog(summary: String, description: String, severity: BugseeSeverity)
+    public fun showReportDialog(summary: String, description: String, severity: BugseeSeverity) {
+        bugseeInternal.showReportDialog(summary, description, severity)
+    }
 
-    public fun showReportDialog(summary: String, description: String, severity: BugseeSeverity, labels: List<String>?)
+    public fun showReportDialog(summary: String, description: String, severity: BugseeSeverity, labels: List<String>?) {
+        bugseeInternal.showReportDialog(summary, description, severity, labels)
+    }
 
     // Upload methods
-    public fun upload(summary: String, description: String, severity: BugseeSeverity)
+    public fun upload(summary: String,
+                      description: String,
+                      severity: BugseeSeverity) {
+        bugseeInternal.upload(summary, description, severity)
+    }
 
-    public fun upload(summary: String, description: String, severity: BugseeSeverity, labels: List<String>?)
+    public fun upload(summary: String,
+                      description: String,
+                      severity: BugseeSeverity,
+                      labels: List<String>?) {
+        bugseeInternal.upload(summary, description, severity, labels)
+    }
 
-    public fun upload(summary: String, description: String, severity: BugseeSeverity, labels: List<String>?, includeVideo: Boolean)
+    public fun upload(summary: String,
+                      description: String,
+                      severity: BugseeSeverity,
+                      labels: List<String>?,
+                      includeVideo: Boolean) {
+        bugseeInternal.upload(summary, description, severity, labels, includeVideo)
+    }
 
     // Exception logging methods
-    public fun logException(ex: Throwable)
+    public fun logException(ex: Throwable) {
+        bugseeInternal.logException(ex)
+    }
 
-    public fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?)
+    public fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
+        bugseeInternal.logException(ex, options)
+    }
 
     // Security methods
-    public fun addSecureViewClass(className: String)
+    public fun addSecureViewClass(className: String) {
+        bugseeInternal.addSecureViewClass(className)
+    }
 
-    public fun removeSecureViewClass(className: String)
+    public fun removeSecureViewClass(className: String) {
+        bugseeInternal.removeSecureViewClass(className)
+    }
 
     // Lifecycle methods
-    public fun pause()
+    public fun pause() {
+        bugseeInternal.pause()
+    }
 
-    public fun resume()
+    public fun resume() {
+        bugseeInternal.resume()
+    }
 
     // Secure rectangle methods
-    public fun addSecureRectangle(rect: BugseeSecureRectangle)
+    public fun addSecureRectangle(rect: BugseeSecureRectangle) {
+        bugseeInternal.addSecureRectangle(rect)
+    }
 
-    public fun removeSecureRectangle(rect: BugseeSecureRectangle)
+    public fun removeSecureRectangle(rect: BugseeSecureRectangle) {
+        bugseeInternal.removeSecureRectangle(rect)
+    }
 
-    public fun removeAllSecureRectangles()
+    public fun removeAllSecureRectangles() {
+        bugseeInternal.removeAllSecureRectangles()
+    }
 
-    public fun getAllSecureRectangles(): List<BugseeSecureRectangle>
+    public fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
+        return bugseeInternal.getAllSecureRectangles()
+    }
 
     // Secure view methods
-    public fun addSecureView(view: Any?)
+    public fun addSecureView(view: Any?) {
+        bugseeInternal.addSecureView(view)
+    }
 
-    public fun addSecureWebView(view: Any?)
+    public fun addSecureWebView(view: Any?) {
+        bugseeInternal.addSecureWebView(view)
+    }
 
-    public fun removeSecureView(view: Any?)
+    public fun removeSecureView(view: Any?) {
+        bugseeInternal.removeSecureView(view)
+    }
 
     // Filter and listener methods
-    public fun setNetworkEventFilter(filter: BugseeNetworkFilter?)
+    public fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
+        bugseeInternal.setNetworkEventFilter(filter)
+    }
 
-    public fun setLogFilter(filter: BugseeLogFilter?)
+    public fun setLogFilter(filter: BugseeLogFilter?) {
+        bugseeInternal.setLogFilter(filter)
+    }
 
-    public fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?)
+    public fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?) {
+        bugseeInternal.setLifecycleEventsListener(listener)
+    }
 
     // User management methods
-    public fun setEmail(email: String)
+    public fun setEmail(email: String) {
+        bugseeInternal.setEmail(email)
+    }
 
-    public fun getEmail(): String?
+    public fun getEmail(): String? {
+        return bugseeInternal.getEmail()
+    }
 
-    public fun clearEmail()
+    public fun clearEmail() {
+        bugseeInternal.clearEmail()
+    }
 
     // Attribute methods
-    public fun setAttribute(name: String, value: Any)
+    public fun setAttribute(name: String, value: Any) {
+        bugseeInternal.setAttribute(name, value)
+    }
 
-    public fun clearAttribute(name: String)
+    public fun clearAttribute(name: String) {
+        bugseeInternal.clearAttribute(name)
+    }
 
-    public fun getAttribute(name: String): Any?
+    public fun getAttribute(name: String): Any? {
+        return bugseeInternal.getAttribute(name)
+    }
 
-    public fun clearAllAttributes()
+    public fun clearAllAttributes() {
+        bugseeInternal.clearAllAttributes()
+    }
 
     // Report attachments provider
-    public fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?)
+    public fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
+        bugseeInternal.setReportAttachmentsProvider(provider)
+    }
 
     // Data management
-    public fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?)
+    public fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
+        bugseeInternal.deleteCollectedDataOnDevice(deletionEventListener)
+    }
 
     // Status methods
-    public fun isLaunched(): Boolean
+    public fun isLaunched(): Boolean {
+        return bugseeInternal.isLaunched()
+    }
 
     // Extended report methods
-    public fun createReport(provider: BugseeExtendedReportProvider)
+    public fun createReport(provider: BugseeExtendedReportProvider) {
+        bugseeInternal.createReport(provider)
+    }
 
-    public fun upload(report: BugseeExtendedReport)
+    public fun upload(report: BugseeExtendedReport) {
+        bugseeInternal.upload(report)
+    }
 
     // Report fields filter
-    public fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?)
+    public fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?) {
+        bugseeInternal.setReportFieldsPreFilter(filler)
+    }
 
-    public fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?)
+    public fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?) {
+        bugseeInternal.setReportFieldsFilter(filter)
+    }
 
     // View hierarchy capture
-    public fun captureViewHierarchy()
+    public fun captureViewHierarchy() {
+        bugseeInternal.captureViewHierarchy()
+    }
 }

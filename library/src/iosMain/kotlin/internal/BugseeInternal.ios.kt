@@ -1,11 +1,25 @@
-package com.bugsee.kmp
+package com.bugsee.kmp.internal
 
 import cocoapods.Bugsee.BugseeTheme
+import com.bugsee.kmp.BugseeAppearance
+import com.bugsee.kmp.BugseeAttachmentsProvider
+import com.bugsee.kmp.BugseeDelegateWrapper
+import com.bugsee.kmp.BugseeExceptionLoggingOptions
+import com.bugsee.kmp.BugseeExtendedReport
+import com.bugsee.kmp.BugseeExtendedReportProvider
+import com.bugsee.kmp.BugseeFeedbackEventListener
+import com.bugsee.kmp.BugseeLaunchOptions
+import com.bugsee.kmp.BugseeLifecycleEventListener
+import com.bugsee.kmp.BugseeLogFilter
+import com.bugsee.kmp.BugseeLogLevel
+import com.bugsee.kmp.BugseeNetworkFilter
+import com.bugsee.kmp.BugseeReportFieldsFiller
+import com.bugsee.kmp.BugseeReportFieldsFilter
+import com.bugsee.kmp.BugseeSecureRectangle
+import com.bugsee.kmp.BugseeSeverity
+import com.bugsee.kmp.EventHandler
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectMake
-import platform.Foundation.NSException
-import platform.UIKit.UIWebView
-import platform.WebKit.WKWebView
 
 private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
 
@@ -14,13 +28,16 @@ public typealias LaunchOptions = cocoapods.Bugsee.BugseeOptions
 public typealias LogLevel = cocoapods.Bugsee.BugseeLogLevel
 public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggingOptions
 
-public actual class Bugsee {
+public actual class BugseeInternal {
     private val bugseeDelegate = BugseeDelegateWrapper()
 
     init {
         val bugsee = BugseeSDK.sharedInstance()
         bugsee?.setDelegate(bugseeDelegate)
     }
+
+    public actual val appearance: BugseeAppearance
+        get() = TODO("Not yet implemented")
 
     // Execution control methods
     public actual fun launch(apiKey: String) {
@@ -32,6 +49,11 @@ public actual class Bugsee {
         BugseeSDK.launchWithToken(apiKey, options as Map<Any?, *>)
     }
 
+    public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
+        // TODO: Implement BugseeLaunchOptions conversion
+        launch(apiKey, HashMap(options.toMap()))
+    }
+
     public actual fun stop() {
         BugseeSDK.stop({})
     }
@@ -41,12 +63,12 @@ public actual class Bugsee {
     }
 
     public actual fun relaunch(options: BugseeLaunchOptions) {
-//        BugseeSDK.relaunchWithOptions(options)
-        // TODO: Implement BugseeLaunchOptions class
+        relaunch(HashMap(options.toMap()))
     }
 
     public actual fun relaunch(options: Map<String, Any>) {
-        // TODO: Implement
+        @Suppress("UNCHECKED_CAST")
+        BugseeSDK.relaunchWithDictionaryOptions(options as Map<Any?, *>)
     }
 
     // Feedback methods
@@ -277,11 +299,12 @@ public actual class Bugsee {
     }
 
     // Report attachments provider
-//    public fun setReportAttachmentsProvider(provider: ReportAttachmentsProvider) {
-//        // TODO: Implement through delegate wrapper!
-//    }
+    public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
+        // TODO: Implement through delegate wrapper
+    }
 
-//    // Control methods
+
+    // Control methods
     public actual fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
         BugseeSDK.deleteCollectedDataOnDevice(deletionEventListener)
     }
@@ -290,7 +313,7 @@ public actual class Bugsee {
 //        return BugseeSDK.getDeviceId()
 //    }
 
-//    // Extended report methods
+    // Extended report methods
     public actual fun createReport(provider: BugseeExtendedReportProvider) {
         // TODO
     }
@@ -310,14 +333,6 @@ public actual class Bugsee {
     // View hierarchy capture
     public actual fun captureViewHierarchy() {
         BugseeSDK.captureViewHierarchy()
-    }
-
-    public actual val appearance: BugseeAppearance
-        get() = TODO("Not yet implemented")
-
-    public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
-        // TODO: Implement BugseeLaunchOptions conversion
-        launch(apiKey)
     }
 
     public actual fun upload(report: BugseeExtendedReport) {
@@ -344,10 +359,6 @@ public actual class Bugsee {
 
     public actual fun removeSecureView(view: Any?) {
         // TODO: Implement view security for iOS
-    }
-
-    public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
-        // TODO: Implement through delegate wrapper
     }
 
     public actual fun isLaunched(): Boolean {
