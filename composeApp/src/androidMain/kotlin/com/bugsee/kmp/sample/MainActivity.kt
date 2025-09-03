@@ -12,6 +12,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+//        val options = BugseeLaunchOptionsAndroid()
+//        options.captureLogs = true
+//        options.videoEnabled = true
+//        options.viewHierarchyEnabled = true
+//        options.shakeToReport = true
+//        options.screenshotToReport = true
+////        options.setCustomOption("endpoint", "https://apidev.bugsee.com/v2/")
+//        Bugsee.launch(getPlatform().token, options)
+
         setContent {
             App()
         }

@@ -50,6 +50,8 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+//            implementation("io.ktor:ktor-client-android:${libs.versions.ktor.get()}")
+            implementation("io.ktor:ktor-client-android:${libs.versions.ktor3.get()}")
         }
 
         commonMain.dependencies {
@@ -60,6 +62,14 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(project(":library"))
+//            implementation(libs.ktor.client.core)
+            implementation(libs.ktor3.client.core)
+            implementation(libs.kotlinx.coroutines.core)
+        }
+
+        iosMain.dependencies {
+//            implementation("io.ktor:ktor-client-darwin:${libs.versions.ktor.get()}")
+            implementation("io.ktor:ktor-client-darwin:${libs.versions.ktor3.get()}")
         }
 
         all {
