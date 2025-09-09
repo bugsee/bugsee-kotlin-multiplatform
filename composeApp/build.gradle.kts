@@ -40,6 +40,17 @@ kotlin {
             version = libs.versions.bugsee.ios.get()
         }
 
+        /*
+         * If you want to debug Bugsee XCF,
+         * then create local Bugsee pod,
+         * and use below pod module description
+         */
+//        pod("Bugsee") {
+//            version = "26.0.0"
+//            source = path(project.file("/Users/dsheikherev/WorkDir/Cocoapods/Local/Bugsee"))
+//            extraOpts += listOf("-compiler-option", "-fmodules")
+//        }
+
         framework {
             baseName = "ComposeApp"
             isStatic = true

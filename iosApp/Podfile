@@ -7,6 +7,9 @@ target 'iosApp' do
   platform :ios, deployment_target
   # Pods for iosApp
   pod 'composeApp', :path => '../composeApp'
+
+  # If you want to debug Bugsee XCF, then create local Bugsee pod, and add below pod module description
+  # pod 'Bugsee', :path => '/Users/dsheikherev/WorkDir/Cocoapods/Local/Bugsee'
 end
 
 post_install do |installer|
