@@ -11,7 +11,6 @@ public class BugseeLaunchOptionsIos: BugseeLaunchOptions() {
         this.monitorDiskSpace = false;
         this.defaultErrorPriority = BugseeSeverity.High;
         this.killDetection = false;
-        this.screenshotToReport = true;
         this.videoScale = 1.0;
         this.monitorBluetoothStatus = false;
         this.captureAVPlayer = false;
@@ -20,44 +19,12 @@ public class BugseeLaunchOptionsIos: BugseeLaunchOptions() {
         this.enableMachExceptions = false;
         this.statusBarInfo = false;
         this.bugseeStyle = "System";
-
-        // common for both platforms
-        this.maxNetworkBodySize = 20 * 1024;
-        this.shakeToReport = false; // true on Android
-        this.crashReport = true;
-        this.maxRecordingTime = 60;
-        this.videoEnabled = true;
-        this.screenshotEnabled = true;
-        this.captureLogs = true;
-        this.monitorNetwork = true;
-        this.wifiOnlyUpload = false;
-        this.maxDataSize = 50;
-        this.reportPrioritySelector = false;
-        this.defaultCrashPriority = BugseeSeverity.Blocker;
-        this.defaultBugPriority = BugseeSeverity.High;
-        this.frameRate = BugseeFrameRate.High;
-        this.minFrameRate = 1;
-        this.maxFrameRate = 30;
-        this.captureDeviceAndNetworkNames = false; // true on Android
-        this.reportSummaryRequired = false;
-        this.reportDescriptionRequired = false;
-        this.reportEmailRequired = false;
-        this.reportLabelsEnabled = false;
-        this.reportLabelsRequired = false;
-        this.viewHierarchyEnabled = true;
-        this.detectAppExit = false;
     }
 
     public var monitorDiskSpace: Boolean
         get() = getBooleanOption("MonitorDiskSpace")
         set(value) {
             options["MonitorDiskSpace"] = value
-        }
-
-    public var screenshotToReport: Boolean
-        get() = getBooleanOption("ScreenshotToReport")
-        set(value) {
-            options["ScreenshotToReport"] = value
         }
 
     public var killDetection: Boolean

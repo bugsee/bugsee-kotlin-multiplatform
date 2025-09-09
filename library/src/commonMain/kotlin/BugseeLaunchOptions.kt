@@ -37,6 +37,33 @@ public open class BugseeLaunchOptions {
 
     protected open fun setDefaults() {
         options.clear()
+
+        // common for both platforms
+        this.maxNetworkBodySize = 20 * 1024;
+        this.shakeToReport = PlatformInfo.getPlatformType() == Platform.ANDROID
+        this.screenshotToReport = PlatformInfo.getPlatformType() == Platform.IOS
+        this.crashReport = true;
+        this.maxRecordingTime = 60;
+        this.videoEnabled = true;
+        this.screenshotEnabled = true;
+        this.captureLogs = true;
+        this.monitorNetwork = true;
+        this.wifiOnlyUpload = false;
+        this.maxDataSize = 50;
+        this.reportPrioritySelector = false;
+        this.defaultCrashPriority = BugseeSeverity.Blocker;
+        this.defaultBugPriority = BugseeSeverity.High;
+        this.frameRate = BugseeFrameRate.High;
+        this.minFrameRate = 1;
+        this.maxFrameRate = 30;
+        this.captureDeviceAndNetworkNames = PlatformInfo.getPlatformType() == Platform.ANDROID
+        this.reportSummaryRequired = false;
+        this.reportDescriptionRequired = false;
+        this.reportEmailRequired = false;
+        this.reportLabelsEnabled = false;
+        this.reportLabelsRequired = false;
+        this.viewHierarchyEnabled = true;
+        this.detectAppExit = false;
     }
 
     protected fun getBooleanOption(key: String): Boolean {
@@ -65,6 +92,16 @@ public open class BugseeLaunchOptions {
         }
         set(value) {
             val key = if (PlatformInfo.getPlatformType() == Platform.ANDROID) "ShakeToTrigger" else "ShakeToReport"
+            options[key] = value
+        }
+
+    public var screenshotToReport: Boolean
+        get() {
+            val key = if (PlatformInfo.getPlatformType() == Platform.ANDROID) "ScreenshotToTrigger" else "ScreenshotToReport"
+            return getBooleanOption(key)
+        }
+        set(value) {
+            val key = if (PlatformInfo.getPlatformType() == Platform.ANDROID) "ScreenshotToTrigger" else "ScreenshotToReport"
             options[key] = value
         }
 
