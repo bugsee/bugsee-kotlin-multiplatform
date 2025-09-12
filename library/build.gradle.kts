@@ -79,6 +79,14 @@ kotlin {
                  compileOnly(libs.ktor.client.core)
             }
         }
+        
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.robolectric)
+                implementation(libs.junit)
+            }
+        }
     }
 
     cocoapods {
@@ -122,6 +130,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
     }
 }
 

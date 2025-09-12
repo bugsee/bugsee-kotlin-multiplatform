@@ -18,6 +18,10 @@ ktor = "2.3.0"
 ktor3 = "3.2.3"
 compose-multiplatform = "1.8.2"
 androidx-activity = "1.10.1"
+androidx-test = "1.5.0"
+robolectric = "4.12.1"
+junit = "4.13.2"
+mockito = "5.8.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -43,6 +47,14 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor3-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor3" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+
+# Testing Libraries
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+junit = { module = "junit:junit", version.ref = "junit" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version = "5.3.1" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
