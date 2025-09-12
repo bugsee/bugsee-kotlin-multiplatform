@@ -6,16 +6,11 @@ public actual class BugseeLogEvent internal constructor(
         internal val underlyingEvent: BugseeLog
 ) {
         // Use underlying object ref to minimize allocations and copying
-
         public actual var message: String
-                get() = underlyingEvent.message
+                get() = underlyingEvent.message ?: ""
                 set(value) {
                         underlyingEvent.message = value
                 }
 
-        public actual var level: BugseeLogLevel
-                get() = BugseeAndroidUtils.convertLogLevel(underlyingEvent.level)
-                set(value) {
-                        underlyingEvent.level = BugseeAndroidUtils.convertLogLevel(value)
-                }
+        public actual val level: BugseeLogLevel = BugseeAndroidUtils.convertLogLevel(underlyingEvent.level)
 }
