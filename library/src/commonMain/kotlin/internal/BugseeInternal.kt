@@ -19,6 +19,8 @@ import com.bugsee.kmp.EventHandler
 
 public expect class BugseeInternal() {
 
+    public var logFilterHandler: BugseeLogFilter?
+
     public val appearance: BugseeAppearance
 
     // Execution control methods

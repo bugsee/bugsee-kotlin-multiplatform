@@ -29,7 +29,9 @@ public typealias LogLevel = cocoapods.Bugsee.BugseeLogLevel
 public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggingOptions
 
 public actual class BugseeInternal {
-    private val bugseeDelegate = BugseeDelegateWrapper()
+
+    public actual var logFilterHandler: BugseeLogFilter? = null
+    private val bugseeDelegate = BugseeDelegateWrapper(this)
 
     init {
         val bugsee = BugseeSDK.sharedInstance()

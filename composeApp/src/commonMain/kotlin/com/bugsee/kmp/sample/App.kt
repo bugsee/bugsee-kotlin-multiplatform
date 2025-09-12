@@ -45,6 +45,12 @@ fun App() {
 //            options.setCustomOption("endpoint", "https://apidev.bugsee.com/v2/")
             options.setCustomOption("debug", true)
             Bugsee.launch(getPlatform().token, options)
+
+//            Bugsee.setLogFilter {
+//                it?.message = "KMP"
+//                println("level=" + it?.level)
+//                return@setLogFilter it
+//            }
         }
         
         when (currentScreen) {

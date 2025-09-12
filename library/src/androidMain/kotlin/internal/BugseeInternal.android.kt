@@ -20,6 +20,8 @@ import com.bugsee.library.send.ReportFieldsFilter
 private typealias BugseeSDK = com.bugsee.library.Bugsee
 
 public actual class BugseeInternal {
+
+    public actual var logFilterHandler: BugseeLogFilter? = null
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
     private var reportFieldsFilter: BugseeReportFieldsFilter? = null
 
