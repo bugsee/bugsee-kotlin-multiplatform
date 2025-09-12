@@ -85,6 +85,10 @@ kotlin {
                 implementation(libs.kotlin.test)
                 implementation(libs.robolectric)
                 implementation(libs.junit)
+                implementation(libs.mockito.core)
+                implementation(libs.mockito.kotlin)
+                implementation(libs.bugsee.android)
+                implementation(libs.androidx.fragment)
             }
         }
     }
