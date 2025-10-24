@@ -5,10 +5,6 @@ import com.bugsee.kmp.internal.BugseeInternal
 public object Bugsee {
     private val bugseeInternal = BugseeInternal()
 
-    public fun setLogFilter(filter: BugseeLogFilter) {
-        bugseeInternal.logFilterHandler = filter
-    }
-
     public fun launch(apiKey: String) {
         bugseeInternal.launch(apiKey)
     }

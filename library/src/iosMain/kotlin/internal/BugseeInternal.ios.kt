@@ -263,7 +263,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun setLogFilter(filter: BugseeLogFilter?) {
-        // TODO: Implement through delegate wrapper!
+        logFilterHandler = filter
     }
 
     public actual fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?) {
