@@ -93,7 +93,16 @@ fun MainScreen(
         }) {
             Text("Click me!")
         }
-        
+
+        // Crash button
+        Button(onClick = {
+            val list = listOf(1, 2, 3)
+            val item = list[3]
+            print(item)
+        }) {
+            Text("Crash app!")
+        }
+
         AnimatedVisibility(showContent) {
             val greeting = remember { Greeting().greet() }
             Column(

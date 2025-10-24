@@ -18,6 +18,7 @@ import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.BugseeSecureRectangle
 import com.bugsee.kmp.BugseeSeverity
 import com.bugsee.kmp.EventHandler
+import com.bugsee.kmp.nsexception.*
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectMake
 
@@ -44,11 +45,13 @@ public actual class BugseeInternal {
     // Execution control methods
     public actual fun launch(apiKey: String) {
         BugseeSDK.launchWithToken(apiKey)
+        setBugseeUnhandledExceptionHook()
     }
 
     public actual fun launch(apiKey: String, options: Map<String, Any>) {
         @Suppress("UNCHECKED_CAST")
         BugseeSDK.launchWithToken(apiKey, options as Map<Any?, *>)
+        setBugseeUnhandledExceptionHook()
     }
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
