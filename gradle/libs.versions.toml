@@ -1,8 +1,8 @@
 [versions]
 agp = "8.6.0"
 kotlin = "2.2.0"
-bugsee-ios = "5.5.7"
-bugsee-android = "5.8.4"
+bugsee-ios = "5.5.8"
+bugsee-android = "5.9.1"
 android-minSdk = "24"
 android-compileSdk = "35"
 android-targetSdk = "35"
