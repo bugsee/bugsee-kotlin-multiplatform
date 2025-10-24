@@ -40,7 +40,7 @@ internal fun setBugseeUnhandledExceptionHook() {
 }
 
 private val Throwable.name: String
-    get() = this::class.qualifiedName ?: this::class.simpleName ?: "Throwable"
+    get() = "KmpManagedException: " + (this::class.qualifiedName ?: this::class.simpleName ?: "Throwable")
 
 internal class BugseeNSException(
     name: String,
