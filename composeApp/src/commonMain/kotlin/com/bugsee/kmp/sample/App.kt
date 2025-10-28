@@ -42,7 +42,7 @@ fun App() {
             options.videoEnabled = true
             options.viewHierarchyEnabled = true
             options.shakeToReport = true
-//            options.setCustomOption("endpoint", "https://apidev.bugsee.com/v2/")
+            options.setCustomOption("endpoint", getPlatform().appdevEndpoint)
             options.setCustomOption("debug", true)
             Bugsee.launch(getPlatform().token, options)
 
