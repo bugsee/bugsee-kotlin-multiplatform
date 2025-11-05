@@ -11,6 +11,70 @@ public open class BugseeLaunchOptions {
         setDefaults()
     }
 
+    public constructor()
+
+    public constructor(optionsMap: Map<String, Any>) {
+        // init block already called setDefaults(), just apply the map
+        applyOptionsMap(optionsMap)
+    }
+
+    private fun applyOptionsMap(optionsMap: Map<String, Any>) {
+        for ((key, value) in optionsMap) {
+            // Skip wrapper_info as it's automatically added
+            if (key == "wrapper_info") {
+                continue
+            }
+
+            // Try to apply using property setters for known keys
+            when (key) {
+                "bodySizeLimit" -> maxNetworkBodySize = (value as? Number)?.toInt() ?: continue
+                "ShakeToTrigger", "ShakeToReport" -> shakeToReport = value as? Boolean ?: continue
+                "ScreenshotToTrigger", "ScreenshotToReport" -> screenshotToReport = value as? Boolean ?: continue
+                "CrashReport" -> crashReport = value as? Boolean ?: continue
+                "MaxRecordingTime" -> maxRecordingTime = (value as? Number)?.toInt() ?: continue
+                "VideoEnabled" -> videoEnabled = value as? Boolean ?: continue
+                "ScreenshotEnabled" -> screenshotEnabled = value as? Boolean ?: continue
+                "CaptureLogs" -> captureLogs = value as? Boolean ?: continue
+                "MonitorNetwork", "monitorNetwork" -> monitorNetwork = value as? Boolean ?: continue
+                "WifiOnlyUpload" -> wifiOnlyUpload = value as? Boolean ?: continue
+                "MaxDataSize" -> maxDataSize = (value as? Number)?.toInt() ?: continue
+                "BugseeReportPrioritySelector" -> reportPrioritySelector = value as? Boolean ?: continue
+                "BugseeDefaultCrashPriority" -> {
+                    val level = (value as? Number)?.toInt()
+                    if (level != null) {
+                        defaultCrashPriority = BugseeSeverity.fromLevel(level, BugseeSeverity.Blocker)
+                    }
+                }
+                "BugseeDefaultBugPriority" -> {
+                    val level = (value as? Number)?.toInt()
+                    if (level != null) {
+                        defaultBugPriority = BugseeSeverity.fromLevel(level, BugseeSeverity.High)
+                    }
+                }
+                "FrameRate" -> {
+                    val intValue = (value as? Number)?.toInt()
+                    if (intValue != null) {
+                        frameRate = BugseeFrameRate.fromIntValue(intValue)
+                    }
+                }
+                "MinFrameRate" -> minFrameRate = (value as? Number)?.toInt() ?: continue
+                "MaxFrameRate" -> maxFrameRate = (value as? Number)?.toInt() ?: continue
+                "CaptureDeviceAndNetworkNames" -> captureDeviceAndNetworkNames = value as? Boolean ?: continue
+                "ReportSummaryRequired" -> reportSummaryRequired = value as? Boolean ?: continue
+                "ReportDescriptionRequired" -> reportDescriptionRequired = value as? Boolean ?: continue
+                "ReportEmailRequired" -> reportEmailRequired = value as? Boolean ?: continue
+                "ReportLabelsRequired" -> reportLabelsRequired = value as? Boolean ?: continue
+                "ReportLabelsEnabled" -> reportLabelsEnabled = value as? Boolean ?: continue
+                "ViewHierarchyEnabled" -> viewHierarchyEnabled = value as? Boolean ?: continue
+                "DetectAppExit" -> detectAppExit = value as? Boolean ?: continue
+                else -> {
+                    // Unknown keys are treated as custom options
+                    customOptions[key] = value
+                }
+            }
+        }
+    }
+
     internal fun toMap(): Map<String, Any> {
         // Join maps
         val result = HashMap<String, Any>()
