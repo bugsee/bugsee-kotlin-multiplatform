@@ -1,5 +1,6 @@
 package com.bugsee.kmp.internal
 
+import cocoapods.Bugsee.BugseeOptions
 import cocoapods.Bugsee.BugseeTheme
 import com.bugsee.kmp.BugseeAppearance
 import com.bugsee.kmp.BugseeAttachmentsProvider
@@ -25,7 +26,6 @@ import platform.CoreGraphics.CGRectMake
 private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
 
 public typealias ExtendedReport = cocoapods.Bugsee.BugseeExtendedReport
-public typealias LaunchOptions = cocoapods.Bugsee.BugseeOptions
 public typealias LogLevel = cocoapods.Bugsee.BugseeLogLevel
 public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggingOptions
 
@@ -44,19 +44,32 @@ public actual class BugseeInternal {
 
     // Execution control methods
     public actual fun launch(apiKey: String) {
-        BugseeSDK.launchWithToken(apiKey)
-        setBugseeUnhandledExceptionHook()
+        launch(apiKey, BugseeLaunchOptions())
     }
 
-    public actual fun launch(apiKey: String, options: Map<String, Any>) {
-        @Suppress("UNCHECKED_CAST")
-        BugseeSDK.launchWithToken(apiKey, options as Map<Any?, *>)
-        setBugseeUnhandledExceptionHook()
+    public actual fun launch(apiKey: String, options: Map<String, Any>?) {
+        var launchOptions: BugseeLaunchOptions? = null
+        if (options != null) {
+            launchOptions = BugseeLaunchOptions(options)
+        }
+
+        launch(apiKey, launchOptions)
     }
 
-    public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
-        // TODO: Implement BugseeLaunchOptions conversion
-        launch(apiKey, HashMap(options.toMap()))
+    public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
+        var nativeOptions: BugseeOptions? = null
+        if (options != null) {
+            @Suppress("UNCHECKED_CAST")
+            nativeOptions = BugseeOptions.optionsFrom(options.toMap() as? Map<Any?, *>)
+        }
+        BugseeSDK.launchWithToken(apiKey, nativeOptions) { started ->
+            // set Bugsee exception hook only after successful launch
+            // and if crashReport option is set to true.
+            // Note: the default value for crashReport is true.
+            if (started && (nativeOptions?.crashReport ?: true)) {
+                setBugseeUnhandledExceptionHook()
+            }
+        }
     }
 
     public actual fun stop() {
@@ -67,13 +80,13 @@ public actual class BugseeInternal {
         BugseeSDK.relaunchWithOptions(null)
     }
 
-    public actual fun relaunch(options: BugseeLaunchOptions) {
-        relaunch(HashMap(options.toMap()))
+    public actual fun relaunch(options: BugseeLaunchOptions?) {
+        relaunch(HashMap(if (options != null) HashMap(options.toMap()) else HashMap()))
     }
 
-    public actual fun relaunch(options: Map<String, Any>) {
+    public actual fun relaunch(options: Map<String, Any>?) {
         @Suppress("UNCHECKED_CAST")
-        BugseeSDK.relaunchWithDictionaryOptions(options as Map<Any?, *>)
+        BugseeSDK.relaunchWithDictionaryOptions(options as? Map<Any?, *>)
     }
 
     // Feedback methods

@@ -9,11 +9,11 @@ public object Bugsee {
         bugseeInternal.launch(apiKey)
     }
 
-    public fun launch(apiKey: String, options: Map<String, Any>) {
+    public fun launch(apiKey: String, options: Map<String, Any>?) {
         bugseeInternal.launch(apiKey, options)
     }
 
-    public fun launch(apiKey: String, options: BugseeLaunchOptions) {
+    public fun launch(apiKey: String, options: BugseeLaunchOptions?) {
         bugseeInternal.launch(apiKey, options)
     }
 
@@ -25,11 +25,11 @@ public object Bugsee {
         bugseeInternal.relaunch()
     }
 
-    public fun relaunch(options: BugseeLaunchOptions) {
+    public fun relaunch(options: BugseeLaunchOptions?) {
         bugseeInternal.relaunch(options)
     }
 
-    public fun relaunch(options: Map<String, Any>) {
+    public fun relaunch(options: Map<String, Any>?) {
         bugseeInternal.relaunch(options)
     }
 

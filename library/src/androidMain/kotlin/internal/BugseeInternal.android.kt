@@ -31,14 +31,14 @@ public actual class BugseeInternal {
 
 
     // Launch methods - these are already working
-    public actual fun launch(apiKey: String, options: Map<String, Any>) {
+    public actual fun launch(apiKey: String, options: Map<String, Any>?) {
         val context = applicationContext ?: run {
             // TODO: add logging later
             return
         }
 
         val app: Application = context as Application
-        BugseeSDK.launch(app, apiKey, HashMap(options))
+        BugseeSDK.launch(app, apiKey, options?.let { HashMap(it) } ?: HashMap())
     }
 
     public actual fun launch(apiKey: String) {
@@ -51,14 +51,14 @@ public actual class BugseeInternal {
         BugseeSDK.launch(app, apiKey)
     }
 
-    public actual fun launch(apiKey: String, options: BugseeLaunchOptions) {
+    public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
         val context = applicationContext ?: run {
             // TODO: add logging later
             return
         }
 
         val app: Application = context as Application
-        BugseeSDK.launch(app, apiKey, HashMap(options.toMap()))
+        BugseeSDK.launch(app, apiKey, if (options != null) HashMap(options.toMap()) else HashMap())
     }
 
     public actual fun stop() {
@@ -69,12 +69,12 @@ public actual class BugseeInternal {
         BugseeSDK.relaunch()
     }
 
-    public actual fun relaunch(options: BugseeLaunchOptions) {
-        BugseeSDK.relaunch(HashMap(options.toMap()))
+    public actual fun relaunch(options: BugseeLaunchOptions?) {
+        BugseeSDK.relaunch(if (options != null) HashMap(options.toMap()) else HashMap())
     }
 
-    public actual fun relaunch(options: Map<String, Any>) {
-        BugseeSDK.relaunch(HashMap(options))
+    public actual fun relaunch(options: Map<String, Any>?) {
+        BugseeSDK.relaunch(options?.let { HashMap(it) } ?: HashMap())
     }
 
 

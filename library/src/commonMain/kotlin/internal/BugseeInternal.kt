@@ -26,17 +26,17 @@ public expect class BugseeInternal() {
     // Execution control methods
     public fun launch(apiKey: String)
 
-    public fun launch(apiKey: String, options: Map<String, Any>)
+    public fun launch(apiKey: String, options: Map<String, Any>?)
 
-    public fun launch(apiKey: String, options: BugseeLaunchOptions)
+    public fun launch(apiKey: String, options: BugseeLaunchOptions?)
 
     public fun stop()
 
     public fun relaunch()
 
-    public fun relaunch(options: BugseeLaunchOptions)
+    public fun relaunch(options: BugseeLaunchOptions?)
 
-    public fun relaunch(options: Map<String, Any>)
+    public fun relaunch(options: Map<String, Any>?)
 
     // Feedback methods
     public fun showFeedback()
