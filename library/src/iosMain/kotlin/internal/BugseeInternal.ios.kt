@@ -30,8 +30,8 @@ public typealias LogLevel = cocoapods.Bugsee.BugseeLogLevel
 public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggingOptions
 
 public actual class BugseeInternal {
-
     public actual var logFilterHandler: BugseeLogFilter? = null
+    public actual var networkFilterHandler: BugseeNetworkFilter? = null
     private val bugseeDelegate = BugseeDelegateWrapper(this)
 
     init {

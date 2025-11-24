@@ -20,6 +20,7 @@ import com.bugsee.kmp.EventHandler
 public expect class BugseeInternal() {
 
     public var logFilterHandler: BugseeLogFilter?
+    public var networkFilterHandler: BugseeNetworkFilter?
 
     public val appearance: BugseeAppearance
 
