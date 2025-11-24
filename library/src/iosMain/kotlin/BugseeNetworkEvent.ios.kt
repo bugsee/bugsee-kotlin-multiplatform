@@ -1,25 +1,57 @@
 package com.bugsee.kmp
 
-public actual class BugseeNetworkEvent {
-    public actual val stage: BugseeNetworkEventStage
-        get() = TODO("Not yet implemented")
+import kotlinx.cinterop.BetaInteropApi
+import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.create
+import platform.Foundation.dataUsingEncoding
+
+public actual class BugseeNetworkEvent (internal val impl: cocoapods.Bugsee.BugseeNetworkEvent) {
+
     public actual val method: String
-        get() = TODO("Not yet implemented")
+        get() = impl.method
+
+    public actual val stage: BugseeNetworkEventStage
+        get() = BugseeIOSUtils.convertNetworkEventStage(impl.bugseeNetworkEventType)
+
     public actual val responseCode: Int
-        get() = TODO("Not yet implemented")
+        get() = impl.responseCode.toInt()
+
     public actual val noBodyReason: String?
-        get() = TODO("Not yet implemented")
+        get() = impl.noBodyReason
+
     public actual val errorDescription: String?
-        get() = TODO("Not yet implemented")
+//      TODO("Not yet implemented")
+        get() = null
+
     public actual val errorShort: String?
-        get() = TODO("Not yet implemented")
+//      TODO("Not yet implemented")
+        get() = null
+
     public actual var url: String?
-        get() = TODO("Not yet implemented")
-        set(value) {}
+        get() = impl.url ?: ""
+        set(value) {
+            impl.url = value
+        }
+
+    @OptIn(BetaInteropApi::class)
     public actual var body: String?
-        get() = TODO("Not yet implemented")
-        set(value) {}
+        get() {
+            if (impl.body == null) return null
+
+            return NSString.create(impl.body!!, encoding = NSUTF8StringEncoding)?.toString()
+        }
+        set(value) {
+            impl.body = value?.let { (it as NSString).dataUsingEncoding(NSUTF8StringEncoding) }
+        }
+
     public actual var headers: Map<String, Any>?
-        get() = TODO("Not yet implemented")
-        set(value) {}
+        get() {
+            @Suppress("UNCHECKED_CAST")
+            return impl.headers as? Map<String, Any>
+        }
+        set(value) {
+            @Suppress("UNCHECKED_CAST")
+            impl.headers = value as? Map<Any?, *>
+        }
 }

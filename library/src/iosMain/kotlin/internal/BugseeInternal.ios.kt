@@ -275,7 +275,7 @@ public actual class BugseeInternal {
 
     // Filter and listener methods
     public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
-        // TODO: Implement through delegate wrapper!
+        networkFilterHandler = filter
     }
 
     public actual fun setLogFilter(filter: BugseeLogFilter?) {

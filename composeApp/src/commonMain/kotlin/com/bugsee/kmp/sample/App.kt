@@ -51,6 +51,21 @@ fun App() {
 //                println("level=" + it?.level)
 //                return@setLogFilter it
 //            }
+
+//            Bugsee.setNetworkEventFilter {
+//                println(it?.method)
+//                println(it?.stage)
+//                println(it?.responseCode)
+//                println(it?.noBodyReason)
+//                println(it?.url)
+//                println(it?.body)
+//                println(it?.headers)
+//                it?.url = "https://jsondummy.com/test"
+//                val newHeaders = mapOf("Server" to "downflare", "Content-Encoding" to "BR", "Content-Type" to "application/json")
+//                it?.headers = newHeaders
+//
+//                return@setNetworkEventFilter it
+//            }
         }
         
         when (currentScreen) {

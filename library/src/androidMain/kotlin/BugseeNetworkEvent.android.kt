@@ -13,7 +13,7 @@ public actual class BugseeNetworkEvent(
         get() = underlyingEvent.method
 
     public actual val responseCode: Int
-        get() = underlyingEvent.responseCode
+        get() = underlyingEvent.responseCode ?: 0
 
     public actual val errorDescription: String?
         get() = underlyingEvent.errorDescription

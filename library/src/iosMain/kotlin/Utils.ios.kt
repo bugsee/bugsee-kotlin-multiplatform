@@ -26,5 +26,16 @@ internal class BugseeIOSUtils {
                 else -> com.bugsee.kmp.BugseeLogLevel.Info
             }
         }
+
+        fun convertNetworkEventStage(stage: String): BugseeNetworkEventStage {
+            return when (stage) {
+                "before" -> BugseeNetworkEventStage.Before
+                "complete" -> BugseeNetworkEventStage.Complete
+                "cancel" -> BugseeNetworkEventStage.Cancel
+                "error" -> BugseeNetworkEventStage.Errors
+
+                else ->  BugseeNetworkEventStage.Before
+            }
+        }
     }
 }

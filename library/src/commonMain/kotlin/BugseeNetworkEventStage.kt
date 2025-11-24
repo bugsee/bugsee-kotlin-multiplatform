@@ -1,8 +1,10 @@
 package com.bugsee.kmp
 
 public enum class BugseeNetworkEventStage(private val stage: String) {
+
     Before("before"),
     Complete("complete"),
+    Cancel("cancel"),
     Redirect("redirect"),
     Errors("error"),
     WebSocket("ws");
@@ -16,6 +18,7 @@ public enum class BugseeNetworkEventStage(private val stage: String) {
             return when (stage) {
                 "before" -> Before
                 "complete" -> Complete
+                "cancel" -> Cancel
                 "redirect" -> Redirect
                 "error" -> Errors
                 "ws" -> WebSocket
