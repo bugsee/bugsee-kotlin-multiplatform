@@ -326,21 +326,26 @@ public actual class BugseeInternal {
                     p0: BugseeNetworkEvent?,
                     p1: NetworkEventListener?
                 ) {
-                    if (p0 == null || p1 == null) {
-                        p1?.onEvent(p0);
-                        return
-                    }
+                    try {
+                        if (p0 == null || p1 == null) {
+                            p1?.onEvent(p0);
+                            return
+                        }
 
-                    val filteredEvent = filter.invoke(
-                        BugseeNetworkEvent(
-                            p0
+                        val filteredEvent = filter.invoke(
+                            BugseeNetworkEvent(
+                                p0
+                            )
                         )
-                    )
-                    if (filteredEvent == null) {
-                        return
-                    }
+                        if (filteredEvent == null) {
+                            return
+                        }
 
-                    p1.onEvent(filteredEvent.underlyingEvent)
+                        p1?.onEvent(filteredEvent.underlyingEvent)
+                    } catch (e: Exception) {
+                        println("BugseeInternal.android: exception during setNetworkEventFilter execution: ${e.message}")
+                        p1?.onEvent(p0)
+                    }
                 }
             }
         )
@@ -358,21 +363,26 @@ public actual class BugseeInternal {
                     p0: BugseeLog?,
                     p1: LogListener?
                 ) {
-                    if (p0 == null || p1 == null) {
-                        p1?.onLog(p0);
-                        return
-                    }
+                    try {
+                        if (p0 == null || p1 == null) {
+                            p1?.onLog(p0);
+                            return
+                        }
 
-                    val filteredEvent = filter.invoke(
-                        BugseeLogEvent(
-                            p0
+                        val filteredEvent = filter.invoke(
+                            BugseeLogEvent(
+                                p0
+                            )
                         )
-                    )
-                    if (filteredEvent == null) {
-                        return
-                    }
+                        if (filteredEvent == null) {
+                            return
+                        }
 
-                    p1.onLog(filteredEvent.underlyingEvent)
+                        p1.onLog(filteredEvent.underlyingEvent)
+                    } catch (e: Exception) {
+                        println("BugseeInternal.android: exception during setLogFilter execution: ${e.message}")
+                        p1?.onLog(p0)
+                    }
                 }
             }
         )
