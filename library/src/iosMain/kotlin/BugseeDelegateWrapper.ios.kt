@@ -26,11 +26,6 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                     try {
                         val kmpLogEvent = BugseeLogEvent(log)
                         val filteredLogEvent = filterHandler.invoke(kmpLogEvent)
-                        
-                        // Update the log text with the filtered message
-                        if (filteredLogEvent != null) {
-                            log.text = filteredLogEvent.message
-                        }
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
                         // The original log will be used if filtering fails
@@ -74,13 +69,6 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                         val filteredNetworkEvent =
                             filterHandler.invoke(kmpNetworkEvent)
 
-//                        // Update the event with the filtered fields
-                        if (filteredNetworkEvent != null) {
-                            event.url = filteredNetworkEvent.url
-                            event.body = filteredNetworkEvent.body?.let { (it as NSString).dataUsingEncoding(NSUTF8StringEncoding) }
-                            @Suppress("UNCHECKED_CAST")
-                            event.headers = filteredNetworkEvent.headers as? Map<Any?, *>
-                        }
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
                         // The original network event will be used if filtering fails
