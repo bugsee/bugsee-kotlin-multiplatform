@@ -9,6 +9,7 @@ import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeExtendedReport
 import com.bugsee.kmp.BugseeExtendedReportProvider
 import com.bugsee.kmp.BugseeFeedbackEventListener
+import com.bugsee.kmp.BugseeIOSUtils
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
@@ -184,24 +185,14 @@ public actual class BugseeInternal {
 
     // Exception logging methods
     public actual fun logException(ex: Throwable) {
-        // TODO: Implement NSException instance from Throwable
-//        BugseeSDK.logException(ex, options, null)
+        logException(ex, null)
     }
 
     public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
-        // TODO: Implement NSException instance from Throwable
-//        BugseeSDK.logException(ex, options, null)
+        val exception = BugseeNSException(ex)
+        val sdkExceptionLoggingOptions = BugseeIOSUtils.convertExceptionLoggingOptions(options)
+        BugseeSDK.logException(exception, sdkExceptionLoggingOptions, null)
     }
-
-    // TODO: Do we need logException with completion?
-//    public actual fun logException(
-//        ex: Throwable,
-//        options: BugseeExceptionLoggingOptions?,
-//        completion: (() -> Unit)?
-//    ) {
-//        // TODO: Implement NSException instance from Throwable
-////        BugseeSDK.logException(ex, options, completion)
-//    }
 
     // Lifecycle methods
     public actual fun pause() {

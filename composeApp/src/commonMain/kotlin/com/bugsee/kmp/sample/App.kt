@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.Bugsee
+import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.sample.Network.NetworkTestsScreen
 import com.bugsee.kmp.sample.composeapp.generated.resources.Res
@@ -51,7 +52,7 @@ fun App() {
 //                println("level=" + it?.level)
 //                return@setLogFilter it
 //            }
-
+//
 //            Bugsee.setNetworkEventFilter {
 //                println(it?.method)
 //                println(it?.stage)
@@ -101,13 +102,6 @@ fun MainScreen(
         Button(onClick = onNetworkTestsClick) {
             Text("Network Tests")
         }
-        
-        // Original button
-        Button(onClick = {
-            showContent = !showContent
-        }) {
-            Text("Click me!")
-        }
 
         // Crash button
         Button(onClick = {
@@ -116,6 +110,29 @@ fun MainScreen(
             print(item)
         }) {
             Text("Crash app!")
+        }
+
+        // logException button
+        Button(onClick = {
+            try {
+                val numerator = 50
+                var quotient = numerator / 0
+            } catch (ex: Exception) {
+                val options = BugseeExceptionLoggingOptions()
+                options.labels = arrayListOf<String>("test", "qa", "withOptions")
+                options.includeVideo = false
+                options.rules.skipFrames = 1
+                Bugsee.logException(ex, options)
+            }
+        }) {
+            Text("Bugsee.logException(ex, options)")
+        }
+
+        // Original button
+        Button(onClick = {
+            showContent = !showContent
+        }) {
+            Text("Show device info!")
         }
 
         AnimatedVisibility(showContent) {

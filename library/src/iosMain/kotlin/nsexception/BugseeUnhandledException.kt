@@ -2,11 +2,7 @@
 
 package com.bugsee.kmp.nsexception
 
-import kotlinx.cinterop.convert
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.Foundation.NSException
-import platform.Foundation.NSNumber
-import platform.darwin.NSUInteger
 import kotlin.concurrent.AtomicInt
 import kotlin.concurrent.AtomicReference
 import kotlin.experimental.ExperimentalNativeApi
@@ -37,25 +33,4 @@ internal fun setBugseeUnhandledExceptionHook() {
     }
 
     prevHook.value = setUnhandledExceptionHook(wrappedHook)
-}
-
-private val Throwable.name: String
-    get() = "KmpManagedException: " + (this::class.qualifiedName ?: this::class.simpleName ?: "Throwable")
-
-internal class BugseeNSException(
-    name: String,
-    reason: String?,
-    private val stackFrameAddresses: List<NSNumber>,
-) : NSException(name, reason, null) {
-    constructor(throwable: Throwable) : this(
-        throwable.name,
-        throwable.message,
-        throwable.getStackTraceAddresses().map { address ->
-            NSNumber(unsignedInteger = address.convert<NSUInteger>())
-        },
-    )
-
-    override fun callStackReturnAddresses(): List<*> {
-        return stackFrameAddresses
-    }
 }

@@ -37,5 +37,20 @@ internal class BugseeIOSUtils {
                 else ->  BugseeNetworkEventStage.Before
             }
         }
+
+        fun convertExceptionLoggingOptions(options: com.bugsee.kmp.BugseeExceptionLoggingOptions?): cocoapods.Bugsee.BugseeExceptionLoggingOptions? {
+            if (options == null) {
+                return null
+            }
+
+            val result = cocoapods.Bugsee.BugseeExceptionLoggingOptions()
+            result.exceptionDomain = options.exceptionDomain
+            result.labels = options.labels?.toList()
+            result.includeVideo = options.includeVideo
+            @Suppress("UNCHECKED_CAST")
+            result.setMergingRules(options.rules.toMap() as Map<Any?, *>?)
+
+            return result
+        }
     }
 }
