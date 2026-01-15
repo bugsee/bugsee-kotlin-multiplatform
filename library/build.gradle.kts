@@ -114,7 +114,7 @@ kotlin {
 //            extraOpts += listOf("-compiler-option", "-fmodules")
 //        }
 
-        ios.deploymentTarget = "11.0"
+        ios.deploymentTarget = "12.0"
     }
 
     // Fix for Xcode 16.4 compatibility issues
