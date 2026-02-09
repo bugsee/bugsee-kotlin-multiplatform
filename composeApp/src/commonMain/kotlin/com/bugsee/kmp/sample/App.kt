@@ -37,16 +37,10 @@ fun App() {
         
         // Launch Bugsee when the app starts
         LaunchedEffect(Unit) {
-            val options = BugseeLaunchOptions()
-            options.monitorNetwork = true
-            options.captureLogs = true
-            options.videoEnabled = true
-            options.viewHierarchyEnabled = true
-            options.shakeToReport = true
-            options.setCustomOption("endpoint", getPlatform().appdevEndpoint)
-            options.setCustomOption("debug", true)
-            Bugsee.launch(getPlatform().token, options)
-
+//            Bugsee.setLifecycleEventsListener {
+//                println("lifecycleEvent = $it")
+//            }
+//
 //            Bugsee.setLogFilter {
 //                it?.message = "KMP"
 //                println("level=" + it?.level)
@@ -64,9 +58,18 @@ fun App() {
 //                it?.url = "https://jsondummy.com/test"
 //                val newHeaders = mapOf("Server" to "downflare", "Content-Encoding" to "BR", "Content-Type" to "application/json")
 //                it?.headers = newHeaders
-//
 //                return@setNetworkEventFilter it
 //            }
+
+            val options = BugseeLaunchOptions()
+            options.monitorNetwork = true
+            options.captureLogs = true
+            options.videoEnabled = true
+            options.viewHierarchyEnabled = true
+            options.shakeToReport = true
+            options.setCustomOption("endpoint", getPlatform().appdevEndpoint)
+            options.setCustomOption("debug", true)
+            Bugsee.launch(getPlatform().token, options)
         }
         
         when (currentScreen) {

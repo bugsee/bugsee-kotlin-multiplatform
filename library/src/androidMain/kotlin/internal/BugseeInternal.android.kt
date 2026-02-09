@@ -23,6 +23,7 @@ public actual class BugseeInternal {
 
     public actual var logFilterHandler: BugseeLogFilter? = null
     public actual var networkFilterHandler: BugseeNetworkFilter? = null
+    public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
     private var reportFieldsFilter: BugseeReportFieldsFilter? = null
 
@@ -401,7 +402,11 @@ public actual class BugseeInternal {
                         return
                     }
 
-                    listener.invoke(BugseeAndroidUtils.Companion.convertLifecycleEvent(p0))
+                    try {
+                        listener.invoke(BugseeAndroidUtils.Companion.convertLifecycleEvent(p0))
+                    } catch (e: Exception) {
+                        println("BugseeInternal.android: exception during setLifecycleEventsListener execution: ${e.message}")
+                    }
                 }
             }
         )

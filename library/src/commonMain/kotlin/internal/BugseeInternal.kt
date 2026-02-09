@@ -21,6 +21,7 @@ public expect class BugseeInternal() {
 
     public var logFilterHandler: BugseeLogFilter?
     public var networkFilterHandler: BugseeNetworkFilter?
+    public var lifecycleEventHandler: BugseeLifecycleEventListener?
 
     public val appearance: BugseeAppearance
 

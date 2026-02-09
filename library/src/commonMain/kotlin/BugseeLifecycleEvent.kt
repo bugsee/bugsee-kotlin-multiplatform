@@ -80,4 +80,29 @@ public enum class BugseeLifecycleEvent(private val eventType: Int) {
     public fun toLongValue(): ULong {
         return eventType.toULong()
     }
+
+    public companion object {
+        @Throws(IllegalArgumentException::class)
+        public fun fromEventType(eventType: Int): BugseeLifecycleEvent {
+            return when (eventType) {
+                0 -> Launched
+                1 -> Started
+                2 -> Stopped
+                3 -> Resumed
+                4 -> Paused
+                5 -> RelaunchedAfterCrash
+                6 -> BeforeReportShown
+                7 -> AfterReportShown
+                8 -> BeforeReportUploaded
+                9 -> AfterReportUploaded
+                10 -> BeforeFeedbackShown
+                11 -> AfterFeedbackShown
+                12 -> BeforeReportAssembled
+                13 -> AfterReportAssembled
+                14 -> ReportUploadFailedWithFutureRetry
+                15 -> ReportUploadFailed
+                else -> throw IllegalArgumentException("Impossible lifecycle event value!")
+            }
+        }
+    }
 }

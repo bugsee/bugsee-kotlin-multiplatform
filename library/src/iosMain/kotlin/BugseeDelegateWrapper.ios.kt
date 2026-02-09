@@ -4,9 +4,6 @@ import cocoapods.Bugsee.BugseeAttachmentsDecisionBlock
 import cocoapods.Bugsee.BugseeLogFilterDecisionBlock
 import cocoapods.Bugsee.BugseeNetworkFilterDecisionBlock
 import com.bugsee.kmp.internal.BugseeInternal
-import platform.Foundation.NSString
-import platform.Foundation.NSUTF8StringEncoding
-import platform.Foundation.dataUsingEncoding
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
@@ -82,6 +79,28 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         } finally {
             // Always call the completion handler to indicate filtering is done
             completionHandler?.invoke(event)
+        }
+    }
+
+    override fun bugseeLifecycleEvent(eventType: cocoapods.Bugsee.BugseeLifecycleEventType) {
+        try {
+            val bugseeInternal = weakBugseeInternal.get()
+            if (bugseeInternal != null) {
+                // Capture the lifecycle event handler to avoid race conditions
+                val lifecycleEventHandler = bugseeInternal.lifecycleEventHandler
+                if (lifecycleEventHandler != null) {
+                    try {
+                        val kmpEventType = BugseeLifecycleEvent.fromEventType(eventType.value.toInt())
+                        lifecycleEventHandler.invoke(kmpEventType)
+                    } catch (e: Exception) {
+                        // Log the error but don't crash the app
+                        println("BugseeDelegateWrapper: exception during lifecycleEventHandler invoke: ${e.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Ensure we don't crash the native SDK
+            println("BugseeDelegateWrapper: bugseeLifecycleEvent: caught exception: ${e.message}")
         }
     }
 }

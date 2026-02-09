@@ -33,6 +33,7 @@ public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggi
 public actual class BugseeInternal {
     public actual var logFilterHandler: BugseeLogFilter? = null
     public actual var networkFilterHandler: BugseeNetworkFilter? = null
+    public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
     private val bugseeDelegate = BugseeDelegateWrapper(this)
 
     init {
@@ -274,7 +275,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?) {
-        // TODO: Implement through delegate wrapper!
+        lifecycleEventHandler = listener
     }
 
     // User management methods
