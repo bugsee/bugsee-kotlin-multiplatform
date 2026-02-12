@@ -240,4 +240,8 @@ public object Bugsee {
     public fun captureViewHierarchy() {
         bugseeInternal.captureViewHierarchy()
     }
+
+    // Appearance access
+    public val appearance: BugseeAppearance
+        get() = bugseeInternal.appearance
 }

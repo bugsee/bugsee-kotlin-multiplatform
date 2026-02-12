@@ -42,7 +42,7 @@ public actual class BugseeInternal {
     }
 
     public actual val appearance: BugseeAppearance
-        get() = TODO("Not yet implemented")
+        get() = BugseeAppearance()
 
     // Execution control methods
     public actual fun launch(apiKey: String) {

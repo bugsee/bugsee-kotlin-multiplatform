@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.Bugsee
+import com.bugsee.kmp.BugseeAppearance
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.sample.Network.NetworkTestsScreen
@@ -67,9 +68,22 @@ fun App() {
             options.videoEnabled = true
             options.viewHierarchyEnabled = true
             options.shakeToReport = true
+            options.reportLabelsEnabled = true
+            options.reportLabelsRequired = false
             options.setCustomOption("endpoint", getPlatform().appdevEndpoint)
             options.setCustomOption("debug", true)
             Bugsee.launch(getPlatform().token, options)
+
+//            Bugsee.appearance.reportVersionColor = 0xFFFF0000.toInt()
+//            Bugsee.appearance.reportTextColor = 0xFFFF0000.toInt()
+//            Bugsee.appearance.reportBackgroundColor = 0xFFFF0000.toInt()
+//            Bugsee.appearance.reportActionBarColor = 0xFFFF0000.toInt()
+//            Bugsee.appearance.reportActionBarTextColor = 0xFFFF0000.toInt()
+//
+//            Bugsee.appearance.reportSummaryPlaceholder = "KMP: summary"
+//            Bugsee.appearance.reportDescriptionPlaceholder = "KMP: description"
+//            Bugsee.appearance.reportEmailPlaceholder = "KMP: email"
+//            Bugsee.appearance.reportLabelsPlaceholder = "KMP: labels"
         }
         
         when (currentScreen) {

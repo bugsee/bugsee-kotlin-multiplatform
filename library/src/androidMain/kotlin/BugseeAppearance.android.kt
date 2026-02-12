@@ -265,4 +265,41 @@ public actual class BugseeAppearance internal constructor(
         set(value) {
             setPropertyValue("NotificationTitle", value)
         }
+
+    // iOS specific fields are not implemented
+    public actual var reportCellBackgroundColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var reportSendButtonColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var reportCloseButtonColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var reportPlaceholderColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var reportNavigationBarColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var feedbackBarsColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var feedbackInputBackgroundColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var feedbackCloseButtonColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual var feedbackNavigationBarColor: Int?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    public actual val mainBugseeColor: Int?
+        get() = TODO("Not yet implemented")
+    public actual val lowBugColor: Int?
+        get() = TODO("Not yet implemented")
+    public actual val mediumBugColor: Int?
+        get() = TODO("Not yet implemented")
+    public actual val dotSelectorColor: Int?
+        get() = TODO("Not yet implemented")
 }
