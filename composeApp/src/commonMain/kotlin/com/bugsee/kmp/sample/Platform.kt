@@ -6,6 +6,10 @@ interface Platform {
     val token: String
 
     val appdevEndpoint: String
+
+    val tempDir: String
 }
 
 expect fun getPlatform(): Platform
+
+expect fun writeTextFile(path: String, content: String)

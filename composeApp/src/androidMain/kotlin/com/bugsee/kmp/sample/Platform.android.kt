@@ -10,6 +10,14 @@ class AndroidPlatform : Platform {
 
 
     override val appdevEndpoint: String = "https://apidev.bugsee.com"
+
+    override val tempDir: String = (System.getProperty("java.io.tmpdir") ?: "/tmp").let {
+        if (it.endsWith("/")) it else "$it/"
+    }
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
+
+actual fun writeTextFile(path: String, content: String) {
+    java.io.File(path).writeText(content)
+}

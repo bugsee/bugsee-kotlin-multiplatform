@@ -1,8 +1,8 @@
 package com.bugsee.kmp
 
-import cocoapods.Bugsee.BugseeAttachmentsDecisionBlock
 import cocoapods.Bugsee.BugseeLogFilterDecisionBlock
 import cocoapods.Bugsee.BugseeNetworkFilterDecisionBlock
+import cocoapods.Bugsee.BugseeReport
 import com.bugsee.kmp.internal.BugseeInternal
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
@@ -39,12 +39,32 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         }
     }
 
-    override fun bugseeAttachmentsForReport(
-        report: cocoapods.Bugsee.BugseeReport,
-        completionHandler: BugseeAttachmentsDecisionBlock?
-    ) {
-        // TODO: Implement attachments logic
-        completionHandler?.invoke(null)
+    override fun bugseeAttachmentsForReport(report: BugseeReport): List<*> {
+        var attachments: List<BugseeAttachment>? = null
+        try {
+            val bugseeInternal = weakBugseeInternal.get()
+            if (bugseeInternal != null) {
+                // Capture the provider to avoid race conditions
+                val attachmentsProviderHandler = bugseeInternal.attachmentsProviderHandler
+                if (attachmentsProviderHandler != null) {
+                    try {
+                        attachments = attachmentsProviderHandler.invoke(BugseeIOSUtils.convertReport(report))
+                    } catch (e: Exception) {
+                        // Log the error but don't crash the app
+                        println("BugseeDelegateWrapper: exception during attachmentsProviderHandler invoke: ${e.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Ensure we don't crash the native SDK
+            println("BugseeDelegateWrapper: bugseeAttachmentsForReport: caught exception: ${e.message}")
+        }
+
+        if (attachments == null) {
+            return listOf<cocoapods.Bugsee.BugseeAttachment>()
+        }
+
+        return ArrayList(attachments.map(BugseeIOSUtils.Companion::convertAttachment))
     }
 
     override fun bugsee(bugsee: cocoapods.Bugsee.Bugsee, didReceiveNewFeedback: List<*>) {

@@ -22,11 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.Bugsee
 import com.bugsee.kmp.BugseeAppearance
+import com.bugsee.kmp.BugseeAttachment
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.sample.Network.NetworkTestsScreen
 import com.bugsee.kmp.sample.composeapp.generated.resources.Res
 import com.bugsee.kmp.sample.composeapp.generated.resources.compose_multiplatform
+import io.ktor.utils.io.core.toByteArray
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -84,6 +86,23 @@ fun App() {
 //            Bugsee.appearance.reportDescriptionPlaceholder = "KMP: description"
 //            Bugsee.appearance.reportEmailPlaceholder = "KMP: email"
 //            Bugsee.appearance.reportLabelsPlaceholder = "KMP: labels"
+
+            Bugsee.setReportAttachmentsProvider { bugseeReport ->
+                // 1. Byte array attachment
+                val str = "Hello from Bugsee"
+                val attachment1 = BugseeAttachment.create("from_bytes", str.toByteArray())
+
+                // 2. JSON file via URI
+                val jsonUri = Res.getUri("files/sample_data.json")
+                val attachment2 = BugseeAttachment.create("from_json_file", jsonUri)
+
+                // 3. Runtime-generated file
+                val generatedFilePath = getPlatform().tempDir + "bugsee_generated.txt"
+                writeTextFile(generatedFilePath, "Generated at runtime by Bugsee KMP sample")
+                val attachment3 = BugseeAttachment.create("from_generated_file", generatedFilePath)
+
+                listOf(attachment1, attachment2, attachment3)
+            }
         }
         
         when (currentScreen) {

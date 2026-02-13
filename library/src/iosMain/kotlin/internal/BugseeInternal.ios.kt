@@ -34,6 +34,7 @@ public actual class BugseeInternal {
     public actual var logFilterHandler: BugseeLogFilter? = null
     public actual var networkFilterHandler: BugseeNetworkFilter? = null
     public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
+    public actual var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
     private val bugseeDelegate = BugseeDelegateWrapper(this)
 
     init {
@@ -310,7 +311,7 @@ public actual class BugseeInternal {
 
     // Report attachments provider
     public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
-        // TODO: Implement through delegate wrapper
+        attachmentsProviderHandler = provider
     }
 
 

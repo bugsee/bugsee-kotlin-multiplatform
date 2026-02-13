@@ -24,6 +24,7 @@ public actual class BugseeInternal {
     public actual var logFilterHandler: BugseeLogFilter? = null
     public actual var networkFilterHandler: BugseeNetworkFilter? = null
     public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
+    public actual var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
     private var reportFieldsFilter: BugseeReportFieldsFilter? = null
 
@@ -458,7 +459,7 @@ public actual class BugseeInternal {
                         return null
                     }
 
-                    val gatheredAttachments = provider.invoke(BugseeAndroidUtils.Companion.convertReport(p0))
+                    val gatheredAttachments = provider.invoke(BugseeAndroidUtils.convertReport(p0))
                     if (gatheredAttachments == null) {
                         return null
                     }
