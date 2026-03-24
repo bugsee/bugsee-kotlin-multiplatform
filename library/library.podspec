@@ -8,8 +8,8 @@ Pod::Spec.new do |spec|
     spec.summary                  = 'Bugsee Kotlin Multiplatform Library'
     spec.vendored_frameworks      = 'build/cocoapods/framework/library.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '11.0'
-    spec.dependency 'Bugsee', '5.5.7'
+    spec.ios.deployment_target    = '12.0'
+    spec.dependency 'Bugsee', '6.1.2'
                 
     if !Dir.exist?('build/cocoapods/framework/library.framework') || Dir.empty?('build/cocoapods/framework/library.framework')
         raise "

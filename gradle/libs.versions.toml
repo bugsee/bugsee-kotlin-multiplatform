@@ -1,8 +1,8 @@
 [versions]
 agp = "8.6.0"
 kotlin = "2.2.20"
-bugsee-ios = "6.0.0"
-bugsee-android = "6.0.0"
+bugsee-ios = "6.1.2"
+bugsee-android = "6.0.2"
 android-minSdk = "24"
 android-compileSdk = "35"
 android-targetSdk = "35"
@@ -46,6 +46,7 @@ kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", versi
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor3-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor3" }
+ktor3-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor3" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "androidx-fragment" }

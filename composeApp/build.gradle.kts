@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -75,6 +76,7 @@ kotlin {
             implementation(project(":library"))
 //            implementation(libs.ktor.client.core)
             implementation(libs.ktor3.client.core)
+            implementation(libs.ktor3.client.websockets)
             implementation(libs.kotlinx.coroutines.core)
         }
 
