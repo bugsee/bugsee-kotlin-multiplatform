@@ -373,7 +373,6 @@ public actual class BugseeInternal {
     }
 
     public actual fun isLaunched(): Boolean {
-        // TODO: Do we need this API?
-        return true
+        return BugseeSDK.sharedInstance()?.launched ?: false
     }
 }

@@ -267,8 +267,7 @@ public actual class BugseeInternal {
 
     // Status checks
     public actual fun isLaunched(): Boolean {
-        // TODO: Do we need this API?
-        return true
+        return BugseeSDK.getLaunched()
     }
 
 
