@@ -64,7 +64,7 @@ public actual class BugseeExtendedReport internal constructor(
     }
 
     public actual fun addLabel(label: String) {
-        if (underlyingReport.labels.contains(label)) {
+        if (!underlyingReport.labels.contains(label)) {
             underlyingReport.labels.add(label)
         }
     }
