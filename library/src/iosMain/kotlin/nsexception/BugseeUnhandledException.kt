@@ -23,7 +23,6 @@ internal fun setBugseeUnhandledExceptionHook() {
     val wrappedHook: ReportUnhandledExceptionHook = { throwable ->
         // We only handle a single Kotlin crash
         if (unhandledExceptionCrashed.compareAndSet(0, 1)) {
-            // TODO: Implement NSException instance from Throwable
             val exception = BugseeNSException(throwable)
             BugseeSDK.logUnhandledException(exception, null)
         }

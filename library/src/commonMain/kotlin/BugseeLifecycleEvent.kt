@@ -1,8 +1,5 @@
 package com.bugsee.kmp
 
-// TODO: Ensure all the values here are actually
-//  mapping correctly to the values in the underlying SDKs!
-
 public enum class BugseeLifecycleEvent(private val eventType: Int) {
     /**
      * Event is dispatched when Bugsee was successfully launched

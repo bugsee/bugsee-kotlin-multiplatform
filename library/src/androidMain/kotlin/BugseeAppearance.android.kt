@@ -266,40 +266,40 @@ public actual class BugseeAppearance internal constructor(
             setPropertyValue("NotificationTitle", value)
         }
 
-    // iOS specific fields are not implemented
+    // iOS specific fields — no-op on Android
     public actual var reportCellBackgroundColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var reportSendButtonColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var reportCloseButtonColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var reportPlaceholderColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var reportNavigationBarColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var feedbackBarsColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var feedbackInputBackgroundColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var feedbackCloseButtonColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual var feedbackNavigationBarColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
         set(value) {}
     public actual val mainBugseeColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
     public actual val lowBugColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
     public actual val mediumBugColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
     public actual val dotSelectorColor: Int?
-        get() = TODO("Not yet implemented")
+        get() = null
 }

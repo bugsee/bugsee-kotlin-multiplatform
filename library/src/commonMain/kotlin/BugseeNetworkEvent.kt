@@ -1,8 +1,6 @@
 package com.bugsee.kmp
 
 
-// TODO: Refine this object and add/remove fields as needed
-
 public expect class BugseeNetworkEvent {
 //    public val id: String?
 //    public val type: BugseeNetworkType
@@ -25,7 +23,13 @@ public expect class BugseeNetworkEvent {
     public val responseCode: Int
     public val noBodyReason: String?
 
+    /**
+     * Error description from the network request. Android-only — returns `null` on iOS.
+     */
     public val errorDescription: String?
+    /**
+     * Short error string from the network request. Android-only — returns `null` on iOS.
+     */
     public val errorShort: String?
 
     public var url: String?

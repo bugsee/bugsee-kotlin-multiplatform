@@ -36,7 +36,7 @@ public actual class BugseeInternal {
     // Launch methods - these are already working
     public actual fun launch(apiKey: String, options: Map<String, Any>?) {
         val context = applicationContext ?: run {
-            // TODO: add logging later
+            println("Bugsee KMP: cannot launch() — applicationContext is not gathered")
             return
         }
 
@@ -46,7 +46,7 @@ public actual class BugseeInternal {
 
     public actual fun launch(apiKey: String) {
         val context = applicationContext ?: run {
-            // TODO: add logging later
+            println("Bugsee KMP: cannot launch() — applicationContext is not gathered")
             return
         }
 
@@ -56,7 +56,7 @@ public actual class BugseeInternal {
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
         val context = applicationContext ?: run {
-            // TODO: add logging later
+            println("Bugsee KMP: cannot launch() — applicationContext is not gathered")
             return
         }
 
@@ -84,7 +84,7 @@ public actual class BugseeInternal {
     // Feedback methods
     public actual fun showFeedback() {
         val context = applicationContext ?: run {
-            // TODO: add logging later
+            println("Bugsee KMP: cannot launch() — applicationContext is not gathered")
             return
         }
 
@@ -345,7 +345,7 @@ public actual class BugseeInternal {
 
                         p1?.onEvent(filteredEvent.underlyingEvent)
                     } catch (e: Exception) {
-                        println("BugseeInternal.android: exception during setNetworkEventFilter execution: ${e.message}")
+                        Bugsee.log("BugseeInternal.android: exception during setNetworkEventFilter execution: ${e.message}", BugseeLogLevel.Warning)
                         p1?.onEvent(p0)
                     }
                 }
@@ -406,7 +406,7 @@ public actual class BugseeInternal {
                     try {
                         listener.invoke(BugseeAndroidUtils.Companion.convertLifecycleEvent(p0))
                     } catch (e: Exception) {
-                        println("BugseeInternal.android: exception during setLifecycleEventsListener execution: ${e.message}")
+                        Bugsee.log("BugseeInternal.android: exception during setLifecycleEventsListener execution: ${e.message}", BugseeLogLevel.Warning)
                     }
                 }
             }

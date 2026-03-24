@@ -51,13 +51,13 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                         attachments = attachmentsProviderHandler.invoke(BugseeIOSUtils.convertReport(report))
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
-                        println("BugseeDelegateWrapper: exception during attachmentsProviderHandler invoke: ${e.message}")
+                        Bugsee.log("BugseeDelegateWrapper: exception during attachmentsProviderHandler invoke: ${e.message}", BugseeLogLevel.Warning)
                     }
                 }
             }
         } catch (e: Exception) {
             // Ensure we don't crash the native SDK
-            println("BugseeDelegateWrapper: bugseeAttachmentsForReport: caught exception: ${e.message}")
+            Bugsee.log("BugseeDelegateWrapper: bugseeAttachmentsForReport: caught exception: ${e.message}", BugseeLogLevel.Warning)
         }
 
         if (attachments == null) {
@@ -89,13 +89,13 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
                         // The original network event will be used if filtering fails
-                        println("BugseeDelegateWrapper: exception during networkFilterHandler invoke: ${e.message}")
+                        Bugsee.log("BugseeDelegateWrapper: exception during networkFilterHandler invoke: ${e.message}", BugseeLogLevel.Warning)
                     }
                 }
             }
         } catch (e: Exception) {
             // Ensure we don't crash the native SDK
-            println("BugseeDelegateWrapper: bugseeFilterNetworkEvent: caught exception: ${e.message}")
+            Bugsee.log("BugseeDelegateWrapper: bugseeFilterNetworkEvent: caught exception: ${e.message}", BugseeLogLevel.Warning)
         } finally {
             // Always call the completion handler to indicate filtering is done
             completionHandler?.invoke(event)
@@ -114,13 +114,13 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                         lifecycleEventHandler.invoke(kmpEventType)
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
-                        println("BugseeDelegateWrapper: exception during lifecycleEventHandler invoke: ${e.message}")
+                        Bugsee.log("BugseeDelegateWrapper: exception during lifecycleEventHandler invoke: ${e.message}", BugseeLogLevel.Warning)
                     }
                 }
             }
         } catch (e: Exception) {
             // Ensure we don't crash the native SDK
-            println("BugseeDelegateWrapper: bugseeLifecycleEvent: caught exception: ${e.message}")
+            Bugsee.log("BugseeDelegateWrapper: bugseeLifecycleEvent: caught exception: ${e.message}", BugseeLogLevel.Warning)
         }
     }
 }

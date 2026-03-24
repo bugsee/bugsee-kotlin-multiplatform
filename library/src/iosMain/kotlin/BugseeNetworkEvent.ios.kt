@@ -20,12 +20,12 @@ public actual class BugseeNetworkEvent (internal val impl: cocoapods.Bugsee.Bugs
     public actual val noBodyReason: String?
         get() = impl.noBodyReason
 
+    // Android-only field — no iOS SDK equivalent
     public actual val errorDescription: String?
-//      TODO("Not yet implemented")
         get() = null
 
+    // Android-only field — no iOS SDK equivalent
     public actual val errorShort: String?
-//      TODO("Not yet implemented")
         get() = null
 
     public actual var url: String?
