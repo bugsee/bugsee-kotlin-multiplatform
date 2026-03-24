@@ -1,5 +1,6 @@
 package com.bugsee.kmp
 
+import com.bugsee.kmp.internal.Logger
 import kotlinx.cinterop.*
 import platform.Foundation.NSBundle
 import platform.Foundation.NSData
@@ -87,7 +88,7 @@ internal class BugseeIOSUtils {
                     )
                 }
             } else if (!attachment.filePath.isNullOrEmpty()) {
-                println("convertAttachment filePath = ${attachment.filePath}")
+                Logger.d("Utils", "convertAttachment filePath = ${attachment.filePath}")
                 val url = when {
                     // file:// URL (e.g. from Compose Resources Res.getUri())
                     attachment.filePath.startsWith("file://") ->

@@ -4,6 +4,7 @@ import cocoapods.Bugsee.BugseeLogFilterDecisionBlock
 import cocoapods.Bugsee.BugseeNetworkFilterDecisionBlock
 import cocoapods.Bugsee.BugseeReport
 import com.bugsee.kmp.internal.BugseeInternal
+import com.bugsee.kmp.internal.Logger
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
@@ -26,13 +27,13 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
                         // The original log will be used if filtering fails
-                        println("BugseeDelegateWrapper: exception during logFilterHandler invoke: ${e.message}")
+                        Logger.e("BugseeDelegateWrapper", "exception during logFilterHandler invoke: ${e.message}")
                     }
                 }
             }
         } catch (e: Exception) {
             // Ensure we don't crash the native SDK
-            println("BugseeDelegateWrapper: bugseeFilterLog: caught exception: ${e.message}")
+            Logger.e("BugseeDelegateWrapper", "bugseeFilterLog: caught exception: ${e.message}")
         } finally {
             // Always call the completion handler to indicate filtering is done
             completionHandler?.invoke(log)
