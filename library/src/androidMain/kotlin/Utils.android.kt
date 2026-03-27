@@ -1,6 +1,7 @@
 package com.bugsee.kmp
 
 import android.graphics.Rect
+import android.net.Uri
 import com.bugsee.library.data.IssueSeverity
 import com.bugsee.library.data.IssueType
 import com.bugsee.library.events.BugseeLogLevel
@@ -113,14 +114,39 @@ internal class BugseeAndroidUtils {
         }
 
         fun convertAttachment(attachment: BugseeAttachment): com.bugsee.library.attachment.CustomAttachment {
-            var result: com.bugsee.library.attachment.CustomAttachment
+            val result: com.bugsee.library.attachment.CustomAttachment
 
             if (attachment.data != null) {
                 result =
                     com.bugsee.library.attachment.CustomAttachment.fromDataBytes(attachment.data)
             } else {
-                result =
-                    com.bugsee.library.attachment.CustomAttachment.fromDataFilePath(attachment.filePath)
+                val filePath = attachment.filePath.orEmpty()
+                var bytes: ByteArray?
+                try {
+                    bytes = when {
+                        // file:///android_asset/ URI — read via AssetManager
+                        filePath.startsWith("file:///android_asset/") -> {
+                            val assetPath = filePath.removePrefix("file:///android_asset/")
+                            applicationContext?.assets?.open(assetPath)?.use { it.readBytes() }
+                        }
+                        // Content URI or other file:// URI — read via ContentResolver
+                        filePath.startsWith("content://") || filePath.startsWith("file://") -> {
+                            applicationContext?.contentResolver?.openInputStream(Uri.parse(filePath))?.use { it.readBytes() }
+                        }
+                        // Absolute or relative file path — pass directly to native SDK
+                        else -> null
+                    }
+                } catch (e: Exception) {
+                    // Log the error but don't crash the app
+                    bytes = null
+                    Bugsee.log("Utils: exception during convertAttachment invoke: ${e.message}", com.bugsee.kmp.BugseeLogLevel.Warning)
+                }
+
+                result = if (bytes != null) {
+                    com.bugsee.library.attachment.CustomAttachment.fromDataBytes(bytes)
+                } else {
+                    com.bugsee.library.attachment.CustomAttachment.fromDataFilePath(filePath)
+                }
             }
 
             // Ensure attachment name is set
