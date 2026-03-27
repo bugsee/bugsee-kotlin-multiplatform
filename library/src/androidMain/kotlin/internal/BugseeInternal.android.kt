@@ -505,7 +505,7 @@ public actual class BugseeInternal {
         synchronizeReportFilter()
     }
 
-    public actual fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?) {
+    public actual fun setReportFieldsPostFilter(filter: BugseeReportFieldsFilter?) {
         reportFieldsFilter = filter
         synchronizeReportFilter()
     }
@@ -527,11 +527,14 @@ public actual class BugseeInternal {
                     val filler = reportFieldsFiller
 
                     if (filler == null || p0 == null) {
-                        p1?.onChanged(p0);
+                        p1?.onChanged(p0)
                         return
                     }
 
-                    filler.invoke(BugseeAndroidUtils.Companion.convertReportFields(p0))
+                    val convertedFields = BugseeAndroidUtils.convertReportFieldsFromNative(p0)
+                    filler.invoke(convertedFields)
+
+                    p1?.onChanged(BugseeAndroidUtils.convertReportFieldsToNative(convertedFields))
                 }
 
                 override fun changeFieldsAfterReportCreated(
@@ -545,7 +548,10 @@ public actual class BugseeInternal {
                         return
                     }
 
-                    filter.invoke(BugseeAndroidUtils.Companion.convertReportFields(p0))
+                    val convertedFields = BugseeAndroidUtils.convertReportFieldsFromNative(p0)
+                    filter.invoke(convertedFields)
+
+                    p1?.onChanged(BugseeAndroidUtils.convertReportFieldsToNative(convertedFields))
                 }
             }
         )

@@ -115,5 +115,24 @@ internal class BugseeIOSUtils {
             result.name = attachment.name
             return result
         }
+
+        @Suppress("UNCHECKED_CAST")
+        fun convertReportFieldsFromNative(nativeFields: cocoapods.Bugsee.BugseeReportFields): BugseeReportFields {
+            return BugseeReportFields(
+                nativeFields.summary ?: "",
+                nativeFields.reportDescription ?: "",
+                BugseeSeverity.fromLevel(nativeFields.severity.toInt()),
+                (nativeFields.labels as? List<String>) ?: emptyList()
+            )
+        }
+
+        fun convertReportFieldsToNative(kmpFields: BugseeReportFields): cocoapods.Bugsee.BugseeReportFields {
+            return cocoapods.Bugsee.BugseeReportFields.reportFieldsWith(
+                kmpFields.summary,
+                kmpFields.description,
+                kmpFields.severity.getLevelLong(),
+                kmpFields.labels
+            )
+        }
     }
 }

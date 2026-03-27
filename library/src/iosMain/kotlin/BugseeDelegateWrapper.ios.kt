@@ -124,4 +124,54 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
             Bugsee.log("BugseeDelegateWrapper: bugseeLifecycleEvent: caught exception: ${e.message}", BugseeLogLevel.Warning)
         }
     }
+
+    override fun bugseeAddFieldsBeforeReportCreated(): cocoapods.Bugsee.BugseeReportFields {
+        try {
+            val bugseeInternal = weakBugseeInternal.get()
+            if (bugseeInternal != null) {
+                val filler = bugseeInternal.reportFieldsFiller
+                if (filler != null) {
+                    try {
+                        val kmpFields = BugseeReportFields("", "", BugseeSeverity.Medium, emptyList())
+                        filler.invoke(kmpFields)
+                        return BugseeIOSUtils.convertReportFieldsToNative(kmpFields)
+                    } catch (e: Exception) {
+                        Bugsee.log("BugseeDelegateWrapper: exception during reportFieldsFiller invoke: ${e.message}", BugseeLogLevel.Warning)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Bugsee.log("BugseeDelegateWrapper: bugseeAddFieldsBeforeReportCreated: caught exception: ${e.message}", BugseeLogLevel.Warning)
+        }
+
+        return cocoapods.Bugsee.BugseeReportFields.reportFieldsWith(
+            "",
+            description = "",
+            severity = BugseeSeverity.Medium.getLevelLong(),
+            labels = emptyList<String>()
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun bugseeCheckFieldsAfterReportCreated(report: cocoapods.Bugsee.BugseeReportFields): cocoapods.Bugsee.BugseeReportFields {
+        try {
+            val bugseeInternal = weakBugseeInternal.get()
+            if (bugseeInternal != null) {
+                val filter = bugseeInternal.reportFieldsFilter
+                if (filter != null) {
+                    try {
+                        val kmpFields = BugseeIOSUtils.convertReportFieldsFromNative(report)
+                        val filteredFields = filter.invoke(kmpFields)
+                        return BugseeIOSUtils.convertReportFieldsToNative(filteredFields)
+                    } catch (e: Exception) {
+                        Bugsee.log("BugseeDelegateWrapper: exception during reportFieldsFilter invoke: ${e.message}", BugseeLogLevel.Warning)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Bugsee.log("BugseeDelegateWrapper: bugseeCheckFieldsAfterReportCreated: caught exception: ${e.message}", BugseeLogLevel.Warning)
+        }
+
+        return report
+    }
 }

@@ -145,7 +145,7 @@ public expect class BugseeInternal() {
     // Report fields filter
     public fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?)
 
-    public fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?)
+    public fun setReportFieldsPostFilter(filter: BugseeReportFieldsFilter?)
 
     // View hierarchy capture
     public fun captureViewHierarchy()

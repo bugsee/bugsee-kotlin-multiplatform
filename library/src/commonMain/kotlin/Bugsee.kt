@@ -232,8 +232,8 @@ public object Bugsee {
         bugseeInternal.setReportFieldsPreFilter(filler)
     }
 
-    public fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?) {
-        bugseeInternal.setReportFieldsFilter(filter)
+    public fun setReportFieldsPostFilter(filter: BugseeReportFieldsFilter?) {
+        bugseeInternal.setReportFieldsPostFilter(filter)
     }
 
     // View hierarchy capture

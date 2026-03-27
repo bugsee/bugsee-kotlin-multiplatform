@@ -129,7 +129,7 @@ internal class BugseeAndroidUtils {
             return result
         }
 
-        fun convertReportFields(reportFields: com.bugsee.library.send.ReportFields): BugseeReportFields {
+        fun convertReportFieldsFromNative(reportFields: com.bugsee.library.send.ReportFields): BugseeReportFields {
             return BugseeReportFields(
                 reportFields.summary,
                 reportFields.description,
@@ -138,7 +138,7 @@ internal class BugseeAndroidUtils {
             )
         }
 
-        fun convertReportFields(reportFields: BugseeReportFields): com.bugsee.library.send.ReportFields {
+        fun convertReportFieldsToNative(reportFields: BugseeReportFields): com.bugsee.library.send.ReportFields {
             return com.bugsee.library.send.ReportFields(
                 reportFields.summary,
                 reportFields.description,

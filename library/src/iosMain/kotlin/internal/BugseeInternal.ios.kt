@@ -35,6 +35,8 @@ public actual class BugseeInternal {
     public actual var networkFilterHandler: BugseeNetworkFilter? = null
     public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
     public actual var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
+    public var reportFieldsFiller: BugseeReportFieldsFiller? = null
+    public var reportFieldsFilter: BugseeReportFieldsFilter? = null
     private val bugseeDelegate = BugseeDelegateWrapper(this)
 
     init {
@@ -335,10 +337,11 @@ public actual class BugseeInternal {
 
     // Report fields filter
     public actual fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?) {
-        // TODO: Implement through delegate wrapper!
+        reportFieldsFiller = filler
     }
 
-    public actual fun setReportFieldsFilter(filter: BugseeReportFieldsFilter?) {
+    public actual fun setReportFieldsPostFilter(filter: BugseeReportFieldsFilter?) {
+        reportFieldsFilter = filter
     }
 
     // View hierarchy capture
