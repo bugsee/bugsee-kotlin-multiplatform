@@ -79,36 +79,42 @@ internal class BugseeIOSUtils {
         @OptIn(BetaInteropApi::class)
         fun convertAttachment(attachment: BugseeAttachment): cocoapods.Bugsee.BugseeAttachment {
             val result = cocoapods.Bugsee.BugseeAttachment()
-            if (attachment.data != null) {
-                val size = attachment.data.size
-                attachment.data.usePinned { pinned ->
-                    result.data = NSData.create(
-                        bytes = pinned.addressOf(0),
-                        length = size.toULong()
-                    )
-                }
-            } else if (!attachment.filePath.isNullOrEmpty()) {
-                Logger.d("Utils", "convertAttachment filePath = ${attachment.filePath}")
-                val url = when {
-                    // file:// URL (e.g. from Compose Resources Res.getUri())
-                    attachment.filePath.startsWith("file://") ->
-                        NSURL.URLWithString(attachment.filePath)
-                    // Absolute path (e.g. /tmp/generated_file.txt)
-                    attachment.filePath.startsWith("/") ->
-                        NSURL.fileURLWithPath(attachment.filePath)
-                    // Relative path — resolved against the app bundle's resource directory
-                    else ->
-                        NSURL.fileURLWithPath(
-                            NSBundle.mainBundle.resourcePath + "/" + attachment.filePath
+            try {
+                if (attachment.data != null) {
+                    val size = attachment.data.size
+                    attachment.data.usePinned { pinned ->
+                        result.data = NSData.create(
+                            bytes = pinned.addressOf(0),
+                            length = size.toULong()
                         )
-                }
-                if (url != null) {
-                    val fileData = NSData.dataWithContentsOfURL(url)
-                    if (fileData != null) {
-                        result.data = fileData
-                        result.filename = attachment.filePath.substringAfterLast('/').ifEmpty { attachment.name }
+                    }
+                } else if (!attachment.filePath.isNullOrEmpty()) {
+                    Logger.d("Utils", "convertAttachment filePath = ${attachment.filePath}")
+                    val url = when {
+                        // file:// URL (e.g. from Compose Resources Res.getUri())
+                        attachment.filePath.startsWith("file://") ->
+                            NSURL.URLWithString(attachment.filePath)
+                        // Absolute path (e.g. /tmp/generated_file.txt)
+                        attachment.filePath.startsWith("/") ->
+                            NSURL.fileURLWithPath(attachment.filePath)
+                        // Relative path — resolved against the app bundle's resource directory
+                        else ->
+                            NSURL.fileURLWithPath(
+                                NSBundle.mainBundle.resourcePath + "/" + attachment.filePath
+                            )
+                    }
+                    if (url != null) {
+                        val fileData = NSData.dataWithContentsOfURL(url)
+                        if (fileData != null) {
+                            result.data = fileData
+                            result.filename = attachment.filePath.substringAfterLast('/').ifEmpty { attachment.name }
+                        } else {
+                            Logger.d("Utils", "convertAttachment: could not read file at $url for '${attachment.name}'")
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                Logger.e("Utils", "convertAttachment failed for '${attachment.name}'", e)
             }
 
             // Ensure attachment name is set
