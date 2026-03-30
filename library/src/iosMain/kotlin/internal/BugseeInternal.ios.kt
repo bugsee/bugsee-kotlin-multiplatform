@@ -328,11 +328,13 @@ public actual class BugseeInternal {
 
     // Extended report methods
     public actual fun createReport(provider: BugseeExtendedReportProvider) {
-        // TODO
-    }
-
-    public fun upload(report: ExtendedReport) {
-        BugseeSDK.uploadReport(report)
+        BugseeSDK.createReportWithCompletion { nativeReport ->
+            if (nativeReport != null) {
+                provider.invoke(BugseeExtendedReport(nativeReport))
+            } else {
+                Logger.d("BugseeInternal", "createReport: native SDK returned null, provider not invoked")
+            }
+        }
     }
 
     // Report fields filter
@@ -350,11 +352,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun upload(report: BugseeExtendedReport) {
-        // Convert our type to the native type
-        val nativeReport = report as? ExtendedReport
-        if (nativeReport != null) {
-            BugseeSDK.uploadReport(nativeReport)
-        }
+        BugseeSDK.uploadReport(report.underlyingReport)
     }
 
     public actual fun addSecureViewClass(className: String) {

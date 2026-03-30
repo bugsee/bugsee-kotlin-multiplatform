@@ -1,13 +1,19 @@
 package com.bugsee.kmp
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import com.bugsee.kmp.internal.Logger
 import com.bugsee.library.attachment.CustomAttachment
 import com.bugsee.library.attachment.ExtendedReport
 
 public actual class BugseeExtendedReport internal constructor(
     internal val underlyingReport: ExtendedReport
 ) {
-    private var screenshotWasChanged = false;
+    private companion object {
+        private const val TAG = "BugseeExtendedReport"
+    }
+
+    private var screenshotWasChanged = false
 
     public actual val type: BugseeReportType
         get() = BugseeAndroidUtils.convertIssueType(underlyingReport.type)
@@ -15,9 +21,20 @@ public actual class BugseeExtendedReport internal constructor(
     public actual var screenshot: Any?
         get() = underlyingReport.screenshot
         set(value) {
-            if (value is Bitmap) {
-                screenshotWasChanged = true
-                underlyingReport.screenshot = value
+            try {
+                val bitmap: Bitmap? = when (value) {
+                    is Bitmap -> value
+                    is ByteArray -> BitmapFactory.decodeByteArray(value, 0, value.size)
+                    else -> null
+                }
+                if (bitmap != null) {
+                    screenshotWasChanged = true
+                    underlyingReport.screenshot = bitmap
+                } else if (value != null) {
+                    Logger.d(TAG, "screenshot setter: unsupported type ${value::class.simpleName}, expected Bitmap or ByteArray")
+                }
+            } catch (e: Exception) {
+                Logger.e(TAG, "screenshot setter: failed to process value", e)
             }
         }
 
@@ -49,37 +66,67 @@ public actual class BugseeExtendedReport internal constructor(
     }
 
     public actual fun addAttachment(attachment: BugseeAttachment) {
-        var internalAttachment: CustomAttachment
-        if (attachment.data != null) {
-            internalAttachment = CustomAttachment.fromDataBytes(attachment.data)
-        } else {
-            internalAttachment = CustomAttachment.fromDataFilePath(attachment.filePath)
-            internalAttachment.setFileName(attachment.filePath)
+        try {
+            var internalAttachment: CustomAttachment
+            if (attachment.data != null) {
+                internalAttachment = CustomAttachment.fromDataBytes(attachment.data)
+            } else {
+                internalAttachment = CustomAttachment.fromDataFilePath(attachment.filePath)
+                internalAttachment.setFileName(attachment.filePath)
+            }
+
+            // Ensure the attachment name is not empty
+            internalAttachment.name = attachment.name
+
+            underlyingReport.attachments.add(internalAttachment)
+        } catch (e: Exception) {
+            Logger.e(TAG, "addAttachment failed for '${attachment.name}'", e)
         }
-
-        // Ensure the attachment name is not empty
-        internalAttachment.name = attachment.name
-
-        underlyingReport.attachments.add(internalAttachment)
     }
 
     public actual fun addLabel(label: String) {
-        if (!underlyingReport.labels.contains(label)) {
-            underlyingReport.labels.add(label)
+        try {
+            if (underlyingReport.labels.isNullOrEmpty()) {
+                underlyingReport.labels = ArrayList<String>()
+            }
+
+            if (!underlyingReport.labels.contains(label)) {
+                underlyingReport.labels.add(label)
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "addLabel failed", e)
         }
     }
 
     public actual fun removeLabel(label: String) {
         try {
-            underlyingReport.labels.remove(label)
-        } catch (_: Throwable) {}
+            if (!underlyingReport.labels.isNullOrEmpty()) {
+                underlyingReport.labels.remove(label)
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "removeLabel failed", e)
+        }
     }
 
     public actual fun clearLabels() {
-        underlyingReport.labels.clear()
+        try {
+            if (!underlyingReport.labels.isNullOrEmpty()) {
+                underlyingReport.labels.clear()
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "clearLabels failed", e)
+        }
     }
 
     public actual fun getLabels(): List<String> {
-        return underlyingReport.labels.toList()
+        try {
+            if (!underlyingReport.labels.isNullOrEmpty()) {
+                return underlyingReport.labels.toList()
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "getLabels failed", e)
+        }
+
+        return emptyList()
     }
 }

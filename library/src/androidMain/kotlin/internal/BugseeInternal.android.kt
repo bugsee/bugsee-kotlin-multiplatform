@@ -485,6 +485,7 @@ public actual class BugseeInternal {
             object : com.bugsee.library.Bugsee.ExtendedReportCreatedListener {
                 override fun onCreated(p0: ExtendedReport?) {
                     if (p0 == null) {
+                        Logger.d("BugseeInternal", "createReport: native SDK returned null, provider not invoked")
                         return
                     }
 

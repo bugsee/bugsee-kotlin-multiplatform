@@ -1,12 +1,21 @@
 package com.bugsee.kmp.internal
 
+import android.graphics.Bitmap
 import com.bugsee.kmp.*
+import com.bugsee.library.attachment.ExtendedReport
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.ByteArrayOutputStream
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -183,7 +192,7 @@ class BugseeInternalAndroidSimpleTest {
     @Test
     fun `test isLaunched method`() {
         val isLaunched = bugseeInternal.isLaunched()
-        assertTrue(isLaunched, "isLaunched should return true")
+        assertFalse(isLaunched, "isLaunched should return false when SDK is not launched")
     }
 
     @Test
@@ -320,14 +329,14 @@ class BugseeInternalAndroidSimpleTest {
         }
         bugseeInternal.setReportFieldsPreFilter(filler)
         
-        bugseeInternal.setReportFieldsFilter(null)
+        bugseeInternal.setReportFieldsPostFilter(null)
         val filter: BugseeReportFieldsFilter = { fields ->
             assertNotNull(fields, "Report fields should not be null")
         }
-        bugseeInternal.setReportFieldsFilter(filter)
+        bugseeInternal.setReportFieldsPostFilter(filter)
         
         bugseeInternal.setReportFieldsPreFilter(filler)
-        bugseeInternal.setReportFieldsFilter(filter)
+        bugseeInternal.setReportFieldsPostFilter(filter)
         
         assertTrue(true, "Report fields filter methods should complete successfully")
     }
@@ -492,6 +501,25 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
+    fun `test convertAttachment with file path`() {
+        val attachment = BugseeAttachment.create("test_file", "/path/to/data.json")
+        val native = BugseeAndroidUtils.convertAttachment(attachment)
+        assertEquals("test_file", native.name)
+        assertEquals("/path/to/data.json", native.dataFilePath)
+        assertNull(native.dataBytes)
+    }
+
+    @Test
+    fun `test convertAttachment with byte data`() {
+        val data = "hello".toByteArray()
+        val attachment = BugseeAttachment.create("test_data", data)
+        val native = BugseeAndroidUtils.convertAttachment(attachment)
+        assertEquals("test_data", native.name)
+        assertNotNull(native.dataBytes)
+        assertTrue(data.contentEquals(native.dataBytes))
+    }
+
+    @Test
     fun `test BugseeAttachment creation and usage`() {
         // Test BugseeAttachment creation and usage - these should not throw exceptions
         val attachment1 = BugseeAttachment.create("test.txt", "test content".toByteArray())
@@ -503,5 +531,303 @@ class BugseeInternalAndroidSimpleTest {
         bugseeInternal.setReportAttachmentsProvider(provider)
         
         assertTrue(true, "BugseeAttachment creation and usage should work correctly")
+    }
+
+    // --- BugseeExtendedReport screenshot tests ---
+
+    @Test
+    fun `test screenshot setter accepts Bitmap`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+        report.screenshot = bitmap
+
+        assertTrue(report.screenshotChanged, "screenshotChanged should be true after setting Bitmap")
+    }
+
+    @Test
+    fun `test screenshot setter accepts ByteArray`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        // Create a valid PNG ByteArray from a small Bitmap
+        val bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        val pngBytes = stream.toByteArray()
+
+        report.screenshot = pngBytes
+
+        assertTrue(report.screenshotChanged, "screenshotChanged should be true after setting ByteArray")
+    }
+
+    @Test
+    fun `test screenshot setter ignores unsupported type without crashing`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        // Setting a String should be silently ignored (with logging)
+        report.screenshot = "not a bitmap"
+
+        assertFalse(report.screenshotChanged, "screenshotChanged should remain false for unsupported type")
+    }
+
+    @Test
+    fun `test screenshot setter handles null`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.screenshot = null
+
+        assertFalse(report.screenshotChanged, "screenshotChanged should remain false for null")
+    }
+
+    @Test
+    fun `test screenshot setter handles invalid ByteArray without crashing`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        // Invalid image bytes — should not crash regardless of BitmapFactory behavior
+        report.screenshot = byteArrayOf(0, 1, 2, 3)
+
+        // Under Robolectric, BitmapFactory.decodeByteArray may return a shadow Bitmap
+        // The key assertion is that no exception was thrown
+        assertTrue(true, "Setting invalid ByteArray should not crash")
+    }
+
+    // --- BugseeExtendedReport summary/description tests ---
+
+    @Test
+    fun `test summary getter and setter`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.summary).thenReturn("Test Summary")
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        assertEquals("Test Summary", report.summary)
+
+        report.summary = "New Summary"
+        verify(mockNativeReport).summary = "New Summary"
+    }
+
+    @Test
+    fun `test description getter and setter`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.description).thenReturn("Test Description")
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        assertEquals("Test Description", report.description)
+
+        report.description = "New Description"
+        verify(mockNativeReport).description = "New Description"
+    }
+
+    @Test
+    fun `test summary and description accept null`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.summary = null
+        report.description = null
+
+        verify(mockNativeReport).summary = null
+        verify(mockNativeReport).description = null
+    }
+
+    // --- BugseeExtendedReport attribute tests ---
+
+    @Test
+    fun `test setAttribute delegates to native`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.setAttribute("key", "value")
+        verify(mockNativeReport).setAttribute("key", "value")
+    }
+
+    @Test
+    fun `test getAttribute delegates to native`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.getAttribute("key")).thenReturn("value")
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        assertEquals("value", report.getAttribute("key"))
+    }
+
+    @Test
+    fun `test getAttribute returns null for missing key`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.getAttribute("missing")).thenReturn(null)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        assertNull(report.getAttribute("missing"))
+    }
+
+    @Test
+    fun `test clearAttribute delegates to native`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.clearAttribute("key")
+        verify(mockNativeReport).clearAttribute("key")
+    }
+
+    // --- BugseeExtendedReport label tests ---
+
+    @Test
+    fun `test addLabel to empty labels`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(null)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        // Should initialize labels and add without crashing
+        report.addLabel("test")
+        // Verify labels was set to a new ArrayList
+        verify(mockNativeReport).labels = org.mockito.ArgumentMatchers.any()
+    }
+
+    @Test
+    fun `test addLabel skips duplicate`() {
+        val labels = ArrayList<String>(listOf("existing"))
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(labels)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.addLabel("existing")
+        assertEquals(1, labels.size, "Should not add duplicate label")
+    }
+
+    @Test
+    fun `test addLabel adds new label`() {
+        val labels = ArrayList<String>(listOf("existing"))
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(labels)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.addLabel("new")
+        assertTrue(labels.contains("new"), "Should add new label")
+        assertEquals(2, labels.size)
+    }
+
+    @Test
+    fun `test removeLabel removes existing`() {
+        val labels = ArrayList<String>(listOf("a", "b", "c"))
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(labels)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.removeLabel("b")
+        assertFalse(labels.contains("b"), "Should remove label")
+        assertEquals(2, labels.size)
+    }
+
+    @Test
+    fun `test removeLabel with null labels does not crash`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(null)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.removeLabel("anything")
+        assertTrue(true, "Should not crash when labels is null")
+    }
+
+    @Test
+    fun `test clearLabels clears all`() {
+        val labels = ArrayList<String>(listOf("a", "b"))
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(labels)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.clearLabels()
+        assertTrue(labels.isEmpty(), "Should clear all labels")
+    }
+
+    @Test
+    fun `test clearLabels with null labels does not crash`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(null)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        report.clearLabels()
+        assertTrue(true, "Should not crash when labels is null")
+    }
+
+    @Test
+    fun `test getLabels returns list`() {
+        val labels = ArrayList<String>(listOf("x", "y"))
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(labels)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val result = report.getLabels()
+        assertEquals(listOf("x", "y"), result)
+    }
+
+    @Test
+    fun `test getLabels returns empty for null labels`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(null)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val result = report.getLabels()
+        assertTrue(result.isEmpty(), "Should return empty list for null labels")
+    }
+
+    @Test
+    fun `test getLabels returns copy not reference`() {
+        val labels = ArrayList<String>(listOf("a"))
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.labels).thenReturn(labels)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val result = report.getLabels()
+        labels.add("b")
+        assertEquals(1, result.size, "Returned list should be a copy")
+    }
+
+    // --- BugseeExtendedReport type test ---
+
+    @Test
+    fun `test type delegates to native via convertIssueType`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        `when`(mockNativeReport.type).thenReturn(com.bugsee.library.data.IssueType.Bug)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val reportType = report.type
+        assertEquals(BugseeReportType.Bug, reportType)
+    }
+
+    // --- BugseeExtendedReport attachment tests ---
+
+    @Test
+    fun `test addAttachment with byte data does not crash`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val attachment = BugseeAttachment.create("test", "hello".toByteArray())
+        report.addAttachment(attachment)
+
+        assertTrue(true, "addAttachment with byte data should not crash")
+    }
+
+    @Test
+    fun `test addAttachment with file path does not crash`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        val attachment = BugseeAttachment.create("test_file", "/tmp/test.txt")
+        report.addAttachment(attachment)
+
+        assertTrue(true, "addAttachment with file path should not crash")
+    }
+
+    // --- BugseeExtendedReport screenshotChanged default ---
+
+    @Test
+    fun `test screenshotChanged is false by default`() {
+        val mockNativeReport = mock(ExtendedReport::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+
+        assertFalse(report.screenshotChanged, "screenshotChanged should be false initially")
     }
 }

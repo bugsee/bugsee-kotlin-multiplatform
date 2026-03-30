@@ -162,9 +162,25 @@ class CommonBugseeTest {
     @Test
     fun `test BugseeAttachment create with file path`() {
         val attachment = BugseeAttachment.create("test.txt", "/path/to/file.txt")
-        
+
         assertEquals("test.txt", attachment.name)
         assertEquals("/path/to/file.txt", attachment.filePath)
+        assertNull(attachment.data)
+    }
+
+    @Test
+    fun `test BugseeAttachment create with file URL path`() {
+        val attachment = BugseeAttachment.create("test", "file:///path/to/file.txt")
+        assertEquals("test", attachment.name)
+        assertEquals("file:///path/to/file.txt", attachment.filePath)
+        assertNull(attachment.data)
+    }
+
+    @Test
+    fun `test BugseeAttachment create with relative path`() {
+        val attachment = BugseeAttachment.create("test", "files/sample.json")
+        assertEquals("test", attachment.name)
+        assertEquals("files/sample.json", attachment.filePath)
         assertNull(attachment.data)
     }
 
