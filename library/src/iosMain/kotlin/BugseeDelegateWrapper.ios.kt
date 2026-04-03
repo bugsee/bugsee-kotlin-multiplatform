@@ -68,8 +68,24 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         return ArrayList(attachments.map(BugseeIOSUtils.Companion::convertAttachment))
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun bugsee(bugsee: cocoapods.Bugsee.Bugsee, didReceiveNewFeedback: List<*>) {
-        // TODO: Implement feedback handling
+        try {
+            val bugseeInternal = weakBugseeInternal.get()
+            if (bugseeInternal != null) {
+                val feedbackHandler = bugseeInternal.feedbackHandler
+                if (feedbackHandler != null) {
+                    try {
+                        val feedbackMessages = (didReceiveNewFeedback as? List<String>) ?: emptyList()
+                        feedbackHandler.invoke(feedbackMessages)
+                    } catch (e: Exception) {
+                        Bugsee.log("BugseeDelegateWrapper: exception during feedbackHandler invoke: ${e.message}", BugseeLogLevel.Warning)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Bugsee.log("BugseeDelegateWrapper: bugsee:didReceiveNewFeedback: caught exception: ${e.message}", BugseeLogLevel.Warning)
+        }
     }
 
     override fun bugseeFilterNetworkEvent(

@@ -37,6 +37,7 @@ public actual class BugseeInternal {
     public actual var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
     public var reportFieldsFiller: BugseeReportFieldsFiller? = null
     public var reportFieldsFilter: BugseeReportFieldsFilter? = null
+    public var feedbackHandler: BugseeFeedbackEventListener? = null
     private val bugseeDelegate = BugseeDelegateWrapper(this)
 
     init {
@@ -100,8 +101,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
-        BugseeSDK //.setOnNewFeedbackListener(listener)
-        // TODO: Implement through delegate wrapper!
+        feedbackHandler = listener
     }
 
     public actual fun setDefaultFeedbackGreeting(greeting: String) {
