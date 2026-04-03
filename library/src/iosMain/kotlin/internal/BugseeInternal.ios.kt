@@ -17,12 +17,10 @@ import com.bugsee.kmp.BugseeLogLevel
 import com.bugsee.kmp.BugseeNetworkFilter
 import com.bugsee.kmp.BugseeReportFieldsFiller
 import com.bugsee.kmp.BugseeReportFieldsFilter
-import com.bugsee.kmp.BugseeSecureRectangle
 import com.bugsee.kmp.BugseeSeverity
 import com.bugsee.kmp.EventHandler
 import com.bugsee.kmp.nsexception.*
-import platform.CoreGraphics.CGRect
-import platform.CoreGraphics.CGRectMake
+import platform.UIKit.UIView
 
 private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
 
@@ -207,67 +205,6 @@ public actual class BugseeInternal {
         BugseeSDK.resume()
     }
 
-    // Secure rectangle methods
-    public actual fun addSecureRectangle(rect: BugseeSecureRectangle) {
-        val cgRect = CGRectMake(
-            rect.x,
-            rect.y,
-            rect.width,
-            rect.height
-        )
-
-        BugseeSDK.addSecureRect(cgRect)
-    }
-
-    public actual fun removeSecureRectangle(rect: BugseeSecureRectangle) {
-        val cgRect = CGRectMake(
-            rect.x,
-            rect.y,
-            rect.width,
-            rect.height
-        )
-
-        BugseeSDK.removeSecureRect(cgRect)
-    }
-
-    public actual fun removeAllSecureRectangles() {
-        BugseeSDK.removeAllSecureRects()
-    }
-
-    public actual fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
-        val rectsList = BugseeSDK.getAllSecureRects()
-        if (rectsList == null) {
-            return emptyList()
-        }
-
-        // TODO: Test the conversion below!
-        val resultingRects = mutableListOf<BugseeSecureRectangle>()
-        for (rect in rectsList) {
-            if (rect is CGRect) {
-                resultingRects.add(
-                    BugseeSecureRectangle(
-                        rect.origin.x,
-                        rect.origin.y,
-                        rect.size.width,
-                        rect.size.height
-                    )
-                )
-            }
-        }
-
-        return resultingRects
-    }
-
-    // Secure view methods
-    public actual fun addSecureWebView(view: Any?) {
-        // TODO: Test webview class
-        BugseeSDK.addSecureWebView(view)
-    }
-
-//    public fun addSecureWebView(view: WKWebView) {
-//        BugseeSDK.addSecureWebView(view)
-//    }
-
     // Filter and listener methods
     public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         networkFilterHandler = filter
@@ -322,10 +259,6 @@ public actual class BugseeInternal {
         BugseeSDK.deleteCollectedDataOnDevice(deletionEventListener)
     }
 
-//    public fun getDeviceId(): String? {
-//        return BugseeSDK.getDeviceId()
-//    }
-
     // Extended report methods
     public actual fun createReport(provider: BugseeExtendedReportProvider) {
         BugseeSDK.createReportWithCompletion { nativeReport ->
@@ -355,22 +288,18 @@ public actual class BugseeInternal {
         BugseeSDK.uploadReport(report.underlyingReport)
     }
 
-    public actual fun addSecureViewClass(className: String) {
-        // iOS doesn't have activity classes like Android
-        // This method is a no-op for iOS
-    }
-
-    public actual fun removeSecureViewClass(className: String) {
-        // iOS doesn't have activity classes like Android
-        // This method is a no-op for iOS
-    }
-
+    // Security methods
+    // Secure view methods
     public actual fun addSecureView(view: Any?) {
-        // TODO: Implement view security for iOS
+        if (view is UIView) {
+            BugseeSDK.setView(view, asHidden = true)
+        }
     }
 
     public actual fun removeSecureView(view: Any?) {
-        // TODO: Implement view security for iOS
+        if (view is UIView) {
+            BugseeSDK.setView(view, asHidden = false)
+        }
     }
 
     public actual fun isLaunched(): Boolean {

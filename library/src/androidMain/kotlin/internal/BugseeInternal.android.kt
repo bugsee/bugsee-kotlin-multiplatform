@@ -239,16 +239,6 @@ public actual class BugseeInternal {
         BugseeSDK.logException(ex, BugseeAndroidUtils.Companion.convertExceptionLoggingOptions(options))
     }
 
-    // Security methods
-    public actual fun addSecureViewClass(className: String) {
-        BugseeSDK.addSecureActivity(className)
-    }
-
-    public actual fun removeSecureViewClass(className: String) {
-        BugseeSDK.removeSecureActivity(className)
-    }
-
-
     // Privacy control methods
     public actual fun pause() {
         BugseeSDK.pause()
@@ -264,30 +254,6 @@ public actual class BugseeInternal {
         return BugseeSDK.getLaunched()
     }
 
-
-    // Secure rectangle methods
-    public actual fun addSecureRectangle(rect: BugseeSecureRectangle) {
-        BugseeSDK.addSecureRectangle(BugseeAndroidUtils.Companion.convertSecureRect(rect))
-    }
-
-    public actual fun removeSecureRectangle(rect: BugseeSecureRectangle) {
-        BugseeSDK.removeSecureRectangle(BugseeAndroidUtils.Companion.convertSecureRect(rect))
-    }
-
-    public actual fun removeAllSecureRectangles() {
-        BugseeSDK.removeAllSecureRectangles()
-    }
-
-    public actual fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
-        val originalRects = BugseeSDK.getAllSecureRectangles()
-        if (originalRects == null) {
-            return emptyList()
-        }
-
-        return originalRects.map(BugseeAndroidUtils.Companion::convertSecureRect)
-    }
-
-
     // Secure view methods
     public actual fun addSecureView(view: Any?) {
         if (view is View) {
@@ -298,12 +264,6 @@ public actual class BugseeInternal {
     public actual fun removeSecureView(view: Any?) {
         if (view is View) {
             BugseeSDK.removeSecureView(view)
-        }
-    }
-
-    public actual fun addSecureWebView(view: Any?) {
-        if (view is android.webkit.WebView) {
-            BugseeSDK.addSecureWebView(view)
         }
     }
 

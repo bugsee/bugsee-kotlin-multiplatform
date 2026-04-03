@@ -170,17 +170,6 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
-    fun `test security methods`() {
-        val className = "com.test.TestActivity"
-        
-        // Test security methods - these should not throw exceptions
-        bugseeInternal.addSecureViewClass(className)
-        bugseeInternal.removeSecureViewClass(className)
-        
-        assertTrue(true, "All security methods should complete successfully")
-    }
-
-    @Test
     fun `test privacy control methods`() {
         // Test privacy control methods - these should not throw exceptions
         bugseeInternal.pause()
@@ -196,32 +185,14 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
-    fun `test secure rectangle methods`() {
-        val rect = BugseeSecureRectangle(10.0, 20.0, 100.0, 200.0)
-        
-        // Test secure rectangle methods - these should not throw exceptions
-        bugseeInternal.addSecureRectangle(rect)
-        bugseeInternal.removeSecureRectangle(rect)
-        bugseeInternal.removeAllSecureRectangles()
-        
-        val allRects = bugseeInternal.getAllSecureRectangles()
-        assertNotNull(allRects, "getAllSecureRectangles should return a list")
-        
-        assertTrue(true, "All secure rectangle methods should complete successfully")
-    }
-
-    @Test
     fun `test secure view methods`() {
         // Test secure view methods - these should not throw exceptions
         bugseeInternal.addSecureView(null)
         bugseeInternal.addSecureView("not a view")
-        
+
         bugseeInternal.removeSecureView(null)
         bugseeInternal.removeSecureView("not a view")
-        
-        bugseeInternal.addSecureWebView(null)
-        bugseeInternal.addSecureWebView("not a webview")
-        
+
         assertTrue(true, "All secure view methods should complete successfully")
     }
 
@@ -481,23 +452,6 @@ class BugseeInternalAndroidSimpleTest {
         bugseeInternal.relaunch(options)
         
         assertTrue(true, "BugseeLaunchOptions integration should work correctly")
-    }
-
-    @Test
-    fun `test BugseeSecureRectangle creation and usage`() {
-        // Test BugseeSecureRectangle creation and usage - these should not throw exceptions
-        val rect1 = BugseeSecureRectangle(0.0, 0.0, 100.0, 200.0)
-        val rect2 = BugseeSecureRectangle(10.5, 20.7, 100.3, 200.9)
-        val rect3 = BugseeSecureRectangle(-10.0, -20.0, 100.0, 200.0)
-        
-        bugseeInternal.addSecureRectangle(rect1)
-        bugseeInternal.addSecureRectangle(rect2)
-        bugseeInternal.addSecureRectangle(rect3)
-        
-        bugseeInternal.removeSecureRectangle(rect1)
-        bugseeInternal.removeAllSecureRectangles()
-        
-        assertTrue(true, "BugseeSecureRectangle creation and usage should work correctly")
     }
 
     @Test

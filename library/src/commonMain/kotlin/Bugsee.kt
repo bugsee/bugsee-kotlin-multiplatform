@@ -112,15 +112,6 @@ public object Bugsee {
         bugseeInternal.logException(ex, options)
     }
 
-    // Security methods
-    public fun addSecureViewClass(className: String) {
-        bugseeInternal.addSecureViewClass(className)
-    }
-
-    public fun removeSecureViewClass(className: String) {
-        bugseeInternal.removeSecureViewClass(className)
-    }
-
     // Lifecycle methods
     public fun pause() {
         bugseeInternal.pause()
@@ -130,30 +121,9 @@ public object Bugsee {
         bugseeInternal.resume()
     }
 
-    // Secure rectangle methods
-    public fun addSecureRectangle(rect: BugseeSecureRectangle) {
-        bugseeInternal.addSecureRectangle(rect)
-    }
-
-    public fun removeSecureRectangle(rect: BugseeSecureRectangle) {
-        bugseeInternal.removeSecureRectangle(rect)
-    }
-
-    public fun removeAllSecureRectangles() {
-        bugseeInternal.removeAllSecureRectangles()
-    }
-
-    public fun getAllSecureRectangles(): List<BugseeSecureRectangle> {
-        return bugseeInternal.getAllSecureRectangles()
-    }
-
     // Secure view methods
     public fun addSecureView(view: Any?) {
         bugseeInternal.addSecureView(view)
-    }
-
-    public fun addSecureWebView(view: Any?) {
-        bugseeInternal.addSecureWebView(view)
     }
 
     public fun removeSecureView(view: Any?) {

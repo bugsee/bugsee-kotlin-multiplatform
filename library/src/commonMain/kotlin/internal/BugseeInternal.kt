@@ -74,29 +74,14 @@ public expect class BugseeInternal() {
 
     public fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?)
 
-    // Security methods
-    public fun addSecureViewClass(className: String)
-
-    public fun removeSecureViewClass(className: String)
-
     // Lifecycle methods
     public fun pause()
 
     public fun resume()
 
-    // Secure rectangle methods
-    public fun addSecureRectangle(rect: BugseeSecureRectangle)
-
-    public fun removeSecureRectangle(rect: BugseeSecureRectangle)
-
-    public fun removeAllSecureRectangles()
-
-    public fun getAllSecureRectangles(): List<BugseeSecureRectangle>
-
+    // Security methods
     // Secure view methods
     public fun addSecureView(view: Any?)
-
-    public fun addSecureWebView(view: Any?)
 
     public fun removeSecureView(view: Any?)
 
