@@ -31,10 +31,10 @@ public typealias LogLevel = cocoapods.Bugsee.BugseeLogLevel
 public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggingOptions
 
 public actual class BugseeInternal {
-    public actual var logFilterHandler: BugseeLogFilter? = null
-    public actual var networkFilterHandler: BugseeNetworkFilter? = null
-    public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
-    public actual var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
+    public var logFilterHandler: BugseeLogFilter? = null
+    public var networkFilterHandler: BugseeNetworkFilter? = null
+    public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
+    public var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
     public var reportFieldsFiller: BugseeReportFieldsFiller? = null
     public var reportFieldsFilter: BugseeReportFieldsFilter? = null
     public var feedbackHandler: BugseeFeedbackEventListener? = null

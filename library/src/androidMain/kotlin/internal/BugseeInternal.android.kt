@@ -21,17 +21,11 @@ private typealias BugseeSDK = com.bugsee.library.Bugsee
 
 public actual class BugseeInternal {
 
-    public actual var logFilterHandler: BugseeLogFilter? = null
-    public actual var networkFilterHandler: BugseeNetworkFilter? = null
-    public actual var lifecycleEventHandler: BugseeLifecycleEventListener? = null
-    public actual var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
     private var reportFieldsFilter: BugseeReportFieldsFilter? = null
 
-
     public actual val appearance: BugseeAppearance
         get() = BugseeAppearance(BugseeSDK.getAppearance())
-
 
     // Launch methods - these are already working
     public actual fun launch(apiKey: String, options: Map<String, Any>?) {
