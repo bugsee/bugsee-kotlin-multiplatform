@@ -1,4 +1,4 @@
-package com.bugsee.kmp.sample.Network
+package com.bugsee.kmp.sample.screens
 
 import io.ktor.client.*
 import io.ktor.client.request.*

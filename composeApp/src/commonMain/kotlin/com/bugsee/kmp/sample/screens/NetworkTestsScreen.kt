@@ -1,4 +1,4 @@
-package com.bugsee.kmp.sample.Network
+package com.bugsee.kmp.sample.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,19 +37,9 @@ fun NetworkTestsScreen(
     val coroutineScope = rememberCoroutineScope()
     
     val testUrl = "https://dummyjson.com/test"
-    
-    Column(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .safeContentPadding()
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Back button
-        Button(onClick = onBackClick) {
-            Text("← Back")
-        }
+
+    TestScreenScaffold(title = "Exceptions", onBackClick = onBackClick) {
+
         
         // Row 1: Ktor test button
         Row(
@@ -84,18 +74,6 @@ fun NetworkTestsScreen(
             }
         }
 
-        // Row 2: placeholder button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(onClick = {
-                // TODO: Add functionality for third button
-            }) {
-                Text("Button")
-            }
-        }
-        
         // Display network result
         networkResult?.let { result ->
             Text(

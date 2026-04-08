@@ -193,6 +193,73 @@ class BugseeEnumsTest {
         assertEquals(BugseeFrameRate.High, BugseeFrameRate.fromIntValue(Int.MIN_VALUE))
     }
 
+    // BugseeReportType string conversion
+    @Test
+    fun `test BugseeReportType fromString - valid values`() {
+        assertEquals(BugseeReportType.Bug, BugseeReportType.fromString("bug"))
+        assertEquals(BugseeReportType.Error, BugseeReportType.fromString("error"))
+        assertEquals(BugseeReportType.Crash, BugseeReportType.fromString("crash"))
+    }
+
+    @Test
+    fun `test BugseeReportType fromString - unknown defaults to Bug`() {
+        assertEquals(BugseeReportType.Bug, BugseeReportType.fromString("unknown"))
+        assertEquals(BugseeReportType.Bug, BugseeReportType.fromString(""))
+        assertEquals(BugseeReportType.Bug, BugseeReportType.fromString("BUG"))
+    }
+
+    @Test
+    fun `test BugseeReportType fromString - custom default`() {
+        assertEquals(BugseeReportType.Crash, BugseeReportType.fromString("invalid", BugseeReportType.Crash))
+        assertEquals(BugseeReportType.Error, BugseeReportType.fromString("invalid", BugseeReportType.Error))
+    }
+
+    @Test
+    fun `test BugseeReportType toStringValue round trip`() {
+        for (type in BugseeReportType.entries) {
+            val str = type.toStringValue()
+            val roundTrip = BugseeReportType.fromString(str)
+            assertEquals(type, roundTrip, "Round trip failed for $type")
+        }
+    }
+
+    // BugseeNetworkEventStage string conversion
+    @Test
+    fun `test BugseeNetworkEventStage fromString - valid values`() {
+        assertEquals(BugseeNetworkEventStage.Before, BugseeNetworkEventStage.fromString("before"))
+        assertEquals(BugseeNetworkEventStage.Complete, BugseeNetworkEventStage.fromString("complete"))
+        assertEquals(BugseeNetworkEventStage.Cancel, BugseeNetworkEventStage.fromString("cancel"))
+        assertEquals(BugseeNetworkEventStage.Redirect, BugseeNetworkEventStage.fromString("redirect"))
+        assertEquals(BugseeNetworkEventStage.Errors, BugseeNetworkEventStage.fromString("error"))
+        assertEquals(BugseeNetworkEventStage.WebSocket, BugseeNetworkEventStage.fromString("ws"))
+    }
+
+    @Test
+    fun `test BugseeNetworkEventStage fromString - unknown defaults to Before`() {
+        assertEquals(BugseeNetworkEventStage.Before, BugseeNetworkEventStage.fromString("unknown"))
+        assertEquals(BugseeNetworkEventStage.Before, BugseeNetworkEventStage.fromString(""))
+        assertEquals(BugseeNetworkEventStage.Before, BugseeNetworkEventStage.fromString(null))
+        assertEquals(BugseeNetworkEventStage.Before, BugseeNetworkEventStage.fromString("BEFORE"))
+    }
+
+    @Test
+    fun `test BugseeNetworkEventStage getStringValue round trip`() {
+        for (stage in BugseeNetworkEventStage.entries) {
+            val str = stage.getStringValue()
+            val roundTrip = BugseeNetworkEventStage.fromString(str)
+            assertEquals(stage, roundTrip, "Round trip failed for $stage")
+        }
+    }
+
+    @Test
+    fun `test BugseeSeverity getLevelLong returns correct ULong`() {
+        assertEquals(1uL, BugseeSeverity.VeryLow.getLevelLong())
+        assertEquals(2uL, BugseeSeverity.Medium.getLevelLong())
+        assertEquals(3uL, BugseeSeverity.High.getLevelLong())
+        assertEquals(4uL, BugseeSeverity.Critical.getLevelLong())
+        assertEquals(5uL, BugseeSeverity.Blocker.getLevelLong())
+    }
+
     // Test enum with custom defaults
     @Test
     fun `test enum with custom defaults`() {
