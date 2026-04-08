@@ -1,7 +1,6 @@
 package com.bugsee.kmp
 
 import cocoapods.Bugsee.BugseeLogFilterDecisionBlock
-import cocoapods.Bugsee.BugseeNetworkFilterDecisionBlock
 import cocoapods.Bugsee.BugseeReport
 import com.bugsee.kmp.internal.BugseeInternal
 import com.bugsee.kmp.internal.Logger
@@ -85,37 +84,6 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
             }
         } catch (e: Exception) {
             Bugsee.log("BugseeDelegateWrapper: bugsee:didReceiveNewFeedback: caught exception: ${e.message}", BugseeLogLevel.Warning)
-        }
-    }
-
-    override fun bugseeFilterNetworkEvent(
-        event: cocoapods.Bugsee.BugseeNetworkEvent,
-        completionHandler: BugseeNetworkFilterDecisionBlock?
-    ) {
-        try {
-            val bugseeInternal = weakBugseeInternal.get()
-            if (bugseeInternal != null) {
-                // Capture the filter handler to avoid race conditions
-                val filterHandler = bugseeInternal.networkFilterHandler
-                if (filterHandler != null) {
-                    try {
-                        val kmpNetworkEvent = BugseeNetworkEvent(impl = event)
-                        val filteredNetworkEvent =
-                            filterHandler.invoke(kmpNetworkEvent)
-
-                    } catch (e: Exception) {
-                        // Log the error but don't crash the app
-                        // The original network event will be used if filtering fails
-                        Bugsee.log("BugseeDelegateWrapper: exception during networkFilterHandler invoke: ${e.message}", BugseeLogLevel.Warning)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            // Ensure we don't crash the native SDK
-            Bugsee.log("BugseeDelegateWrapper: bugseeFilterNetworkEvent: caught exception: ${e.message}", BugseeLogLevel.Warning)
-        } finally {
-            // Always call the completion handler to indicate filtering is done
-            completionHandler?.invoke(event)
         }
     }
 

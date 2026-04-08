@@ -30,7 +30,6 @@ public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggi
 
 public actual class BugseeInternal {
     public var logFilterHandler: BugseeLogFilter? = null
-    public var networkFilterHandler: BugseeNetworkFilter? = null
     public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
     public var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
     public var reportFieldsFiller: BugseeReportFieldsFiller? = null
@@ -207,7 +206,25 @@ public actual class BugseeInternal {
 
     // Filter and listener methods
     public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
-        networkFilterHandler = filter
+        if (filter != null) {
+            BugseeSDK.setNetworkEventFilter { nativeEvent, completionHandler ->
+                try {
+                    if (nativeEvent != null) {
+                        val kmpNetworkEvent = com.bugsee.kmp.BugseeNetworkEvent(impl = nativeEvent)
+                        filter.invoke(kmpNetworkEvent)
+                    }
+                } catch (e: Exception) {
+                    com.bugsee.kmp.Bugsee.log(
+                        "BugseeInternal: exception during networkFilterHandler invoke: ${e.message}",
+                        BugseeLogLevel.Warning
+                    )
+                } finally {
+                    completionHandler?.invoke(nativeEvent)
+                }
+            }
+        } else {
+            BugseeSDK.setNetworkEventFilter(null)
+        }
     }
 
     public actual fun setLogFilter(filter: BugseeLogFilter?) {
