@@ -14,28 +14,28 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         log: cocoapods.Bugsee.BugseeLogEvent,
         completionHandler: BugseeLogFilterDecisionBlock?
     ) {
+        // Default to keeping the original log; flipped to filtered.impl (or null
+        // to drop) if a filter is registered and runs successfully.
+        var decision: cocoapods.Bugsee.BugseeLogEvent? = log
         try {
-            val bugseeInternal = weakBugseeInternal.get()
-            if (bugseeInternal != null) {
-                // Capture the filter handler to avoid race conditions
-                val filterHandler = bugseeInternal.logFilterHandler
-                if (filterHandler != null) {
-                    try {
-                        val kmpLogEvent = BugseeLogEvent(log)
-                        val filteredLogEvent = filterHandler.invoke(kmpLogEvent)
-                    } catch (e: Exception) {
-                        // Log the error but don't crash the app
-                        // The original log will be used if filtering fails
-                        Logger.e("BugseeDelegateWrapper", "exception during logFilterHandler invoke: ${e.message}")
-                    }
-                }
+            // Capture the filter handler to avoid race conditions
+            val filterHandler = weakBugseeInternal.get()?.logFilterHandler
+            if (filterHandler != null) {
+                val filtered = filterHandler.invoke(BugseeLogEvent(log))
+                // null => drop the log; non-null => keep (mutations in `impl` propagate)
+                decision = filtered?.impl
             }
-        } catch (e: Exception) {
-            // Ensure we don't crash the native SDK
+        } catch (e: Throwable) {
+            // Log the error but don't crash the app — fall through with the original log
             Logger.e("BugseeDelegateWrapper", "bugseeFilterLog: caught exception: ${e.message}")
-        } finally {
+            decision = log
+        }
+        try {
             // Always call the completion handler to indicate filtering is done
-            completionHandler?.invoke(log)
+            completionHandler?.invoke(decision)
+        } catch (e: Throwable) {
+            // Don't let an exception cross the Obj-C boundary
+            Logger.e("BugseeDelegateWrapper", "bugseeFilterLog: completionHandler threw: ${e.message}")
         }
     }
 

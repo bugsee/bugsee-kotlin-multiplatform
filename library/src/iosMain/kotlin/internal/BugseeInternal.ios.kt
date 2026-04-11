@@ -206,24 +206,32 @@ public actual class BugseeInternal {
 
     // Filter and listener methods
     public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
-        if (filter != null) {
-            BugseeSDK.setNetworkEventFilter { nativeEvent, completionHandler ->
-                try {
-                    if (nativeEvent != null) {
-                        val kmpNetworkEvent = com.bugsee.kmp.BugseeNetworkEvent(impl = nativeEvent)
-                        filter.invoke(kmpNetworkEvent)
-                    }
-                } catch (e: Exception) {
-                    com.bugsee.kmp.Bugsee.log(
-                        "BugseeInternal: exception during networkFilterHandler invoke: ${e.message}",
-                        BugseeLogLevel.Warning
-                    )
-                } finally {
-                    completionHandler?.invoke(nativeEvent)
-                }
-            }
-        } else {
+        if (filter == null) {
             BugseeSDK.setNetworkEventFilter(null)
+            return
+        }
+        BugseeSDK.setNetworkEventFilter { nativeEvent, completionHandler ->
+            // Default to keeping the original event; flipped to filtered.impl
+            // (or null to drop) if the filter runs successfully.
+            var decision: cocoapods.Bugsee.BugseeNetworkEvent? = nativeEvent
+            try {
+                if (nativeEvent != null) {
+                    val filtered = filter.invoke(com.bugsee.kmp.BugseeNetworkEvent(impl = nativeEvent))
+                    // null => drop; non-null => keep (mutations in `impl` propagate)
+                    decision = filtered?.impl
+                }
+            } catch (e: Throwable) {
+                com.bugsee.kmp.Bugsee.log(
+                    "BugseeInternal: exception during networkFilterHandler invoke: ${e.message}",
+                    BugseeLogLevel.Warning
+                )
+                decision = nativeEvent
+            }
+            try {
+                completionHandler?.invoke(decision)
+            } catch (e: Throwable) {
+                Logger.e("BugseeInternal", "networkFilter completionHandler threw: ${e.message}")
+            }
         }
     }
 
@@ -273,16 +281,26 @@ public actual class BugseeInternal {
 
     // Control methods
     public actual fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
-        BugseeSDK.deleteCollectedDataOnDevice(deletionEventListener)
+        BugseeSDK.deleteCollectedDataOnDevice { success ->
+            try {
+                deletionEventListener?.invoke(success)
+            } catch (e: Throwable) {
+                Logger.e("BugseeInternal", "deleteCollectedDataOnDevice: listener threw: ${e.message}")
+            }
+        }
     }
 
     // Extended report methods
     public actual fun createReport(provider: BugseeExtendedReportProvider) {
         BugseeSDK.createReportWithCompletion { nativeReport ->
-            if (nativeReport != null) {
-                provider.invoke(BugseeExtendedReport(nativeReport))
-            } else {
-                Logger.d("BugseeInternal", "createReport: native SDK returned null, provider not invoked")
+            try {
+                if (nativeReport != null) {
+                    provider.invoke(BugseeExtendedReport(nativeReport))
+                } else {
+                    Logger.d("BugseeInternal", "createReport: native SDK returned null, provider not invoked")
+                }
+            } catch (e: Throwable) {
+                Logger.e("BugseeInternal", "createReport: provider threw: ${e.message}")
             }
         }
     }
