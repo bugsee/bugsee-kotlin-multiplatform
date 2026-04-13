@@ -74,6 +74,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(project(":library"))
+            implementation(project(":library-protect"))
 //            implementation(libs.ktor.client.core)
             implementation(libs.ktor3.client.core)
             implementation(libs.ktor3.client.websockets)

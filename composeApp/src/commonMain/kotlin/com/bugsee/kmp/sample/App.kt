@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.Bugsee
 import com.bugsee.kmp.BugseeLogLevel
 import com.bugsee.kmp.BugseeSeverity
+import com.bugsee.kmp.protect.BugseeProtect
 import com.bugsee.kmp.sample.screens.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview

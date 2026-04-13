@@ -1,4 +1,4 @@
-package com.bugsee.kmp.sample
+package com.bugsee.kmp.protect
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
  * @param content The composable content to protect.
  */
 @Composable
-expect fun BugseeProtect(
+public expect fun BugseeProtect(
     modifier: Modifier = Modifier,
     placeMainContent: Boolean = true,
     content: @Composable () -> Unit
