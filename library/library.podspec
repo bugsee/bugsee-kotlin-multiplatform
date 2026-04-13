@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'library'
-    spec.version                  = '0.0.1'
+    spec.version                  = '0.1.0'
     spec.homepage                 = 'https://bugsee.com'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''

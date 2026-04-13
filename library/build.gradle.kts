@@ -10,8 +10,11 @@ plugins {
     alias(libs.plugins.kotlinCocoapods)
 }
 
-group = "com.bugsee.kmp"
-version = "1.0.0"
+// Maven coordinates for the published artifact:
+//   group:    com.bugsee  (matches the existing com.bugsee:bugsee-android namespace on Maven Central)
+//   version:  bumped here for every release; the cocoapods{} block below reuses this same value
+group = "com.bugsee"
+version = "0.1.0"
 
 tasks.withType<KotlinCompile> {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
@@ -22,6 +25,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     androidTarget {
+        // Publish only the `release` Android variant to Maven Central; debug variants are not shipped.
         publishLibraryVariants("release")
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -29,9 +33,18 @@ kotlin {
         }
     }
 
-    iosArm64() // Declares a target that corresponds to 64-bit iPhones
+    // Published iOS targets. Currently device-only (real iPhones, arm64).
+    // Note: without iosSimulatorArm64 / iosX64, consumers cannot run their app
+    // in the iOS simulator against this artifact — they must use a real device.
+    iosArm64()
 
-    // These are simulators targets. Commented out
+    // Simulator targets — intentionally disabled for now.
+    // Adding a second iOS target forces Kotlin/Native's platform-library
+    // commonizer to run across iosArm64 + iosSimulatorArm64, which on Xcode
+    // 16.x fails with "Unresolved classifier: platform/Metal/…" — a known
+    // Kotlin platform-library bug, unrelated to our Bugsee cinterop. Until
+    // that's resolved upstream, simulator tests need a different path (see
+    // docs / discuss with the team).
     // iosX64()
     // iosSimulatorArm64()
 
@@ -93,13 +106,21 @@ kotlin {
         }
     }
 
+    // Kotlin/Native cinterop is generated from the Bugsee CocoaPod at build time.
+    // The published .klib only contains Objective-C bindings — consumers must
+    // supply the actual Bugsee framework themselves (e.g. by adding
+    // `pod 'Bugsee', '~> 6.1.2'` to their own Podfile, or via the Kotlin
+    // cocoapods plugin in their KMP project).
     cocoapods {
         summary = "Bugsee Kotlin Multiplatform Library"
         homepage = "https://bugsee.com"
-        version = "0.0.1"
+        // Reuse the Maven version so the auto-generated library.podspec stays in sync.
+        version = project.version.toString()
 
         pod("Bugsee") {
             version = libs.versions.bugsee.ios.get()
+            // -fmodules is required so clang can resolve Bugsee's @import statements
+            // when generating the cinterop klib.
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
 
@@ -144,36 +165,62 @@ android {
     }
 }
 
+// Maven Central publishing via the vanniktech maven-publish plugin.
+//
+// Required local setup (in ~/.gradle/gradle.properties — NOT this repo):
+//   mavenCentralUsername=<central portal user-token name>
+//   mavenCentralPassword=<central portal user-token password>
+//   signingInMemoryKey=<ASCII-armored GPG private key body>
+//   signingInMemoryKeyId=<last 8 chars of the GPG key id>
+//   signingInMemoryKeyPassword=<GPG key passphrase>
+//
+// Generate the user token at https://central.sonatype.com/account
+// Export the GPG key with:  gpg --export-secret-keys --armor <key-id>
+//
+// Publish steps:
+//   1. ./gradlew :library:publishToMavenLocal           (smoke test, writes to ~/.m2)
+//   2. ./gradlew :library:publishAndReleaseToMavenCentral (uploads + auto-releases)
 mavenPublishing {
+    // Target the new Central Portal (https://central.sonatype.com), not the legacy OSSRH.
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-    signAllPublications()
+    // GPG-sign every publication (KMP root + android + iosarm64 + sources/javadoc).
+    // Central Portal rejects unsigned artifacts, but local smoke tests
+    // (./gradlew :library:publishToMavenLocal) shouldn't require GPG keys.
+    // Sign only when a signing key is configured.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
 
-    coordinates(group.toString(), "library", version.toString())
+    // Final coordinates: com.bugsee:bugsee-kotlin-multiplatform:<version>
+    // Per-target artifacts derive from this base id automatically:
+    //   *-android, *-iosarm64, *-kotlinMultiplatform (root metadata).
+    coordinates("com.bugsee", "bugsee-kotlin-multiplatform", version.toString())
 
     pom {
-        name = "Bugsee"
-        description = "A library."
-        inceptionYear = "2024"
-        url = "https://github.com/kotlin/multiplatform-library-template/"
+        name.set("Bugsee Kotlin Multiplatform")
+        description.set("Kotlin Multiplatform wrapper around the native Bugsee crash reporting SDKs for Android and iOS.")
+        inceptionYear.set("2026")
+        url.set("https://bugsee.com")
+
         licenses {
             license {
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
+                name = "Proprietary"
+                url = "https://bugsee.com/tos/"
             }
         }
+
         developers {
             developer {
-                id = "XXX"
-                name = "YYY"
-                url = "ZZZ"
+                id.set("bugsee")
+                name.set("Bugsee, Inc")
+                email.set("support@bugsee.com")
+                url.set("https://bugsee.com")
             }
         }
+
         scm {
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
+            url = "https://bugsee.com/"
         }
     }
 }
