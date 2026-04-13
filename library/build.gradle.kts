@@ -13,8 +13,8 @@ plugins {
 // Maven coordinates for the published artifact:
 //   group:    com.bugsee  (matches the existing com.bugsee:bugsee-android namespace on Maven Central)
 //   version:  bumped here for every release; the cocoapods{} block below reuses this same value
-group = "com.bugsee"
-version = "0.1.0"
+group = "${project.properties["LIB_GROUP"]}"
+version = "${project.properties["LIB_VERSION"]}"
 
 tasks.withType<KotlinCompile> {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)

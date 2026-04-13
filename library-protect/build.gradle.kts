@@ -12,8 +12,8 @@ plugins {
 }
 
 // Match :library exactly so the two artifacts ship in lockstep.
-group = "com.bugsee"
-version = "0.1.0"
+group = "${project.properties["LIB_GROUP"]}"
+version = "${project.properties["LIB_VERSION"]}"
 
 tasks.withType<KotlinCompile> {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
