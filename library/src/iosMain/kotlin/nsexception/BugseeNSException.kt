@@ -1,26 +1,30 @@
+@file:OptIn(ExperimentalNativeApi::class)
+
 package com.bugsee.kmp.nsexception
 
-import kotlinx.cinterop.convert
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.getStackTraceAddresses
 import platform.Foundation.NSException
 import platform.Foundation.NSNumber
-import platform.darwin.NSUInteger
 
-public class BugseeNSException(
+public class BugseeNSException private constructor(
     name: String,
     reason: String?,
     private val stackFrameAddresses: List<NSNumber>,
+    private val stackFrameSymbols: List<String>,
 ) : NSException(name, reason, null) {
     public constructor(throwable: Throwable) : this(
-        throwable.name,
-        throwable.message,
-        throwable.getStackTraceAddresses().map { address ->
-            NSNumber(unsignedInteger = address.convert<NSUInteger>())
+        name = throwable.name,
+        reason = throwable.message,
+        stackFrameAddresses = throwable.getStackTraceAddresses().map { address ->
+            NSNumber(unsignedLongLong = address.toULong())
         },
+        stackFrameSymbols = throwable.getStackTrace().toList(),
     )
 
-    override fun callStackReturnAddresses(): List<*> {
-        return stackFrameAddresses
-    }
+    override fun callStackReturnAddresses(): List<*> = stackFrameAddresses
+
+    override fun callStackSymbols(): List<*> = stackFrameSymbols
 }
 
 private val Throwable.name: String
