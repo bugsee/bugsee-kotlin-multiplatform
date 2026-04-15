@@ -33,20 +33,12 @@ kotlin {
         }
     }
 
-    // Published iOS targets. Currently device-only (real iPhones, arm64).
-    // Note: without iosSimulatorArm64 / iosX64, consumers cannot run their app
-    // in the iOS simulator against this artifact — they must use a real device.
+    // Published iOS targets — device (arm64) + both simulator slices so
+    // consumers can link against the artifact from the iOS simulator as well
+    // as real devices.
     iosArm64()
-
-    // Simulator targets — intentionally disabled for now.
-    // Adding a second iOS target forces Kotlin/Native's platform-library
-    // commonizer to run across iosArm64 + iosSimulatorArm64, which on Xcode
-    // 16.x fails with "Unresolved classifier: platform/Metal/…" — a known
-    // Kotlin platform-library bug, unrelated to our Bugsee cinterop. Until
-    // that's resolved upstream, simulator tests need a different path (see
-    // docs / discuss with the team).
-    // iosX64()
-    // iosSimulatorArm64()
+    iosX64()
+    iosSimulatorArm64()
 
     sourceSets {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)

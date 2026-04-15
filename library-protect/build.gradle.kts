@@ -32,9 +32,11 @@ kotlin {
         }
     }
 
-    // Device-only iOS, mirroring :library. Must NOT add simulator targets unless
-    // :library also adds them — KMP target sets must match for transitive deps.
+    // iOS target set MUST match :library (this module depends on it transitively),
+    // so device + both simulator slices are all published.
     iosArm64()
+    iosX64()
+    iosSimulatorArm64()
 
     sourceSets {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
