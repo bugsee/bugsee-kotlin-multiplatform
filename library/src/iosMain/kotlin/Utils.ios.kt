@@ -82,11 +82,16 @@ internal class BugseeIOSUtils {
             try {
                 if (attachment.data != null) {
                     val size = attachment.data.size
-                    attachment.data.usePinned { pinned ->
-                        result.data = NSData.create(
-                            bytes = pinned.addressOf(0),
-                            length = size.toULong()
-                        )
+                    // addressOf(0) throws on an empty ByteArray, so produce empty NSData directly.
+                    result.data = if (size == 0) {
+                        NSData()
+                    } else {
+                        attachment.data.usePinned { pinned ->
+                            NSData.create(
+                                bytes = pinned.addressOf(0),
+                                length = size.toULong()
+                            )
+                        }
                     }
                 } else if (!attachment.filePath.isNullOrEmpty()) {
                     Logger.d("Utils", "convertAttachment filePath = ${attachment.filePath}")
