@@ -1,144 +1,118 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Run tests for every publishable module (:library and :library-protect) on CI
+# simulators for both platforms:
+#   - Android: Robolectric (JVM-hosted Android runtime simulator)
+#   - iOS:     Xcode simulator — iosSimulatorArm64 on Apple Silicon, iosX64 on Intel
+#
+# Usage:
+#   scripts/test.sh                  # run android + ios
+#   scripts/test.sh android          # android only
+#   scripts/test.sh ios              # ios only
+#   scripts/test.sh <gradle-args...> # forward extra args to gradle
 
-# Test runner script for Bugsee KMP Library
-# This script runs tests for all platforms
+set -euo pipefail
 
-set -e
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
 
-echo "🧪 Running Bugsee KMP Library Tests"
-echo "====================================="
-
-# Check if JAVA_HOME is set, if not try to set it
-if [ -z "$JAVA_HOME" ]; then
-    echo "⚠️  JAVA_HOME not set, attempting to find JDK..."
-    
-    # Try to find JDK using macOS java_home utility
-    if command -v /usr/libexec/java_home >/dev/null 2>&1; then
-        # Try to find JDK (not JRE) by checking for javac
-        JAVA_HOME=""
-        for version in 21 17 11; do
-            candidate=$(/usr/libexec/java_home -v $version 2>/dev/null)
-            if [ -n "$candidate" ] && [ -f "$candidate/bin/javac" ]; then
-                JAVA_HOME="$candidate"
-                break
-            fi
-        done
-        
-        # If no JDK found, try any available Java installation
-        if [ -z "$JAVA_HOME" ]; then
-            JAVA_HOME=$(/usr/libexec/java_home 2>/dev/null)
+# ---------- JAVA_HOME ----------
+if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1; then
+    for v in 21 17 11; do
+        candidate="$(/usr/libexec/java_home -v "$v" 2>/dev/null || true)"
+        if [ -n "$candidate" ] && [ -x "$candidate/bin/javac" ]; then
+            export JAVA_HOME="$candidate"
+            break
         fi
-        
-        if [ -n "$JAVA_HOME" ]; then
-            export JAVA_HOME
-            if [ -f "$JAVA_HOME/bin/javac" ]; then
-                echo "✅ Found JDK at: $JAVA_HOME"
-            else
-                echo "⚠️  Found JRE at: $JAVA_HOME (JDK preferred for compilation)"
-                echo "   Consider installing JDK: brew install openjdk@21"
-            fi
-        else
-            echo "❌ No Java installation found. Please install JDK 11 or higher."
-            echo "   You can install it using: brew install openjdk@21"
-            exit 1
-        fi
-    else
-        echo "❌ Cannot find JDK. Please set JAVA_HOME environment variable."
-        echo "   Example: export JAVA_HOME=/path/to/jdk"
-        exit 1
-    fi
-else
-    echo "✅ Using JAVA_HOME: $JAVA_HOME"
+    done
 fi
-
-# Verify Java installation
-if ! java -version >/dev/null 2>&1; then
-    echo "❌ Java is not working properly. Please check your Java installation."
+if [ -z "${JAVA_HOME:-}" ]; then
+    echo "error: JDK 11+ required. Install with: brew install openjdk@21" >&2
     exit 1
 fi
 
-echo "Java version:"
+echo "JAVA_HOME=$JAVA_HOME"
 java -version
-echo ""
 
-# Function to run tests for a specific target
-run_tests() {
-    local target=$1
-    local description=$2
-    
+# ---------- ANDROID_HOME ----------
+# CI runners often provide ANDROID_SDK_ROOT but Gradle expects ANDROID_HOME.
+if [ -z "${ANDROID_HOME:-}" ] && [ -n "${ANDROID_SDK_ROOT:-}" ]; then
+    export ANDROID_HOME="$ANDROID_SDK_ROOT"
+fi
+if [ -n "${ANDROID_HOME:-}" ]; then
+    export PATH="$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$PATH"
+    echo "ANDROID_HOME=$ANDROID_HOME"
+fi
+
+# ---------- iOS simulator task (arch-detected) ----------
+# We run the slice matching the host so the test binary can launch on a booted
+# simulator without Rosetta. CI Mac runners are usually arm64 nowadays.
+ARCH="$(uname -m)"
+case "$ARCH" in
+    arm64)   IOS_TEST_NAME="iosSimulatorArm64Test" ;;
+    x86_64)  IOS_TEST_NAME="iosX64Test" ;;
+    *) echo "error: unsupported host arch '$ARCH' for iOS simulator tests" >&2; exit 1 ;;
+esac
+
+# Every publishable KMP module must be covered on both CI simulators.
+MODULES=(":library" ":library-protect")
+IOS_TASKS=()
+ANDROID_TASKS=()
+for m in "${MODULES[@]}"; do
+    IOS_TASKS+=("$m:$IOS_TEST_NAME")
+    ANDROID_TASKS+=("$m:testDebugUnitTest")
+done
+
+# ---------- arg parsing ----------
+RUN_ANDROID=1
+RUN_IOS=1
+GRADLE_ARGS=("--console=plain" "--stacktrace")
+for arg in "$@"; do
+    case "$arg" in
+        android) RUN_ANDROID=1; RUN_IOS=0 ;;
+        ios)     RUN_ANDROID=0; RUN_IOS=1 ;;
+        all)     RUN_ANDROID=1; RUN_IOS=1 ;;
+        *)       GRADLE_ARGS+=("$arg") ;;
+    esac
+done
+
+# Only macOS hosts can run Kotlin/Native iOS tests. On Linux CI, skip iOS.
+if [ "$RUN_IOS" = "1" ] && [ "$(uname -s)" != "Darwin" ]; then
+    echo "note: host is $(uname -s) — skipping iOS tests (macOS required)"
+    RUN_IOS=0
+fi
+
+# ---------- run ----------
+ANDROID_STATUS="skipped"
+IOS_STATUS="skipped"
+
+if [ "$RUN_ANDROID" = "1" ]; then
     echo ""
-    echo "📱 Testing $description..."
-    echo "------------------------"
-    
-    if ./gradlew :library:test${target}UnitTest --no-daemon --console=plain; then
-        echo "✅ $description tests passed"
+    echo "=== Android tests (Robolectric): ${ANDROID_TASKS[*]} ==="
+    if ./gradlew "${ANDROID_TASKS[@]}" "${GRADLE_ARGS[@]}"; then
+        ANDROID_STATUS="passed"
     else
-        echo "❌ $description tests failed"
-        echo "   This might be due to missing JDK or platform-specific issues."
-        echo "   Try running: ./gradlew :library:test${target}UnitTest --info"
-        return 1
+        ANDROID_STATUS="failed"
     fi
-}
+fi
 
-# Function to check if we can run tests
-check_test_environment() {
-    echo "🔍 Checking test environment..."
-    
-    # Check if gradlew exists
-    if [ ! -f "./gradlew" ]; then
-        echo "❌ gradlew not found. Please run this script from the project root."
-        exit 1
-    fi
-    
-    # Check if gradlew is executable
-    if [ ! -x "./gradlew" ]; then
-        echo "⚠️  Making gradlew executable..."
-        chmod +x ./gradlew
-    fi
-    
-    echo "✅ Test environment looks good"
+if [ "$RUN_IOS" = "1" ]; then
     echo ""
-}
-
-# Check test environment
-check_test_environment
-
-# Run tests for all platforms
-echo "🚀 Starting test execution..."
-
-# Common tests (shared across all platforms)
-echo ""
-echo "🌐 Running Common Tests..."
-echo "------------------------"
-if ./gradlew :library:test --no-daemon --console=plain; then
-    echo "✅ All tests passed"
-else
-    echo "⚠️  Some tests failed (this is expected for expect classes in common tests)"
-    echo "   The important thing is that compilation succeeded and tests are running."
-    echo "   Platform-specific implementations will handle the actual functionality."
-fi
-
-# Run Android unit tests with Robolectric
-echo ""
-echo "🤖 Testing Android with Robolectric..."
-echo "------------------------------------"
-if ./gradlew :library:testDebugUnitTest --no-daemon --console=plain; then
-    echo "✅ Android tests passed"
-else
-    echo "⚠️  Android tests had issues (this might be due to Robolectric setup)"
-    echo "   Check that Android SDK is properly configured"
+    echo "=== iOS tests: ${IOS_TASKS[*]} ==="
+    if ./gradlew "${IOS_TASKS[@]}" "${GRADLE_ARGS[@]}"; then
+        IOS_STATUS="passed"
+    else
+        IOS_STATUS="failed"
+    fi
 fi
 
 echo ""
-echo "🎉 Test execution completed!"
-echo "============================="
+echo "=== Summary ==="
+printf "  %-10s %s\n" "android:" "$ANDROID_STATUS"
+printf "  %-10s %s (%s on %s)\n" "ios:" "$IOS_STATUS" "$IOS_TEST_NAME" "$ARCH"
+echo "  modules:   ${MODULES[*]}"
 echo ""
-echo "Test Summary:"
-echo "- ✅ Compilation successful"
-echo "- ✅ Test framework working"
-echo "- ✅ Comprehensive test coverage implemented"
-echo "- ✅ All common tests passing"
-echo ""
-echo "The Bugsee KMP library now has comprehensive test coverage!"
-echo "Common tests validate core functionality across all platforms."
-echo "Platform-specific tests can be run in their respective environments."
+echo "Reports: */build/reports/tests/"
+
+if [ "$ANDROID_STATUS" = "failed" ] || [ "$IOS_STATUS" = "failed" ]; then
+    exit 1
+fi

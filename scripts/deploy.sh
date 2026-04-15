@@ -1,1 +1,110 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Publish both KMP modules to Maven Central (Sonatype Central Portal):
+#   com.bugsee:bugsee-kotlin-multiplatform:<LIB_VERSION>
+#   com.bugsee:bugsee-kotlin-multiplatform-protect:<LIB_VERSION>
+#
+# Targets per module: androidRelease, iosArm64, iosX64, iosSimulatorArm64, kotlinMultiplatform.
+#
+# Required credentials (env vars OR ~/.gradle/gradle.properties):
+#   ORG_GRADLE_PROJECT_mavenCentralUsername        / mavenCentralUsername
+#   ORG_GRADLE_PROJECT_mavenCentralPassword        / mavenCentralPassword
+#   ORG_GRADLE_PROJECT_signingInMemoryKey          / signingInMemoryKey
+#   ORG_GRADLE_PROJECT_signingInMemoryKeyId        / signingInMemoryKeyId
+#   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword  / signingInMemoryKeyPassword
+#
+# Usage:
+#   scripts/deploy.sh              # test + publish
+#   scripts/deploy.sh --skip-tests # publish without running tests (dangerous)
+#   scripts/deploy.sh --local      # publishToMavenLocal (smoke test)
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
+
+# ---------- JAVA_HOME ----------
+if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1; then
+    for v in 21 17 11; do
+        candidate="$(/usr/libexec/java_home -v "$v" 2>/dev/null || true)"
+        if [ -n "$candidate" ] && [ -x "$candidate/bin/javac" ]; then
+            export JAVA_HOME="$candidate"
+            break
+        fi
+    done
+fi
+if [ -z "${JAVA_HOME:-}" ]; then
+    echo "error: JDK 11+ required" >&2
+    exit 1
+fi
+
+# ---------- ANDROID_HOME ----------
+if [ -z "${ANDROID_HOME:-}" ] && [ -n "${ANDROID_SDK_ROOT:-}" ]; then
+    export ANDROID_HOME="$ANDROID_SDK_ROOT"
+fi
+if [ -n "${ANDROID_HOME:-}" ]; then
+    export PATH="$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$PATH"
+fi
+
+# ---------- args ----------
+SKIP_TESTS=0
+LOCAL_ONLY=0
+GRADLE_ARGS=("--console=plain" "--stacktrace")
+for arg in "$@"; do
+    case "$arg" in
+        --skip-tests) SKIP_TESTS=1 ;;
+        --local)      LOCAL_ONLY=1 ;;
+        *)            GRADLE_ARGS+=("$arg") ;;
+    esac
+done
+
+# ---------- version ----------
+VERSION="$(awk -F= '$1=="LIB_VERSION"{print $2; exit}' gradle.properties | tr -d '[:space:]')"
+if [ -z "$VERSION" ]; then
+    echo "error: LIB_VERSION missing from gradle.properties" >&2
+    exit 1
+fi
+
+MODULES=(":library" ":library-protect")
+echo "Publishing version $VERSION for: ${MODULES[*]}"
+
+# ---------- credential sanity check (remote publish only) ----------
+if [ "$LOCAL_ONLY" = "0" ]; then
+    HOME_GRADLE_PROPS="${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
+    missing=()
+    for key in mavenCentralUsername mavenCentralPassword \
+               signingInMemoryKey signingInMemoryKeyId signingInMemoryKeyPassword; do
+        env_name="ORG_GRADLE_PROJECT_$key"
+        if [ -z "${!env_name:-}" ] && ! grep -qE "^[[:space:]]*$key=" "$HOME_GRADLE_PROPS" 2>/dev/null; then
+            missing+=("$key")
+        fi
+    done
+    if [ "${#missing[@]}" -gt 0 ]; then
+        echo "error: missing credentials: ${missing[*]}" >&2
+        echo "       set ORG_GRADLE_PROJECT_<name> env vars or add to $HOME_GRADLE_PROPS" >&2
+        exit 1
+    fi
+fi
+
+# ---------- tests ----------
+if [ "$SKIP_TESTS" = "0" ]; then
+    echo ""
+    echo "=== Running tests before publish ==="
+    "$REPO_ROOT/scripts/test.sh"
+else
+    echo "note: --skip-tests set, skipping test run"
+fi
+
+# ---------- publish ----------
+echo ""
+PUBLISH_TASKS=()
+if [ "$LOCAL_ONLY" = "1" ]; then
+    for m in "${MODULES[@]}"; do PUBLISH_TASKS+=("$m:publishToMavenLocal"); done
+    echo "=== publishToMavenLocal: ${PUBLISH_TASKS[*]} ==="
+    ./gradlew "${PUBLISH_TASKS[@]}" "${GRADLE_ARGS[@]}"
+    echo "published to $HOME/.m2/repository/com/bugsee/"
+else
+    for m in "${MODULES[@]}"; do PUBLISH_TASKS+=("$m:publishAndReleaseToMavenCentral"); done
+    echo "=== publishAndReleaseToMavenCentral: ${PUBLISH_TASKS[*]} ==="
+    ./gradlew "${PUBLISH_TASKS[@]}" "${GRADLE_ARGS[@]}"
+    echo "released version $VERSION of ${MODULES[*]} to Maven Central"
+fi
