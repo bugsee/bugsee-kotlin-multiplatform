@@ -71,6 +71,13 @@ android {
     }
 }
 
+tasks.withType<AbstractTestTask> {
+    outputs.upToDateWhen { false }
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
 // Maven Central publishing — same conventions as :library.
 // Required local setup (~/.gradle/gradle.properties keys, GPG key export, publish
 // commands) is documented at the top of the mavenPublishing block in :library/build.gradle.kts.

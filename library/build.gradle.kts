@@ -138,6 +138,16 @@ kotlin {
     }
 }
 
+// Print each test method and its result in CI logs (applies to all test tasks).
+// outputs.upToDateWhen { false } forces re-execution so results always appear,
+// even when Gradle considers the task UP-TO-DATE from a prior build on CI.
+tasks.withType<AbstractTestTask> {
+    outputs.upToDateWhen { false }
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
 android {
     namespace = "com.bugsee.kmp"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
