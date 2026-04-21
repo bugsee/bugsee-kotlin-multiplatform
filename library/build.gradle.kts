@@ -101,7 +101,7 @@ kotlin {
     // Kotlin/Native cinterop is generated from the Bugsee CocoaPod at build time.
     // The published .klib only contains Objective-C bindings — consumers must
     // supply the actual Bugsee framework themselves (e.g. by adding
-    // `pod 'Bugsee', '~> 6.1.2'` to their own Podfile, or via the Kotlin
+    // `pod 'Bugsee'` to their own Podfile, or via the Kotlin
     // cocoapods plugin in their KMP project).
     cocoapods {
         summary = "Bugsee Kotlin Multiplatform Library"
