@@ -172,12 +172,12 @@ android {
 // Required local setup (in ~/.gradle/gradle.properties — NOT this repo):
 //   mavenCentralUsername=<central portal user-token name>
 //   mavenCentralPassword=<central portal user-token password>
-//   signingInMemoryKey=<ASCII-armored GPG private key body>
-//   signingInMemoryKeyId=<last 8 chars of the GPG key id>
-//   signingInMemoryKeyPassword=<GPG key passphrase>
+//   signing.keyId=<last 8 chars of the GPG key id>
+//   signing.password=<GPG key passphrase>
+//   signing.secretKeyRingFile=<absolute path to GPG secring.gpg>
 //
 // Generate the user token at https://central.sonatype.com/account
-// Export the GPG key with:  gpg --export-secret-keys --armor <key-id>
+// Export a legacy secring.gpg with:  gpg --export-secret-keys -o ~/.gnupg/secring.gpg
 //
 // Publish steps:
 //   1. ./gradlew :library:publishToMavenLocal           (smoke test, writes to ~/.m2)
@@ -190,7 +190,7 @@ mavenPublishing {
     // Central Portal rejects unsigned artifacts, but local smoke tests
     // (./gradlew :library:publishToMavenLocal) shouldn't require GPG keys.
     // Sign only when a signing key is configured.
-    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+    if (providers.gradleProperty("signing.keyId").isPresent) {
         signAllPublications()
     }
 

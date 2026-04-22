@@ -5,12 +5,14 @@
 #
 # Targets per module: androidRelease, iosArm64, iosX64, iosSimulatorArm64, kotlinMultiplatform.
 #
-# Required credentials (env vars OR ~/.gradle/gradle.properties):
-#   ORG_GRADLE_PROJECT_mavenCentralUsername        / mavenCentralUsername
-#   ORG_GRADLE_PROJECT_mavenCentralPassword        / mavenCentralPassword
-#   ORG_GRADLE_PROJECT_signingInMemoryKey          / signingInMemoryKey
-#   ORG_GRADLE_PROJECT_signingInMemoryKeyId        / signingInMemoryKeyId
-#   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword  / signingInMemoryKeyPassword
+# Required credentials in ~/.gradle/gradle.properties (env-var form in parens
+# works only for the maven-portal keys — the classic signing.* names contain
+# dots and cannot be exported as shell env vars):
+#   mavenCentralUsername       (ORG_GRADLE_PROJECT_mavenCentralUsername)
+#   mavenCentralPassword       (ORG_GRADLE_PROJECT_mavenCentralPassword)
+#   signing.keyId              # last 8 chars of the GPG key id
+#   signing.password           # GPG key passphrase
+#   signing.secretKeyRingFile  # absolute path to secring.gpg
 #
 # Usage:
 #   scripts/deploy.sh              # test + publish
@@ -71,16 +73,22 @@ echo "Publishing version $VERSION for: ${MODULES[*]}"
 if [ "$LOCAL_ONLY" = "0" ]; then
     HOME_GRADLE_PROPS="${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
     missing=()
-    for key in mavenCentralUsername mavenCentralPassword \
-               signingInMemoryKey signingInMemoryKeyId signingInMemoryKeyPassword; do
+    # Maven portal credentials: env vars OR gradle.properties.
+    for key in mavenCentralUsername mavenCentralPassword; do
         env_name="ORG_GRADLE_PROJECT_$key"
         if [ -z "${!env_name:-}" ] && ! grep -qE "^[[:space:]]*$key=" "$HOME_GRADLE_PROPS" 2>/dev/null; then
             missing+=("$key")
         fi
     done
+    # Classic signing.* keys: gradle.properties only (dots block env-var export).
+    for key in signing.keyId signing.password signing.secretKeyRingFile; do
+        if ! grep -qE "^[[:space:]]*${key//./\\.}=" "$HOME_GRADLE_PROPS" 2>/dev/null; then
+            missing+=("$key")
+        fi
+    done
     if [ "${#missing[@]}" -gt 0 ]; then
         echo "error: missing credentials: ${missing[*]}" >&2
-        echo "       set ORG_GRADLE_PROJECT_<name> env vars or add to $HOME_GRADLE_PROPS" >&2
+        echo "       add them to $HOME_GRADLE_PROPS (or export ORG_GRADLE_PROJECT_* for maven keys)" >&2
         exit 1
     fi
 fi
