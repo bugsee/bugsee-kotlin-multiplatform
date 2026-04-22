@@ -1,7 +1,7 @@
 PODS:
-  - Bugsee (6.1.2)
+  - Bugsee (6.1.3)
   - composeApp (1.0-SNAPSHOT):
-    - Bugsee (= 6.1.2)
+    - Bugsee (= 6.1.3)
 
 DEPENDENCIES:
   - composeApp (from `../composeApp`)
@@ -15,8 +15,8 @@ EXTERNAL SOURCES:
     :path: "../composeApp"
 
 SPEC CHECKSUMS:
-  Bugsee: 4201b8acfccd85d6115ef777b5253dc8f9173f69
-  composeApp: a9fa06b2e088cb9062d5142d334cede20c5d5b44
+  Bugsee: c085916e527fe7da9cc00246ea31d64c6c353fbc
+  composeApp: 33ed43d6c56a1bd13d088fd8699f7cfecff69eef
 
 PODFILE CHECKSUM: 3f3b5ddd5d8323f619f565895b03653c146298c4
 
