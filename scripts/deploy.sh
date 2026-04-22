@@ -14,10 +14,16 @@
 #   signing.password           # GPG key passphrase
 #   signing.secretKeyRingFile  # absolute path to secring.gpg
 #
+# Release vs SNAPSHOT is controlled by the RELEASE env var (same convention as the
+# legacy bugsee-android SDK):
+#   RELEASE=true  -> publish LIB_VERSION as-is (e.g. 0.1.0)
+#   unset / false -> publish with a -SNAPSHOT suffix (e.g. 0.1.0-SNAPSHOT)
+#
 # Usage:
-#   scripts/deploy.sh              # test + publish
-#   scripts/deploy.sh --skip-tests # publish without running tests (dangerous)
-#   scripts/deploy.sh --local      # publishToMavenLocal (smoke test)
+#   scripts/deploy.sh                     # SNAPSHOT publish + tests
+#   RELEASE=true scripts/deploy.sh        # release publish + tests
+#   scripts/deploy.sh --skip-tests        # publish without running tests (dangerous)
+#   scripts/deploy.sh --local             # publishToMavenLocal (smoke test, RELEASE respected)
 
 set -euo pipefail
 
@@ -66,8 +72,22 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
+# RELEASE env var gates the -SNAPSHOT suffix (see header comment). Build files
+# resolve this identically; the echo below is purely for the operator.
+RELEASE_FLAG="${RELEASE:-false}"
+case "$RELEASE_FLAG" in
+    true|TRUE|1) RELEASE_FLAG=true ;;
+    *)           RELEASE_FLAG=false ;;
+esac
+if [ "$RELEASE_FLAG" = "true" ]; then
+    EFFECTIVE_VERSION="$VERSION"
+else
+    EFFECTIVE_VERSION="${VERSION}-SNAPSHOT"
+fi
+export RELEASE="$RELEASE_FLAG"
+
 MODULES=(":library" ":library-protect")
-echo "Publishing version $VERSION for: ${MODULES[*]}"
+echo "RELEASE=$RELEASE_FLAG  ->  publishing $EFFECTIVE_VERSION for: ${MODULES[*]}"
 
 # ---------- credential sanity check (remote publish only) ----------
 if [ "$LOCAL_ONLY" = "0" ]; then
@@ -109,10 +129,10 @@ if [ "$LOCAL_ONLY" = "1" ]; then
     for m in "${MODULES[@]}"; do PUBLISH_TASKS+=("$m:publishToMavenLocal"); done
     echo "=== publishToMavenLocal: ${PUBLISH_TASKS[*]} ==="
     ./gradlew "${PUBLISH_TASKS[@]}" "${GRADLE_ARGS[@]}"
-    echo "published to $HOME/.m2/repository/com/bugsee/"
+    echo "published $EFFECTIVE_VERSION to $HOME/.m2/repository/com/bugsee/"
 else
     for m in "${MODULES[@]}"; do PUBLISH_TASKS+=("$m:publishAndReleaseToMavenCentral"); done
     echo "=== publishAndReleaseToMavenCentral: ${PUBLISH_TASKS[*]} ==="
     ./gradlew "${PUBLISH_TASKS[@]}" "${GRADLE_ARGS[@]}"
-    echo "released version $VERSION of ${MODULES[*]} to Maven Central"
+    echo "released $EFFECTIVE_VERSION of ${MODULES[*]} to Maven Central"
 fi

@@ -12,9 +12,15 @@ plugins {
 
 // Maven coordinates for the published artifact:
 //   group:    com.bugsee  (matches the existing com.bugsee:bugsee-android namespace on Maven Central)
-//   version:  bumped here for every release; the cocoapods{} block below reuses this same value
+//   version:  LIB_VERSION (e.g. 0.1.0) — a SNAPSHOT suffix is appended automatically unless
+//             RELEASE=true is set in the environment (or -PRELEASE=true on the Gradle CLI).
+//             Convention matches the legacy bugsee-android SDK's release script.
+//             The cocoapods{} block below reuses the resolved value.
 group = "${project.properties["LIB_GROUP"]}"
-version = "${project.properties["LIB_VERSION"]}"
+val isReleaseBuild: Boolean =
+    (System.getenv("RELEASE") ?: project.findProperty("RELEASE")?.toString() ?: "false").toBoolean()
+version = "${project.properties["LIB_VERSION"]}" + if (isReleaseBuild) "" else "-SNAPSHOT"
+println("[:library] Release build: $isReleaseBuild  —  version: $version")
 
 tasks.withType<KotlinCompile> {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
