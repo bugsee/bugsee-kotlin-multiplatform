@@ -21,7 +21,7 @@ class BugseeLaunchOptionsTest {
         
         val wrapperInfo = map["wrapper_info"] as Map<String, Any>
         assertEquals("kmp", wrapperInfo["type"])
-        assertEquals("0.0.1-beta", wrapperInfo["version"])
+        assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
         assertNotNull(wrapperInfo["runtime"])
     }
 

@@ -93,10 +93,13 @@ public open class BugseeLaunchOptions {
     }
 
     private fun getWrapperInfo(): Map<String, Any> {
-//        val runtime = mapOf("version" to KotlinVersion.CURRENT.toString())
         val runtime = KotlinVersion.CURRENT.toString()
 
-        return mapOf("type" to "kmp", "version" to "0.0.1-beta", "runtime" to runtime)
+        return mapOf(
+            "type" to "kmp",
+            "version" to BuildKonfig.libraryVersion,
+            "build" to BuildKonfig.buildChecksum,
+            "runtime" to runtime)
     }
 
     protected open fun setDefaults() {
