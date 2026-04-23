@@ -328,12 +328,22 @@ public actual class BugseeInternal {
     public actual fun addSecureView(view: Any?) {
         if (view is UIView) {
             BugseeSDK.setView(view, asHidden = true)
+        } else {
+            Logger.e(
+                "BugseeInternal",
+                "addSecureView: expected platform.UIKit.UIView on iOS, got ${view?.let { it::class.simpleName } ?: "null"} — ignoring"
+            )
         }
     }
 
     public actual fun removeSecureView(view: Any?) {
         if (view is UIView) {
             BugseeSDK.setView(view, asHidden = false)
+        } else {
+            Logger.e(
+                "BugseeInternal",
+                "removeSecureView: expected platform.UIKit.UIView on iOS, got ${view?.let { it::class.simpleName } ?: "null"} — ignoring"
+            )
         }
     }
 

@@ -258,12 +258,22 @@ public actual class BugseeInternal {
     public actual fun addSecureView(view: Any?) {
         if (view is View) {
             BugseeSDK.addSecureView(view)
+        } else {
+            Logger.e(
+                "BugseeInternal",
+                "addSecureView: expected android.view.View on Android, got ${view?.let { it::class.simpleName } ?: "null"} — ignoring"
+            )
         }
     }
 
     public actual fun removeSecureView(view: Any?) {
         if (view is View) {
             BugseeSDK.removeSecureView(view)
+        } else {
+            Logger.e(
+                "BugseeInternal",
+                "removeSecureView: expected android.view.View on Android, got ${view?.let { it::class.simpleName } ?: "null"} — ignoring"
+            )
         }
     }
 
