@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Publish both KMP modules to Maven Central (Sonatype Central Portal):
-#   com.bugsee:bugsee-kotlin-multiplatform:<LIB_VERSION>
-#   com.bugsee:bugsee-kotlin-multiplatform-protect:<LIB_VERSION>
+#   com.bugsee:bugsee-kotlin-multiplatform:<version from version.txt>
+#   com.bugsee:bugsee-kotlin-multiplatform-protect:<version from version.txt>
 #
 # Targets per module: androidRelease, iosArm64, iosX64, iosSimulatorArm64, kotlinMultiplatform.
 #
@@ -16,7 +16,7 @@
 #
 # Release vs SNAPSHOT is controlled by the RELEASE env var (same convention as the
 # legacy bugsee-android SDK):
-#   RELEASE=true  -> publish LIB_VERSION as-is (e.g. 0.1.0)
+#   RELEASE=true  -> publish version.txt value as-is (e.g. 0.1.0)
 #   unset / false -> publish with a -SNAPSHOT suffix (e.g. 0.1.0-SNAPSHOT)
 #
 # Usage:
@@ -66,9 +66,13 @@ for arg in "$@"; do
 done
 
 # ---------- version ----------
-VERSION="$(awk -F= '$1=="LIB_VERSION"{print $2; exit}' gradle.properties | tr -d '[:space:]')"
+if [ ! -f version.txt ]; then
+    echo "error: version.txt missing from repo root" >&2
+    exit 1
+fi
+VERSION="$(head -n1 version.txt | tr -d '[:space:]')"
 if [ -z "$VERSION" ]; then
-    echo "error: LIB_VERSION missing from gradle.properties" >&2
+    echo "error: version.txt is empty" >&2
     exit 1
 fi
 

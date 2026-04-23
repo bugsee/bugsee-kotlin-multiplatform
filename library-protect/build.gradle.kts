@@ -13,10 +13,15 @@ plugins {
 
 // Match :library exactly so the two artifacts ship in lockstep.
 // RELEASE=true flips off the -SNAPSHOT suffix; see :library/build.gradle.kts for the rationale.
-group = "${project.properties["LIB_GROUP"]}"
+
 val isReleaseBuild: Boolean =
     (System.getenv("RELEASE") ?: project.findProperty("RELEASE")?.toString() ?: "false").toBoolean()
-version = "${project.properties["LIB_VERSION"]}" + if (isReleaseBuild) "" else "-SNAPSHOT"
+val libraryVersionName: String = rootProject.file("version.txt").readLines().first().trim() +
+        if (isReleaseBuild) "" else "-SNAPSHOT"
+
+group = "${project.properties["LIB_GROUP"]}"
+version = libraryVersionName
+
 println("[:library-protect] Release build: $isReleaseBuild  —  version: $version")
 
 tasks.withType<KotlinCompile> {

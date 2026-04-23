@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -8,19 +9,34 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.kotlinCocoapods)
+    alias(libs.plugins.buildKonfig)
 }
 
 // Maven coordinates for the published artifact:
 //   group:    com.bugsee  (matches the existing com.bugsee:bugsee-android namespace on Maven Central)
-//   version:  LIB_VERSION (e.g. 0.1.0) — a SNAPSHOT suffix is appended automatically unless
-//             RELEASE=true is set in the environment (or -PRELEASE=true on the Gradle CLI).
-//             Convention matches the legacy bugsee-android SDK's release script.
-//             The cocoapods{} block below reuses the resolved value.
-group = "${project.properties["LIB_GROUP"]}"
+//   version:  read from repo-root version.txt (e.g. 0.1.0) — a SNAPSHOT suffix is appended
+//             automatically unless RELEASE=true is set in the environment
+//             (or -PRELEASE=true on the Gradle CLI). Convention matches the legacy
+//             bugsee-android SDK's release script. The cocoapods{} block and BuildKonfig
+//             libraryVersion field below both reuse the resolved value.
 val isReleaseBuild: Boolean =
     (System.getenv("RELEASE") ?: project.findProperty("RELEASE")?.toString() ?: "false").toBoolean()
-version = "${project.properties["LIB_VERSION"]}" + if (isReleaseBuild) "" else "-SNAPSHOT"
-println("[:library] Release build: $isReleaseBuild  —  version: $version")
+val libraryVersionName: String = rootProject.file("version.txt").readLines().first().trim() +
+        if (isReleaseBuild) "" else "-SNAPSHOT"
+
+// Short git SHA of the current HEAD — surfaced through BuildKonfig so wrapper_info
+// can report which commit produced the artifact. Falls back to "unknown" when the
+// repo has no commits or git is unavailable.
+val buildChecksum: String = runCatching {
+    providers.exec {
+        commandLine("git", "--git-dir=${rootProject.projectDir}/.git", "rev-parse", "--short", "HEAD")
+    }.standardOutput.asText.get().trim()
+}.getOrElse { "unknown" }
+
+group = "${project.properties["LIB_GROUP"]}"
+version = libraryVersionName
+
+println("[:library] Release build: $isReleaseBuild  —  version: $version  —  build: $buildChecksum")
 
 tasks.withType<KotlinCompile> {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
@@ -141,6 +157,17 @@ kotlin {
         binaries.all {
             // Remove problematic compiler args
         }
+    }
+}
+
+// Generates a `com.bugsee.kmp.BuildKonfig` object in commonMain with compile-time
+// constants. `libraryVersion` is consumed by BugseeLaunchOptions.getWrapperInfo()
+// so the value reported to the Bugsee backend always matches the published artifact.
+buildkonfig {
+    packageName = "com.bugsee.kmp"
+    defaultConfigs {
+        buildConfigField(FieldSpec.Type.STRING, "libraryVersion", libraryVersionName)
+        buildConfigField(FieldSpec.Type.STRING, "buildChecksum", buildChecksum)
     }
 }
 
