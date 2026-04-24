@@ -25,6 +25,7 @@ fun MainViewController(): UIViewController {
             AppLogger.d("MainViewController", "New feedback: $message")
         }
     }
+
     return ComposeUIViewController {
         App()
     }
