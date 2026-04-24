@@ -2,12 +2,11 @@ package com.bugsee.kmp.sample
 
 import androidx.compose.ui.window.ComposeUIViewController
 import com.bugsee.kmp.Bugsee
-import com.bugsee.kmp.BugseeAttachment
 import com.bugsee.kmp.BugseeLaunchOptions
-import com.bugsee.kmp.sample.composeapp.generated.resources.Res
-import io.ktor.utils.io.core.toByteArray
+import platform.UIKit.UIViewController
 
-fun MainViewController() = ComposeUIViewController {
+
+fun MainViewController(): UIViewController {
 
     val options = BugseeLaunchOptions()
     options.monitorNetwork = true
@@ -26,6 +25,7 @@ fun MainViewController() = ComposeUIViewController {
             AppLogger.d("MainViewController", "New feedback: $message")
         }
     }
-
-    App()
+    return ComposeUIViewController {
+        App()
+    }
 }
