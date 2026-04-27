@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinCocoapods)
+
+    alias(libs.plugins.bugsee.gradle.plugin)
 }
 
 group = "com.bugsee.kmp.sample"
@@ -105,19 +107,38 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
     buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
+        debug {
+            // Enables code-related app optimization.
+//            isMinifyEnabled = true
+
+            // Enables resource shrinking.
+//            isShrinkResources = true
+
+//            proguardFiles(
+//                // Default file with automatically generated optimization rules.
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//            )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    bugsee {
+        appToken("629d2d4a-8804-4210-8951-3b3c3f83761a")
+        endpoint = "https://apidev.bugsee.com"  // custom endpoint (optional) "https://apidev.bugsee.com"
+        debug = true                         // enable plugin debug logging
+        ndk(true)                             // upload NDK debug symbols
     }
 }
 
