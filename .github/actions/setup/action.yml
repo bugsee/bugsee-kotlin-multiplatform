@@ -1,0 +1,50 @@
+name: Setup toolchains
+description: >-
+  Pin Xcode and the JDK on a GitHub-hosted macOS runner and restore the Gradle
+  and Kotlin/Native caches. Android SDK and CocoaPods come preinstalled.
+
+inputs:
+  xcode-version:
+    description: Xcode to select; must exist as /Applications/Xcode_<version>.app on the image.
+    required: false
+    # gradle.properties carries Xcode 16.4 compatibility workarounds.
+    default: '16.4'
+
+runs:
+  using: composite
+  steps:
+    # Explicit, so a runner-image default bump cannot silently change the
+    # toolchain that builds the published iOS klibs.
+    - name: Select Xcode
+      shell: bash
+      env:
+        XCODE_VERSION: ${{ inputs.xcode-version }}
+      run: |
+        set -euo pipefail
+        app="/Applications/Xcode_${XCODE_VERSION}.app"
+        if [ ! -d "$app" ]; then
+          echo "::error::$app is not on this runner image. Pick one listed at https://github.com/actions/runner-images/tree/main/images/macos"
+          exit 1
+        fi
+        sudo xcode-select -s "$app/Contents/Developer"
+        xcodebuild -version
+        echo "CocoaPods $(pod --version)"
+
+    # AGP 8.x needs 17+. The scripts only probe java_home when JAVA_HOME is
+    # unset, so this pins what Gradle runs on.
+    - uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: '21'
+
+    # Caches ~/.gradle; only the default branch writes the cache, so PRs cannot
+    # poison it.
+    - uses: gradle/actions/setup-gradle@v6
+
+    # Kotlin/Native toolchain + dependencies (~1 GB) that Gradle's cache does
+    # not cover. Keyed on the version catalog, which pins the Kotlin version.
+    - uses: actions/cache@v6
+      with:
+        path: ~/.konan
+        key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+        restore-keys: konan-${{ runner.os }}-${{ runner.arch }}-

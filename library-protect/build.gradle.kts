@@ -95,7 +95,10 @@ mavenPublishing {
 
     // Sign only when a signing key is configured, so local smoke tests
     // (./gradlew :library-protect:publishToMavenLocal) work without GPG keys.
-    if (providers.gradleProperty("signing.keyId").isPresent) {
+    // Classic keyring locally, in-memory key on CI — see :library/build.gradle.kts.
+    if (providers.gradleProperty("signing.keyId").isPresent ||
+        providers.gradleProperty("signingInMemoryKey").isPresent
+    ) {
         signAllPublications()
     }
 

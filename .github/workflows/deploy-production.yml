@@ -1,0 +1,120 @@
+name: Deploy (production)
+
+# Manual only. RELEASE=true, so deploy.sh runs the full test suite and then
+# publishes and auto-releases both artifacts to Maven Central:
+#   com.bugsee:bugsee-kotlin-multiplatform:<version.txt>
+#   com.bugsee:bugsee-kotlin-multiplatform-protect:<version.txt>
+# A Central release cannot be deleted or overwritten, so the gates are:
+#   1. workflow_dispatch -> only users with write access can start it
+#   2. environment: production, restricted by deployment branch policy to
+#      `release` -> a run started from any other branch is refused by GitHub,
+#      and the publishing secrets are only released to such a run
+#   3. the typed version must match version.txt
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type the version being released (from version.txt) to confirm'
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: build + test + publish (RELEASE)
+    runs-on: macos-15
+    environment: production
+    timeout-minutes: 120
+
+    # Secrets are deliberately NOT job-level env: that would hand the signing key
+    # to every step, including third-party actions. Only the two steps below
+    # that need them get them.
+    env:
+      RELEASE: "true"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Cheap guard against dispatching the wrong branch or a stale checkout:
+      # the typed version must match what is actually about to be published.
+      - name: Verify confirmation matches version.txt
+        env:
+          TYPED: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          actual="$(head -n 1 version.txt | tr -d '[:space:]')"
+          typed="$(printf '%s' "$TYPED" | tr -d '[:space:]')"
+          echo "version.txt = $actual"
+          if [ "$actual" != "$typed" ]; then
+            echo "::error::Confirmation '$typed' does not match version.txt '$actual' — refusing to publish."
+            exit 1
+          fi
+
+      # deploy.sh would catch these too, but only after toolchain setup, and its
+      # hint points at gradle.properties rather than the GitHub-side fix.
+      - name: Check publishing secrets are configured
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -n "${ORG_GRADLE_PROJECT_mavenCentralUsername:-}" ] || missing+=(MAVEN_CENTRAL_USERNAME)
+          [ -n "${ORG_GRADLE_PROJECT_mavenCentralPassword:-}" ] || missing+=(MAVEN_CENTRAL_PASSWORD)
+          [ -n "${ORG_GRADLE_PROJECT_signingInMemoryKey:-}" ] || missing+=(SIGNING_KEY)
+          [ -n "${ORG_GRADLE_PROJECT_signingInMemoryKeyPassword:-}" ] || missing+=(SIGNING_PASSWORD)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing secrets on the 'production' GitHub Environment: ${missing[*]}. See .github/CI.md."
+            exit 1
+          fi
+
+      # setup-gradle only saves its cache from the default branch, so this job
+      # (dispatched from `release`) restores but never writes it.
+      - uses: ./.github/actions/setup
+
+      - name: Build
+        run: bash -xe ./scripts/build.sh
+
+      # Runs scripts/test.sh before publishing; a red suite publishes nothing.
+      # No `-x`: this step's environment carries the signing key and token.
+      - name: Test + publish to Maven Central
+        env:
+          # Gradle maps ORG_GRADLE_PROJECT_* onto project properties, which is how
+          # the vanniktech plugin reads the Central Portal user token and the
+          # in-memory signing key (see mavenPublishing in library/build.gradle.kts).
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+        run: bash -e ./scripts/deploy.sh
+
+      - name: Summary
+        run: |
+          version="$(head -n 1 version.txt | tr -d '[:space:]')"
+          {
+            echo "### Released ${version} to Maven Central"
+            echo
+            echo "- \`com.bugsee:bugsee-kotlin-multiplatform:${version}\`"
+            echo "- \`com.bugsee:bugsee-kotlin-multiplatform-protect:${version}\`"
+            echo
+            echo "Artifacts can take up to ~30 minutes to appear on repo1.maven.org."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-release
+          path: |
+            */build/reports/tests/
+            */build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

@@ -14,13 +14,22 @@
 #   signing.password           # GPG key passphrase
 #   signing.secretKeyRingFile  # absolute path to secring.gpg
 #
+# Alternatively (GitHub Actions — a keyring path cannot live in a secret), sign
+# in memory instead of the classic signing.* keys:
+#   ORG_GRADLE_PROJECT_signingInMemoryKey          # ASCII-armored GPG private key
+#   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword  # GPG key passphrase
+#
 # Release vs SNAPSHOT is controlled by the RELEASE env var (same convention as the
 # legacy bugsee-android SDK):
 #   RELEASE=true  -> publish version.txt value as-is (e.g. 0.1.0)
 #   unset / false -> publish with a -SNAPSHOT suffix (e.g. 0.1.0-SNAPSHOT)
 #
+# A SNAPSHOT can only be published with --local: maven-publish 0.29.0 rejects
+# SNAPSHOTs on the Central Portal ("Snapshots are not supported when publishing
+# through the central portal"), so a remote SNAPSHOT publish is refused up front.
+#
 # Usage:
-#   scripts/deploy.sh                     # SNAPSHOT publish + tests
+#   scripts/deploy.sh --local             # SNAPSHOT publishToMavenLocal + tests
 #   RELEASE=true scripts/deploy.sh        # release publish + tests
 #   scripts/deploy.sh --skip-tests        # publish without running tests (dangerous)
 #   scripts/deploy.sh --local             # publishToMavenLocal (smoke test, RELEASE respected)
@@ -95,6 +104,12 @@ echo "RELEASE=$RELEASE_FLAG  ->  publishing $EFFECTIVE_VERSION for: ${MODULES[*]
 
 # ---------- credential sanity check (remote publish only) ----------
 if [ "$LOCAL_ONLY" = "0" ]; then
+    if [ "$RELEASE_FLAG" != "true" ]; then
+        echo "error: cannot publish $EFFECTIVE_VERSION to Maven Central — the Central Portal does not accept SNAPSHOTs with this plugin version" >&2
+        echo "       set RELEASE=true for a release, or pass --local for a SNAPSHOT smoke test" >&2
+        exit 1
+    fi
+
     HOME_GRADLE_PROPS="${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
     missing=()
     # Maven portal credentials: env vars OR gradle.properties.
@@ -104,12 +119,19 @@ if [ "$LOCAL_ONLY" = "0" ]; then
             missing+=("$key")
         fi
     done
-    # Classic signing.* keys: gradle.properties only (dots block env-var export).
-    for key in signing.keyId signing.password signing.secretKeyRingFile; do
-        if ! grep -qE "^[[:space:]]*${key//./\\.}=" "$HOME_GRADLE_PROPS" 2>/dev/null; then
-            missing+=("$key")
+    if [ -n "${ORG_GRADLE_PROJECT_signingInMemoryKey:-}" ]; then
+        # In-memory signing (CI): the key is set, so only its passphrase can be missing.
+        if [ -z "${ORG_GRADLE_PROJECT_signingInMemoryKeyPassword:-}" ]; then
+            missing+=("signingInMemoryKeyPassword")
         fi
-    done
+    else
+        # Classic signing.* keys: gradle.properties only (dots block env-var export).
+        for key in signing.keyId signing.password signing.secretKeyRingFile; do
+            if ! grep -qE "^[[:space:]]*${key//./\\.}=" "$HOME_GRADLE_PROPS" 2>/dev/null; then
+                missing+=("$key")
+            fi
+        done
+    fi
     if [ "${#missing[@]}" -gt 0 ]; then
         echo "error: missing credentials: ${missing[*]}" >&2
         echo "       add them to $HOME_GRADLE_PROPS (or export ORG_GRADLE_PROJECT_* for maven keys)" >&2

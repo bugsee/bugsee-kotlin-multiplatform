@@ -212,6 +212,12 @@ android {
 // Generate the user token at https://central.sonatype.com/account
 // Export a legacy secring.gpg with:  gpg --export-secret-keys -o ~/.gnupg/secring.gpg
 //
+// CI (GitHub Actions) cannot put a keyring file in a secret, so it signs in memory
+// instead. The plugin picks these up and prefers them over the classic keys above:
+//   ORG_GRADLE_PROJECT_signingInMemoryKey=<ASCII-armored GPG private key block>
+//   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=<GPG key passphrase>
+// See .github/CI.md.
+//
 // Publish steps:
 //   1. ./gradlew :library:publishToMavenLocal           (smoke test, writes to ~/.m2)
 //   2. ./gradlew :library:publishAndReleaseToMavenCentral (uploads + auto-releases)
@@ -222,8 +228,10 @@ mavenPublishing {
     // GPG-sign every publication (KMP root + android + iosarm64 + sources/javadoc).
     // Central Portal rejects unsigned artifacts, but local smoke tests
     // (./gradlew :library:publishToMavenLocal) shouldn't require GPG keys.
-    // Sign only when a signing key is configured.
-    if (providers.gradleProperty("signing.keyId").isPresent) {
+    // Sign only when a signing key is configured (classic keyring locally, in-memory key on CI).
+    if (providers.gradleProperty("signing.keyId").isPresent ||
+        providers.gradleProperty("signingInMemoryKey").isPresent
+    ) {
         signAllPublications()
     }
 
