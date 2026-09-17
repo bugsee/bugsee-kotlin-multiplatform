@@ -97,9 +97,15 @@ gpg --armor --export-secret-keys <signing.keyId> | gh secret set SIGNING_KEY --e
 gh secret set SIGNING_PASSWORD       --env production --repo bugsee/bugsee-kotlin-multiplatform
 ```
 
-Use the same GPG key as local releases. Armoring is only an encoding, so the
-export needs no passphrase. The secrets reach only the two steps that need them,
-not the whole job.
+**All four are already set.** They carry the same credentials as
+`bugsee-android` (same `com.bugsee` namespace, same key):
+`MAVEN_CENTRAL_USERNAME`/`PASSWORD` = its `NEXUS_USERNAME`/`PASSWORD` (Central
+Portal user token), `SIGNING_KEY`/`SIGNING_PASSWORD` = its secrets of the same
+name — master key `0DEF44F1F9AB1FCF` (short id `F9AB1FCF`) plus subkey
+`4CFA136C`. Rotate them in both repos together.
+
+Armoring is only an encoding, so the export needs no passphrase. The secrets
+reach only the two steps that need them, not the whole job.
 
 ### Why signing needed a build change
 
