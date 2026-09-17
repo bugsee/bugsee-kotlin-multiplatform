@@ -1,0 +1,50 @@
+name: PR
+
+# Replaces the gerrit patchset job: build every publishable target, then run
+# both test lanes (Robolectric + iOS simulator) for :library and :library-protect.
+#
+# No secrets are used here, so it is safe for pull requests from forks.
+on:
+  pull_request:
+    branches: [main, release]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: build + test
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    env:
+      RELEASE: "false"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      # Android release AAR + iosArm64/iosX64/iosSimulatorArm64 klibs — covers
+      # the device slice, which the simulator test run below never compiles.
+      - name: Build
+        run: bash -xe ./scripts/build.sh
+
+      - name: Test
+        run: bash -xe ./scripts/test.sh all
+
+      # Failure-only with short retention: artifact storage is an org-wide quota.
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-pr${{ github.event.pull_request.number }}
+          path: |
+            */build/reports/tests/
+            */build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

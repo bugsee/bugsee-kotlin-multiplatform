@@ -1,0 +1,55 @@
+name: Main
+
+# Replaces the gerrit merge job. Unlike bugsee-android there is no SNAPSHOT
+# deploy here: maven-publish 0.29.0 cannot publish SNAPSHOTs to the Central
+# Portal. Instead the merged tree is built, tested, and published to the
+# runner's local Maven repo, which exercises the whole publication setup (POMs,
+# KMP metadata, every target) without credentials — the part that otherwise
+# only gets tested on release day.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: build + test + local publish
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    env:
+      RELEASE: "false"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      - name: Build
+        run: bash -xe ./scripts/build.sh
+
+      - name: Test
+        run: bash -xe ./scripts/test.sh all
+
+      - name: Publish to mavenLocal (smoke test)
+        run: |
+          bash -xe ./scripts/deploy.sh --local --skip-tests
+          find ~/.m2/repository/com/bugsee -name '*.pom' | sort
+
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-main
+          path: |
+            */build/reports/tests/
+            */build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
