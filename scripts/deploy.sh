@@ -29,10 +29,9 @@
 # through the central portal"), so a remote SNAPSHOT publish is refused up front.
 #
 # Usage:
-#   scripts/deploy.sh --local             # SNAPSHOT publishToMavenLocal + tests
-#   RELEASE=true scripts/deploy.sh        # release publish + tests
-#   scripts/deploy.sh --skip-tests        # publish without running tests (dangerous)
-#   scripts/deploy.sh --local             # publishToMavenLocal (smoke test, RELEASE respected)
+#   RELEASE=true scripts/deploy.sh        # tests, then release publish to Maven Central
+#   scripts/deploy.sh --local             # tests, then publishToMavenLocal (smoke test; SNAPSHOT unless RELEASE=true)
+#   <any of the above> --skip-tests       # skip the test run (only when tests already ran on this checkout)
 
 set -euo pipefail
 
