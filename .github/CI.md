@@ -7,7 +7,7 @@ repo's own `scripts/{build,test,deploy}.sh`, so CI and local runs stay identical
 |---|---|---|---|---|
 | `pr.yml` | PR → `main` / `release` | — | `false` | `build.sh` + `test.sh all` |
 | `main.yml` | push to `main`, manual | — | `false` | `build.sh` + `test.sh all` + `deploy.sh --local` (mavenLocal) |
-| `deploy-production.yml` | manual dispatch from `release` | `production` | `true` | `build.sh` + `deploy.sh` (tests, then publish + auto-release to Maven Central) |
+| `deploy-production.yml` | manual dispatch from `release` | `production` | `true` | `build.sh` + `test.sh all` + `deploy.sh --skip-tests` (publish + auto-release to Maven Central) |
 
 `test.sh all` = Robolectric unit tests and iOS simulator tests for both
 `:library` and `:library-protect`. `build.sh` assembles every published target,
@@ -105,7 +105,10 @@ name — master key `0DEF44F1F9AB1FCF` (short id `F9AB1FCF`) plus subkey
 `4CFA136C`. Rotate them in both repos together.
 
 Armoring is only an encoding, so the export needs no passphrase. The secrets
-reach only the two steps that need them, not the whole job.
+reach only the two steps that need them, not the whole job — in particular not
+the test step, whose test-only dependencies (Robolectric, Mockito, …) have no
+reason to see them. The publish step still runs Gradle with the build's own
+plugins, so exposure is narrowed, not eliminated.
 
 ### Why signing needed a build change
 

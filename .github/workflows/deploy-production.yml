@@ -1,7 +1,7 @@
 name: Deploy (production)
 
-# Manual only. RELEASE=true, so deploy.sh runs the full test suite and then
-# publishes and auto-releases both artifacts to Maven Central:
+# Manual only. RELEASE=true: builds, runs the full test suite, then publishes
+# and auto-releases both artifacts to Maven Central:
 #   com.bugsee:bugsee-kotlin-multiplatform:<version.txt>
 #   com.bugsee:bugsee-kotlin-multiplatform-protect:<version.txt>
 # A Central release cannot be deleted or overwritten, so the gates are:
@@ -83,9 +83,18 @@ jobs:
       - name: Build
         run: bash -xe ./scripts/build.sh
 
-      # Runs scripts/test.sh before publishing; a red suite publishes nothing.
+      # Its own step, with no secrets in its environment: the test suite pulls in
+      # test-only dependencies (Robolectric, Mockito, ...) that the publish never
+      # needs, so none of that code can read the signing key or the Central token.
+      # A red suite fails the job here and publishes nothing.
+      - name: Test
+        run: bash -xe ./scripts/test.sh all
+
+      # --skip-tests: the step above already ran them on this exact checkout.
+      # This narrows the secrets' exposure but cannot remove it: the publish
+      # still runs Gradle with the build's own plugins (AGP, Kotlin, maven-publish).
       # No `-x`: this step's environment carries the signing key and token.
-      - name: Test + publish to Maven Central
+      - name: Publish to Maven Central
         env:
           # Gradle maps ORG_GRADLE_PROJECT_* onto project properties, which is how
           # the vanniktech plugin reads the Central Portal user token and the
@@ -94,7 +103,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-        run: bash -e ./scripts/deploy.sh
+        run: bash -e ./scripts/deploy.sh --skip-tests
 
       - name: Summary
         run: |
