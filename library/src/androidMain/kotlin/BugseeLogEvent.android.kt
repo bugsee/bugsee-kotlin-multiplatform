@@ -1,9 +1,9 @@
 package com.bugsee.kmp
 
-import com.bugsee.library.logs.BugseeLog
+import com.bugsee.library.contracts.exchange.LogEvent
 
 public actual class BugseeLogEvent internal constructor(
-        internal val underlyingEvent: BugseeLog
+        internal val underlyingEvent: LogEvent
 ) {
         // Use underlying object ref to minimize allocations and copying
         public actual var message: String

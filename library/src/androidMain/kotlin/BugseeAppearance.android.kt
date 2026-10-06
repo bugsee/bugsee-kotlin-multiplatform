@@ -1,41 +1,53 @@
 package com.bugsee.kmp
 
-import java.lang.reflect.Field
+import com.bugsee.kmp.internal.Logger
+import com.bugsee.library.contracts.appearance.Appearance
+import com.bugsee.library.contracts.appearance.NotificationAppearance
 
 public actual class BugseeAppearance internal constructor(
-    private val bugseeAppearance: com.bugsee.library.data.BugseeAppearance
+    private val bugseeAppearance: Appearance
 ) {
-    private val fieldsMap = HashMap<String, Field>()
-
-    private fun getAndCacheField(name: String): Field? {
-        return try {
-            val field = bugseeAppearance.javaClass.getDeclaredField(name)
-            field.isAccessible = true
-            fieldsMap.put(name, field)
-            field
-        } catch (_: Throwable) {
-            null
-        }
+    private companion object {
+        private const val TAG = "BugseeAppearance"
+        private val legacyNamePattern = Regex("^(Report|Feedback|Notification)(.+)$")
     }
 
-    private fun getPropertyValue(name: String): Any? {
-        val field = fieldsMap.get(name) ?: getAndCacheField(name)
+    // Values for these keys are strings; every other appearance key holds a color.
+    private fun isStringKey(key: String): Boolean =
+        key.endsWith("Placeholder") || key == NotificationAppearance.Title
 
+    // 6.x field name ("ReportActionBarColor") -> 7.x appearance key ("Report::ActionBarColor").
+    // Feedback keys take effect only when the bugsee-android-feedback module is present.
+    private fun toKey(name: String): String =
+        legacyNamePattern.matchEntire(name)?.let { "${it.groupValues[1]}::${it.groupValues[2]}" } ?: name
+
+    private fun getPropertyValue(name: String): Any? {
+        val key = toKey(name)
         return try {
-            field?.get(bugseeAppearance)
-        } catch (_: Throwable) {
+            if (isStringKey(key)) bugseeAppearance.getString(key) else bugseeAppearance.getColor(key)
+        } catch (e: Throwable) {
+            Logger.e(TAG, "get '$key' failed", e)
             null
         }
     }
 
     private fun setPropertyValue(name: String, value: Any?) {
-        val field = fieldsMap.get(name) ?: getAndCacheField(name)
-
+        val key = toKey(name)
         try {
-            field?.set(bugseeAppearance, value)
-        } catch (_: Throwable) {
+            if (isStringKey(key)) {
+                bugseeAppearance.setString(key, value as? String)
+            } else {
+                bugseeAppearance.setColor(key, value as? Int)
+            }
+        } catch (e: Throwable) {
+            Logger.e(TAG, "set '$key' failed", e)
         }
     }
+
+    // 7.x has no resource-id variant of the notification title; the id is resolved to
+    // a string and stored under Notification::Title.
+    private var notificationTitleResIdValue: Int? = null
+    private var titleResolvedFromResId: String? = null
 
 
     public actual var reportActionBarColor: Int?
@@ -255,9 +267,28 @@ public actual class BugseeAppearance internal constructor(
         }
 
     public actual var notificationTitleResId: Int?
-        get() = getPropertyValue("NotificationTitleResId") as? Int?
+        get() = notificationTitleResIdValue
         set(value) {
-            setPropertyValue("NotificationTitleResId", value)
+            notificationTitleResIdValue = value
+            if (value == null) {
+                // Clear only a title that came from the resource id, not one set directly.
+                if (titleResolvedFromResId != null && getPropertyValue("NotificationTitle") == titleResolvedFromResId) {
+                    setPropertyValue("NotificationTitle", null)
+                }
+                titleResolvedFromResId = null
+                return
+            }
+
+            val title = try {
+                applicationContext?.getString(value)
+            } catch (e: Exception) {
+                Logger.e(TAG, "notificationTitleResId: cannot resolve string resource $value", e)
+                null
+            }
+            if (title != null) {
+                titleResolvedFromResId = title
+                setPropertyValue("NotificationTitle", title)
+            }
         }
 
     public actual var notificationTitle: String?

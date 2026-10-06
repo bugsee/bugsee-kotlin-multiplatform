@@ -26,8 +26,9 @@ class KMPSample: Application() {
         options.shakeToReport = true
         options.reportLabelsEnabled = true
         options.reportLabelsRequired = false
-        options.setCustomOption("endpoint", getPlatform().appdevEndpoint)
-        options.setCustomOption("debug", true)
+        // Internal Android SDK 7 keys; the 6.x "endpoint" / "debug" keys are ignored.
+        options.setCustomOption("com.bugsee.option.\$\$ENDPOINT", getPlatform().appdevEndpoint)
+        options.setCustomOption("com.bugsee.option.\$\$DEBUG", true)
         Bugsee.launch(getPlatform().token, options)
 
         Bugsee.setOnNewFeedbackListener { messages ->
