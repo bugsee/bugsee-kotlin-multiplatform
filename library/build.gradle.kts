@@ -140,13 +140,6 @@ kotlin {
 
         ios.deploymentTarget = "15.0"
     }
-
-    // Fix for Xcode 16.4 compatibility issues
-    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-        binaries.all {
-            // Remove problematic compiler args
-        }
-    }
 }
 
 // Generates a `com.bugsee.kmp.BuildKonfig` object in commonMain with compile-time

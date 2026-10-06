@@ -6,6 +6,9 @@
 ## Requirements
 
 - **iOS 15.0 or later.** The minimum iOS deployment target is raised from 12.0 to 15.0.
+- **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.20 and depends on
+  `kotlin-stdlib` 2.4.20. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
+  read; Android consumers on Kotlin 2.3 may work but are not supported.
 - **Android: Bugsee SDK 7.3.0 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
