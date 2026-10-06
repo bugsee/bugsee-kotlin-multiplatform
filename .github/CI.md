@@ -32,9 +32,8 @@ disabled file watching, on-disk report archiving) are needed.
 
 The shared `.github/actions/setup` action:
 
-- selects **Xcode 16.4** explicitly (`gradle.properties` carries 16.4
-  workarounds) rather than trusting the image default — bump its
-  `xcode-version` default deliberately;
+- selects **Xcode 16.4** explicitly rather than trusting the image default —
+  bump its `xcode-version` default deliberately;
 - installs Temurin **JDK 21** (AGP 8 needs 17+);
 - restores the Gradle cache (`gradle/actions/setup-gradle`, written only from
   `main`) and `~/.konan` (Kotlin/Native toolchain, keyed on
