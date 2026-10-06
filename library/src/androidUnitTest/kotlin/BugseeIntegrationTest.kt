@@ -1,10 +1,11 @@
 package com.bugsee.kmp
 
-import android.graphics.Rect
-import com.bugsee.library.data.IssueSeverity
-import com.bugsee.library.data.IssueType
+import com.bugsee.library.contracts.options.IssueSeverity
+import com.bugsee.library.contracts.reporting.ExceptionOptions
+import com.bugsee.library.contracts.reporting.Report
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
@@ -14,6 +15,27 @@ import kotlin.test.assertTrue
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class BugseeIntegrationTest {
+
+    // Stateful stand-in for the native report: keeps the fields the report-fields
+    // conversions read and write, everything else is delegated to a Mockito mock.
+    private class FakeNativeReport : Report by mock(Report::class.java) {
+        private var summaryValue: String? = null
+        private var descriptionValue: String? = null
+        private var severityValue: IssueSeverity = IssueSeverity.Medium
+        private val labelsValue: MutableList<String> = ArrayList()
+
+        override fun getSummary(): String? = summaryValue
+        override fun setSummary(summary: String?) { summaryValue = summary }
+        override fun getDescription(): String? = descriptionValue
+        override fun setDescription(description: String?) { descriptionValue = description }
+        override fun getSeverity(): IssueSeverity = severityValue
+        override fun setSeverity(severity: IssueSeverity) { severityValue = severity }
+        override fun getLabels(): MutableList<String> = ArrayList(labelsValue)
+        override fun setLabels(labels: List<String>) {
+            labelsValue.clear()
+            labelsValue.addAll(labels)
+        }
+    }
 
     @Test
     fun `integration - SecureRect KMP to Android round trip`() {
@@ -38,24 +60,6 @@ class BugseeIntegrationTest {
     }
 
     @Test
-    fun `integration - Report round trip preserves all fields`() {
-        val original = BugseeReport(
-            BugseeReportType.Error,
-            BugseeSeverity.High,
-            listOf("integration", "test")
-        )
-
-        val nativeReport = BugseeAndroidUtils.convertReport(original)
-        assertEquals(IssueType.Error, nativeReport.type)
-        assertEquals(IssueSeverity.High, nativeReport.severity)
-
-        val roundTrip = BugseeAndroidUtils.convertReport(nativeReport)
-        assertEquals(original.type, roundTrip.type)
-        assertEquals(original.severity, roundTrip.severity)
-        assertEquals(original.labels, roundTrip.labels)
-    }
-
-    @Test
     fun `integration - ReportFields round trip preserves all fields`() {
         val original = BugseeReportFields(
             "Integration test summary",
@@ -64,28 +68,20 @@ class BugseeIntegrationTest {
             listOf("qa", "integration")
         )
 
-        val nativeFields = BugseeAndroidUtils.convertReportFieldsToNative(original)
-        val roundTrip = BugseeAndroidUtils.convertReportFieldsFromNative(nativeFields)
+        val nativeReport = FakeNativeReport()
+        BugseeAndroidUtils.applyReportFieldsToNative(
+            original,
+            BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport),
+            nativeReport
+        )
+        assertEquals(IssueSeverity.Critical, nativeReport.severity)
+
+        val roundTrip = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
 
         assertEquals(original.summary, roundTrip.summary)
         assertEquals(original.description, roundTrip.description)
         assertEquals(original.severity, roundTrip.severity)
         assertEquals(original.labels, roundTrip.labels)
-    }
-
-    @Test
-    fun `integration - Attachment with bytes round trip preserves data`() {
-        val data = "Hello integration test".toByteArray()
-        val original = BugseeAttachment.create("integration.txt", data)
-
-        val nativeAttachment = BugseeAndroidUtils.convertAttachment(original)
-        assertNotNull(nativeAttachment.dataBytes)
-        assertEquals("integration.txt", nativeAttachment.name)
-
-        val roundTrip = BugseeAndroidUtils.convertAttachment(nativeAttachment)
-        assertEquals(original.name, roundTrip.name)
-        assertNotNull(roundTrip.data)
-        assertTrue(data.contentEquals(roundTrip.data!!))
     }
 
     @Test
@@ -100,10 +96,11 @@ class BugseeIntegrationTest {
         val nativeOptions = BugseeAndroidUtils.convertExceptionLoggingOptions(options)
         assertNotNull(nativeOptions)
 
-        assertEquals(options.exceptionDomain, nativeOptions.exceptionDomain)
-        assertEquals(options.includeVideo, nativeOptions.includeVideo)
-        assertEquals(options.labels, nativeOptions.labels)
-        assertEquals(options.rules.skipFrames, nativeOptions.Rules.skipFrames)
+        assertEquals(options.exceptionDomain, nativeOptions[ExceptionOptions.Domain])
+        assertEquals(options.includeVideo, nativeOptions["includeVideo"])
+        assertEquals(options.labels, nativeOptions["labels"])
+        assertEquals(options.rules.skipFrames, nativeOptions[ExceptionOptions.SkipFrames])
+        assertEquals("high", nativeOptions["severity"])
     }
 
     @Test
@@ -116,35 +113,15 @@ class BugseeIntegrationTest {
     }
 
     @Test
-    fun `integration - all issue types survive conversion`() {
-        for (type in BugseeReportType.entries) {
-            val native = BugseeAndroidUtils.convertIssueType(type)
-            val roundTrip = BugseeAndroidUtils.convertIssueType(native)
-            assertEquals(type, roundTrip, "IssueType $type failed round trip")
-        }
-    }
-
-    @Test
-    fun `integration - Report with empty labels round trip`() {
-        val original = BugseeReport(
-            BugseeReportType.Bug,
-            BugseeSeverity.Medium,
-            emptyList()
-        )
-        val nativeReport = BugseeAndroidUtils.convertReport(original)
-        val roundTrip = BugseeAndroidUtils.convertReport(nativeReport)
-
-        assertEquals(original.type, roundTrip.type)
-        assertEquals(original.severity, roundTrip.severity)
-        assertNotNull(roundTrip.labels)
-        assertTrue(roundTrip.labels!!.isEmpty())
-    }
-
-    @Test
     fun `integration - ReportFields with empty content round trip`() {
         val original = BugseeReportFields("", "", BugseeSeverity.VeryLow, emptyList())
-        val nativeFields = BugseeAndroidUtils.convertReportFieldsToNative(original)
-        val roundTrip = BugseeAndroidUtils.convertReportFieldsFromNative(nativeFields)
+        val nativeReport = FakeNativeReport()
+        BugseeAndroidUtils.applyReportFieldsToNative(
+            original,
+            BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport),
+            nativeReport
+        )
+        val roundTrip = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
 
         assertEquals("", roundTrip.summary)
         assertEquals("", roundTrip.description)

@@ -64,7 +64,6 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-//            implementation("io.ktor:ktor-client-android:${libs.versions.ktor.get()}")
             implementation("io.ktor:ktor-client-android:${libs.versions.ktor3.get()}")
         }
 
@@ -77,14 +76,12 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(project(":library"))
             implementation(project(":library-protect"))
-//            implementation(libs.ktor.client.core)
             implementation(libs.ktor3.client.core)
             implementation(libs.ktor3.client.websockets)
             implementation(libs.kotlinx.coroutines.core)
         }
 
         iosMain.dependencies {
-//            implementation("io.ktor:ktor-client-darwin:${libs.versions.ktor.get()}")
             implementation("io.ktor:ktor-client-darwin:${libs.versions.ktor3.get()}")
         }
 
@@ -138,7 +135,9 @@ android {
         appToken("629d2d4a-8804-4210-8951-3b3c3f83761a")
         endpoint = "https://apidev.bugsee.com"  // custom endpoint (optional) "https://apidev.bugsee.com"
         debug = true                         // enable plugin debug logging
-        ndk(true)                             // upload NDK debug symbols
+        ndk {                                 // upload NDK debug symbols
+            enabled.set(true)
+        }
     }
 }
 

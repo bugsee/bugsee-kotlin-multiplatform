@@ -1,16 +1,28 @@
 package com.bugsee.kmp
 
 import android.graphics.Rect
-import com.bugsee.library.data.IssueSeverity
-import com.bugsee.library.data.IssueType
-import com.bugsee.library.events.BugseeLogLevel as AndroidLogLevel
-import com.bugsee.library.lifecycle.LifecycleEventTypes
-import com.bugsee.library.network.data.NetworkEventType
+import com.bugsee.library.contracts.exchange.NetworkEvent.NetworkEventStage
+import com.bugsee.library.contracts.lifecycle.LifecycleEvents
+import com.bugsee.library.contracts.options.IssueSeverity
+import com.bugsee.library.contracts.options.IssueType
+import com.bugsee.library.contracts.options.LogLevel
+import com.bugsee.library.contracts.reporting.Attachment
+import com.bugsee.library.contracts.reporting.ExceptionOptions
+import com.bugsee.library.contracts.reporting.Report
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.isNull
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -18,6 +30,22 @@ import kotlin.test.assertTrue
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class BugseeAndroidUtilsTest {
+
+    private fun mockNativeReport(
+        type: IssueType? = IssueType.Bug,
+        severity: IssueSeverity? = IssueSeverity.Medium,
+        labels: List<String>? = null,
+        summary: String? = null,
+        description: String? = null
+    ): Report {
+        val report = mock(Report::class.java)
+        `when`(report.type).thenReturn(type)
+        `when`(report.severity).thenReturn(severity)
+        `when`(report.labels).thenReturn(labels)
+        `when`(report.summary).thenReturn(summary)
+        `when`(report.description).thenReturn(description)
+        return report
+    }
 
     // --- convertIssueType ---
 
@@ -29,39 +57,33 @@ class BugseeAndroidUtilsTest {
     }
 
     @Test
-    fun `convertIssueType - KMP to Android - all values`() {
-        assertEquals(IssueType.Bug, BugseeAndroidUtils.convertIssueType(BugseeReportType.Bug))
-        assertEquals(IssueType.Error, BugseeAndroidUtils.convertIssueType(BugseeReportType.Error))
-        assertEquals(IssueType.Crash, BugseeAndroidUtils.convertIssueType(BugseeReportType.Crash))
-    }
-
-    @Test
-    fun `convertIssueType - round trip preserves value`() {
-        for (type in BugseeReportType.entries) {
-            val native = BugseeAndroidUtils.convertIssueType(type)
-            val roundTrip = BugseeAndroidUtils.convertIssueType(native)
-            assertEquals(type, roundTrip, "Round trip failed for $type")
-        }
+    fun `convertIssueType - Android to KMP - null falls back to Bug`() {
+        assertEquals(BugseeReportType.Bug, BugseeAndroidUtils.convertIssueType(null))
     }
 
     // --- convertLogLevel ---
 
     @Test
     fun `convertLogLevel - KMP to Android - all values`() {
-        assertEquals(AndroidLogLevel.Debug, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Debug))
-        assertEquals(AndroidLogLevel.Info, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Info))
-        assertEquals(AndroidLogLevel.Warning, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Warning))
-        assertEquals(AndroidLogLevel.Error, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Error))
-        assertEquals(AndroidLogLevel.Verbose, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Verbose))
+        assertEquals(LogLevel.Debug, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Debug))
+        assertEquals(LogLevel.Info, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Info))
+        assertEquals(LogLevel.Warning, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Warning))
+        assertEquals(LogLevel.Error, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Error))
+        assertEquals(LogLevel.Verbose, BugseeAndroidUtils.convertLogLevel(BugseeLogLevel.Verbose))
     }
 
     @Test
     fun `convertLogLevel - Android to KMP - all values`() {
-        assertEquals(BugseeLogLevel.Debug, BugseeAndroidUtils.convertLogLevel(AndroidLogLevel.Debug))
-        assertEquals(BugseeLogLevel.Info, BugseeAndroidUtils.convertLogLevel(AndroidLogLevel.Info))
-        assertEquals(BugseeLogLevel.Warning, BugseeAndroidUtils.convertLogLevel(AndroidLogLevel.Warning))
-        assertEquals(BugseeLogLevel.Error, BugseeAndroidUtils.convertLogLevel(AndroidLogLevel.Error))
-        assertEquals(BugseeLogLevel.Verbose, BugseeAndroidUtils.convertLogLevel(AndroidLogLevel.Verbose))
+        assertEquals(BugseeLogLevel.Debug, BugseeAndroidUtils.convertLogLevel(LogLevel.Debug))
+        assertEquals(BugseeLogLevel.Info, BugseeAndroidUtils.convertLogLevel(LogLevel.Info))
+        assertEquals(BugseeLogLevel.Warning, BugseeAndroidUtils.convertLogLevel(LogLevel.Warning))
+        assertEquals(BugseeLogLevel.Error, BugseeAndroidUtils.convertLogLevel(LogLevel.Error))
+        assertEquals(BugseeLogLevel.Verbose, BugseeAndroidUtils.convertLogLevel(LogLevel.Verbose))
+    }
+
+    @Test
+    fun `convertLogLevel - Android to KMP - null falls back to Verbose`() {
+        assertEquals(BugseeLogLevel.Verbose, BugseeAndroidUtils.convertLogLevel(null as LogLevel?))
     }
 
     @Test
@@ -91,6 +113,11 @@ class BugseeAndroidUtilsTest {
         assertEquals(BugseeSeverity.Medium, BugseeAndroidUtils.convertSeverity(IssueSeverity.Medium))
         assertEquals(BugseeSeverity.VeryLow, BugseeAndroidUtils.convertSeverity(IssueSeverity.VeryLow))
         assertEquals(BugseeSeverity.Blocker, BugseeAndroidUtils.convertSeverity(IssueSeverity.Blocker))
+    }
+
+    @Test
+    fun `convertSeverity - Android to KMP - null falls back to Medium`() {
+        assertEquals(BugseeSeverity.Medium, BugseeAndroidUtils.convertSeverity(null as IssueSeverity?))
     }
 
     @Test
@@ -162,10 +189,10 @@ class BugseeAndroidUtilsTest {
 
     @Test
     fun `convertReport - Android to KMP - with labels`() {
-        val nativeReport = com.bugsee.library.attachment.Report(
-            IssueType.Bug,
-            IssueSeverity.High,
-            arrayListOf("label1", "label2")
+        val nativeReport = mockNativeReport(
+            type = IssueType.Bug,
+            severity = IssueSeverity.High,
+            labels = arrayListOf("label1", "label2")
         )
         val kmpReport = BugseeAndroidUtils.convertReport(nativeReport)
         assertEquals(BugseeReportType.Bug, kmpReport.type)
@@ -175,10 +202,10 @@ class BugseeAndroidUtilsTest {
 
     @Test
     fun `convertReport - Android to KMP - null labels`() {
-        val nativeReport = com.bugsee.library.attachment.Report(
-            IssueType.Crash,
-            IssueSeverity.Critical,
-            null
+        val nativeReport = mockNativeReport(
+            type = IssueType.Crash,
+            severity = IssueSeverity.Critical,
+            labels = null
         )
         val kmpReport = BugseeAndroidUtils.convertReport(nativeReport)
         assertEquals(BugseeReportType.Crash, kmpReport.type)
@@ -186,78 +213,70 @@ class BugseeAndroidUtilsTest {
         assertEquals(emptyList(), kmpReport.labels)
     }
 
-    @Test
-    fun `convertReport - KMP to Android - with labels`() {
-        val kmpReport = BugseeReport(
-            BugseeReportType.Error,
-            BugseeSeverity.Medium,
-            listOf("qa", "test")
-        )
-        val nativeReport = BugseeAndroidUtils.convertReport(kmpReport)
-        assertEquals(IssueType.Error, nativeReport.type)
-        assertEquals(IssueSeverity.Medium, nativeReport.severity)
-        assertEquals(listOf("qa", "test"), nativeReport.labels?.toList())
-    }
+    // --- addAttachmentToReport ---
 
     @Test
-    fun `convertReport - KMP to Android - null labels`() {
-        val kmpReport = BugseeReport(
-            BugseeReportType.Bug,
-            BugseeSeverity.VeryLow,
-            null
-        )
-        val nativeReport = BugseeAndroidUtils.convertReport(kmpReport)
-        assertEquals(IssueType.Bug, nativeReport.type)
-        assertEquals(IssueSeverity.VeryLow, nativeReport.severity)
-        assertNull(nativeReport.labels)
-    }
-
-    @Test
-    fun `convertReport - KMP to Android - empty labels`() {
-        val kmpReport = BugseeReport(
-            BugseeReportType.Bug,
-            BugseeSeverity.VeryLow,
-            emptyList()
-        )
-        val nativeReport = BugseeAndroidUtils.convertReport(kmpReport)
-        assertNotNull(nativeReport.labels)
-        assertTrue(nativeReport.labels!!.isEmpty())
-    }
-
-    // --- convertAttachment ---
-
-    @Test
-    fun `convertAttachment - KMP with data to Android`() {
+    fun `addAttachmentToReport - data attachment is added in memory`() {
         val data = "test content".toByteArray()
         val kmpAttachment = BugseeAttachment.create("test.txt", data)
-        val nativeAttachment = BugseeAndroidUtils.convertAttachment(kmpAttachment)
-        assertEquals("test.txt", nativeAttachment.name)
-        assertNotNull(nativeAttachment.dataBytes)
-        assertTrue(data.contentEquals(nativeAttachment.dataBytes))
+        val nativeReport = mockNativeReport()
+
+        BugseeAndroidUtils.addAttachmentToReport(kmpAttachment, nativeReport)
+
+        verify(nativeReport).addAttachment(data, "test.txt", null)
+        verify(nativeReport, never()).addAttachment(org.mockito.ArgumentMatchers.any(File::class.java), anyString(), isNull(), anyBoolean())
+    }
+
+    // --- addProviderAttachments ---
+
+    @Test
+    fun `addProviderAttachments - skips names already on the report`() {
+        val existing = mock(Attachment::class.java)
+        `when`(existing.name).thenReturn("log.txt")
+        val nativeReport = mockNativeReport()
+        `when`(nativeReport.attachments).thenReturn(listOf(existing))
+        val logData = "replayed".toByteArray()
+        val configData = "config".toByteArray()
+
+        BugseeAndroidUtils.addProviderAttachments(
+            listOf(
+                BugseeAttachment.create("log.txt", logData),
+                BugseeAttachment.create("config.json", configData)
+            ),
+            nativeReport
+        )
+
+        verify(nativeReport, never()).addAttachment(logData, "log.txt", null)
+        verify(nativeReport).addAttachment(configData, "config.json", null)
     }
 
     @Test
-    fun `convertAttachment - Android with data to KMP`() {
-        val data = "test content".toByteArray()
-        val nativeAttachment = com.bugsee.library.attachment.CustomAttachment.fromDataBytes(data)
-        nativeAttachment.name = "test.txt"
-        val kmpAttachment = BugseeAndroidUtils.convertAttachment(nativeAttachment)
-        assertEquals("test.txt", kmpAttachment.name)
-        assertNotNull(kmpAttachment.data)
-        assertTrue(data.contentEquals(kmpAttachment.data!!))
+    fun `addProviderAttachments - keeps provider duplicates absent from the report`() {
+        val nativeReport = mockNativeReport()
+        `when`(nativeReport.attachments).thenReturn(emptyList())
+        val first = "first".toByteArray()
+        val second = "second".toByteArray()
+
+        BugseeAndroidUtils.addProviderAttachments(
+            listOf(BugseeAttachment.create("same.txt", first), BugseeAttachment.create("same.txt", second)),
+            nativeReport
+        )
+
+        verify(nativeReport).addAttachment(first, "same.txt", null)
+        verify(nativeReport).addAttachment(second, "same.txt", null)
     }
 
     // --- convertReportFields ---
 
     @Test
     fun `convertReportFieldsFromNative - normal values`() {
-        val nativeFields = com.bugsee.library.send.ReportFields(
-            "Summary",
-            "Description",
-            arrayListOf("label1"),
-            IssueSeverity.High
+        val nativeReport = mockNativeReport(
+            severity = IssueSeverity.High,
+            labels = arrayListOf("label1"),
+            summary = "Summary",
+            description = "Description"
         )
-        val kmpFields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeFields)
+        val kmpFields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
         assertEquals("Summary", kmpFields.summary)
         assertEquals("Description", kmpFields.description)
         assertEquals(BugseeSeverity.High, kmpFields.severity)
@@ -265,38 +284,68 @@ class BugseeAndroidUtilsTest {
     }
 
     @Test
-    fun `convertReportFieldsToNative - normal values`() {
+    fun `convertReportFieldsFromNative - null summary and description fall back to empty`() {
+        val nativeReport = mockNativeReport(summary = null, description = null)
+        val kmpFields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
+        assertEquals("", kmpFields.summary)
+        assertEquals("", kmpFields.description)
+    }
+
+    @Test
+    fun `applyReportFieldsToNative - normal values`() {
         val kmpFields = BugseeReportFields(
             "Summary",
             "Description",
             BugseeSeverity.Critical,
             listOf("qa", "test")
         )
-        val nativeFields = BugseeAndroidUtils.convertReportFieldsToNative(kmpFields)
-        assertEquals("Summary", nativeFields.summary)
-        assertEquals("Description", nativeFields.description)
-        assertEquals(IssueSeverity.Critical, nativeFields.severity)
-        assertEquals(listOf("qa", "test"), nativeFields.labels)
+        val nativeReport = mockNativeReport()
+        val original = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
+
+        BugseeAndroidUtils.applyReportFieldsToNative(kmpFields, original, nativeReport)
+
+        verify(nativeReport).summary = "Summary"
+        verify(nativeReport).description = "Description"
+        verify(nativeReport).severity = IssueSeverity.Critical
+        verify(nativeReport).setLabels(listOf("qa", "test"))
     }
 
     @Test
-    fun `convertReportFields - empty strings and labels`() {
+    fun `applyReportFieldsToNative - empty strings and labels`() {
         val kmpFields = BugseeReportFields("", "", BugseeSeverity.Medium, emptyList())
-        val nativeFields = BugseeAndroidUtils.convertReportFieldsToNative(kmpFields)
-        assertEquals("", nativeFields.summary)
-        assertEquals("", nativeFields.description)
-        assertTrue(nativeFields.labels!!.isEmpty())
+        val nativeReport = mockNativeReport(summary = "Summary", description = "Description", labels = listOf("qa"))
+        val original = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
+
+        BugseeAndroidUtils.applyReportFieldsToNative(kmpFields, original, nativeReport)
+
+        verify(nativeReport).summary = ""
+        verify(nativeReport).description = ""
+        verify(nativeReport).setLabels(emptyList())
+    }
+
+    @Test
+    fun `applyReportFieldsToNative - untouched fields are not written back`() {
+        val nativeReport = mockNativeReport()
+        val original = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
+        val fields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
+
+        BugseeAndroidUtils.applyReportFieldsToNative(fields, original, nativeReport)
+
+        // A null summary/description must stay null rather than become ""
+        verify(nativeReport, never()).summary = anyString()
+        verify(nativeReport, never()).description = anyString()
+        verify(nativeReport, never()).severity = IssueSeverity.Medium
+        verify(nativeReport, never()).setLabels(emptyList())
     }
 
     @Test
     fun `convertReportFieldsFromNative - empty labels`() {
-        val nativeFields = com.bugsee.library.send.ReportFields(
-            "Summary",
-            "Description",
-            arrayListOf(),
-            IssueSeverity.Medium
+        val nativeReport = mockNativeReport(
+            labels = arrayListOf(),
+            summary = "Summary",
+            description = "Description"
         )
-        val kmpFields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeFields)
+        val kmpFields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
         assertTrue(kmpFields.labels.isEmpty())
     }
 
@@ -318,10 +367,11 @@ class BugseeAndroidUtilsTest {
 
         val nativeOptions = BugseeAndroidUtils.convertExceptionLoggingOptions(options)
         assertNotNull(nativeOptions)
-        assertEquals("com.test", nativeOptions.exceptionDomain)
-        assertEquals(false, nativeOptions.includeVideo)
-        assertEquals(arrayListOf("label1", "label2"), nativeOptions.labels)
-        assertEquals(3, nativeOptions.Rules.skipFrames)
+        assertEquals("com.test", nativeOptions[ExceptionOptions.Domain])
+        assertEquals(false, nativeOptions["includeVideo"])
+        assertEquals(arrayListOf("label1", "label2"), nativeOptions["labels"])
+        assertEquals(3, nativeOptions[ExceptionOptions.SkipFrames])
+        assertEquals("customValue", nativeOptions["customKey"])
     }
 
     @Test
@@ -329,42 +379,70 @@ class BugseeAndroidUtilsTest {
         val options = BugseeExceptionLoggingOptions()
         val nativeOptions = BugseeAndroidUtils.convertExceptionLoggingOptions(options)
         assertNotNull(nativeOptions)
-        assertNull(nativeOptions.exceptionDomain)
-        assertEquals(true, nativeOptions.includeVideo)
-        assertNull(nativeOptions.labels)
-        assertEquals(0, nativeOptions.Rules.skipFrames)
+        assertFalse(nativeOptions.containsKey(ExceptionOptions.Domain))
+        assertEquals(true, nativeOptions["includeVideo"])
+        assertFalse(nativeOptions.containsKey("labels"))
+        assertEquals(0, nativeOptions[ExceptionOptions.SkipFrames])
     }
 
     // --- convertLifecycleEvent ---
 
     @Test
     fun `convertLifecycleEvent - all event types`() {
-        assertEquals(BugseeLifecycleEvent.Launched, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.Launched))
-        assertEquals(BugseeLifecycleEvent.Started, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.Started))
-        assertEquals(BugseeLifecycleEvent.Stopped, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.Stopped))
-        assertEquals(BugseeLifecycleEvent.Resumed, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.Resumed))
-        assertEquals(BugseeLifecycleEvent.Paused, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.Paused))
-        assertEquals(BugseeLifecycleEvent.RelaunchedAfterCrash, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.RelaunchedAfterCrash))
-        assertEquals(BugseeLifecycleEvent.BeforeReportShown, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.BeforeReportShown))
-        assertEquals(BugseeLifecycleEvent.AfterReportShown, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.AfterReportShown))
-        assertEquals(BugseeLifecycleEvent.BeforeReportUploaded, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.BeforeReportUploaded))
-        assertEquals(BugseeLifecycleEvent.AfterReportUploaded, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.AfterReportUploaded))
-        assertEquals(BugseeLifecycleEvent.BeforeFeedbackShown, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.BeforeFeedbackShown))
-        assertEquals(BugseeLifecycleEvent.AfterFeedbackShown, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.AfterFeedbackShown))
-        assertEquals(BugseeLifecycleEvent.BeforeReportAssembled, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.BeforeReportAssembled))
-        assertEquals(BugseeLifecycleEvent.AfterReportAssembled, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.AfterReportAssembled))
-        assertEquals(BugseeLifecycleEvent.ReportUploadFailedWithFutureRetry, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.ReportUploadFailedWithFutureRetry))
-        assertEquals(BugseeLifecycleEvent.ReportUploadFailed, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEventTypes.ReportUploadFailed))
+        assertEquals(BugseeLifecycleEvent.Launched, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.Launched))
+        assertEquals(BugseeLifecycleEvent.Stopped, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.Stopped))
+        assertEquals(BugseeLifecycleEvent.Resumed, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BlackoutEnded))
+        assertEquals(BugseeLifecycleEvent.Paused, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BlackoutStarted))
+        assertEquals(BugseeLifecycleEvent.RelaunchedAfterCrash, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.RelaunchedAfterCrash))
+        assertEquals(BugseeLifecycleEvent.BeforeReportShown, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BeforeReportShown))
+        assertEquals(BugseeLifecycleEvent.AfterReportShown, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.AfterReportShown))
+        assertEquals(BugseeLifecycleEvent.BeforeReportUploaded, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BeforeReportUploaded))
+        assertEquals(BugseeLifecycleEvent.AfterReportUploaded, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.AfterReportUploaded))
+        assertEquals(BugseeLifecycleEvent.BeforeReportAssembled, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BeforeReportAssembled))
+        assertEquals(BugseeLifecycleEvent.AfterReportAssembled, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.AfterReportAssembled))
+        assertEquals(BugseeLifecycleEvent.ReportUploadFailedWithFutureRetry, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.ReportUploadFailedWithFutureRetry))
+        assertEquals(BugseeLifecycleEvent.ReportUploadFailed, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.ReportUploadFailed))
+    }
+
+    @Test
+    fun `convertLifecycleEvent - events without KMP counterpart return null`() {
+        assertNull(BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.Launching))
+        assertNull(BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.Stopping))
+        assertNull(BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.ReportAssemblyFailed))
+        assertNull(BugseeAndroidUtils.convertLifecycleEvent("com.bugsee.lifecycle.Unknown"))
     }
 
     // --- convertNetworkEventStage ---
 
     @Test
     fun `convertNetworkEventStage - all stages`() {
-        assertEquals(BugseeNetworkEventStage.Before, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventType.Before))
-        assertEquals(BugseeNetworkEventStage.Complete, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventType.Complete))
-        assertEquals(BugseeNetworkEventStage.Redirect, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventType.Redirect))
-        assertEquals(BugseeNetworkEventStage.Errors, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventType.Errors))
-        assertEquals(BugseeNetworkEventStage.WebSocket, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventType.WebSocket))
+        assertEquals(BugseeNetworkEventStage.Before, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.RequestStarted))
+        assertEquals(BugseeNetworkEventStage.Complete, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.RequestCompleted))
+        assertEquals(BugseeNetworkEventStage.Redirect, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.Redirect))
+        assertEquals(BugseeNetworkEventStage.Errors, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.RequestErrored))
+        assertEquals(BugseeNetworkEventStage.Cancel, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.RequestAborted))
+        assertEquals(BugseeNetworkEventStage.WebSocket, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.WebSocket))
+        // No KMP counterpart — falls back to Before
+        assertEquals(BugseeNetworkEventStage.Before, BugseeAndroidUtils.convertNetworkEventStage(NetworkEventStage.RequestTimingsReceived))
+        assertEquals(BugseeNetworkEventStage.Before, BugseeAndroidUtils.convertNetworkEventStage(null))
+    }
+
+    // --- toSerializableMap ---
+
+    @Test
+    fun `toSerializableMap - keeps Serializable values and drops the rest`() {
+        val source = mapOf<String, Any?>(
+            "string" to "value",
+            "int" to 42,
+            "null" to null,
+            "notSerializable" to Any()
+        )
+        val result = BugseeAndroidUtils.toSerializableMap(source, "test")
+        assertEquals(mapOf<String, Any>("string" to "value", "int" to 42), result)
+    }
+
+    @Test
+    fun `toSerializableMap - null source returns empty map`() {
+        assertTrue(BugseeAndroidUtils.toSerializableMap(null, "test").isEmpty())
     }
 }

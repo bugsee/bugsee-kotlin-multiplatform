@@ -3,23 +3,25 @@ package com.bugsee.kmp
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.bugsee.kmp.internal.Logger
-import com.bugsee.library.attachment.CustomAttachment
-import com.bugsee.library.attachment.ExtendedReport
+import com.bugsee.library.contracts.reporting.Report
+import java.io.Serializable
 
 public actual class BugseeExtendedReport internal constructor(
-    internal val underlyingReport: ExtendedReport
+    internal val underlyingReport: Report
 ) {
     private companion object {
         private const val TAG = "BugseeExtendedReport"
     }
 
-    private var screenshotWasChanged = false
+    // 7.x only exposes the captured screenshot asynchronously, so the synchronous getter
+    // returns the bitmap last assigned through this wrapper.
+    private var assignedScreenshot: Bitmap? = null
 
     public actual val type: BugseeReportType
         get() = BugseeAndroidUtils.convertIssueType(underlyingReport.type)
 
     public actual var screenshot: Any?
-        get() = underlyingReport.screenshot
+        get() = assignedScreenshot
         set(value) {
             try {
                 val bitmap: Bitmap? = when (value) {
@@ -28,8 +30,8 @@ public actual class BugseeExtendedReport internal constructor(
                     else -> null
                 }
                 if (bitmap != null) {
-                    screenshotWasChanged = true
-                    underlyingReport.screenshot = bitmap
+                    assignedScreenshot = bitmap
+                    underlyingReport.setScreenshot(bitmap)
                 } else if (value != null) {
                     Logger.d(TAG, "screenshot setter: unsupported type ${value::class.simpleName}, expected Bitmap or ByteArray")
                 }
@@ -39,7 +41,7 @@ public actual class BugseeExtendedReport internal constructor(
         }
 
     public actual val screenshotChanged: Boolean
-        get() = screenshotWasChanged
+        get() = underlyingReport.isScreenshotChanged
 
     public actual var summary: String?
         get() = underlyingReport.summary
@@ -54,7 +56,11 @@ public actual class BugseeExtendedReport internal constructor(
         }
 
     public actual fun setAttribute(name: String, value: Any) {
-        underlyingReport.setAttribute(name, value)
+        if (value is Serializable) {
+            underlyingReport.setAttribute(name, value)
+        } else {
+            Logger.e(TAG, "setAttribute: value for '$name' is not Serializable (${value::class.simpleName}) — ignoring")
+        }
     }
 
     public actual fun getAttribute(name: String): Any? {
@@ -62,23 +68,12 @@ public actual class BugseeExtendedReport internal constructor(
     }
 
     public actual fun clearAttribute(name: String) {
-        underlyingReport.clearAttribute(name)
+        underlyingReport.removeAttribute(name)
     }
 
     public actual fun addAttachment(attachment: BugseeAttachment) {
         try {
-            var internalAttachment: CustomAttachment
-            if (attachment.data != null) {
-                internalAttachment = CustomAttachment.fromDataBytes(attachment.data)
-            } else {
-                internalAttachment = CustomAttachment.fromDataFilePath(attachment.filePath)
-                internalAttachment.setFileName(attachment.filePath)
-            }
-
-            // Ensure the attachment name is not empty
-            internalAttachment.name = attachment.name
-
-            underlyingReport.attachments.add(internalAttachment)
+            BugseeAndroidUtils.addAttachmentToReport(attachment, underlyingReport)
         } catch (e: Exception) {
             Logger.e(TAG, "addAttachment failed for '${attachment.name}'", e)
         }
@@ -86,12 +81,8 @@ public actual class BugseeExtendedReport internal constructor(
 
     public actual fun addLabel(label: String) {
         try {
-            if (underlyingReport.labels.isNullOrEmpty()) {
-                underlyingReport.labels = ArrayList<String>()
-            }
-
-            if (!underlyingReport.labels.contains(label)) {
-                underlyingReport.labels.add(label)
+            if (underlyingReport.labels?.contains(label) != true) {
+                underlyingReport.addLabel(label)
             }
         } catch (e: Exception) {
             Logger.e(TAG, "addLabel failed", e)
@@ -100,8 +91,9 @@ public actual class BugseeExtendedReport internal constructor(
 
     public actual fun removeLabel(label: String) {
         try {
-            if (!underlyingReport.labels.isNullOrEmpty()) {
-                underlyingReport.labels.remove(label)
+            val labels = underlyingReport.labels
+            if (!labels.isNullOrEmpty() && labels.contains(label)) {
+                underlyingReport.setLabels(labels.filter { it != label })
             }
         } catch (e: Exception) {
             Logger.e(TAG, "removeLabel failed", e)
@@ -110,9 +102,7 @@ public actual class BugseeExtendedReport internal constructor(
 
     public actual fun clearLabels() {
         try {
-            if (!underlyingReport.labels.isNullOrEmpty()) {
-                underlyingReport.labels.clear()
-            }
+            underlyingReport.clearLabels()
         } catch (e: Exception) {
             Logger.e(TAG, "clearLabels failed", e)
         }
@@ -120,9 +110,7 @@ public actual class BugseeExtendedReport internal constructor(
 
     public actual fun getLabels(): List<String> {
         try {
-            if (!underlyingReport.labels.isNullOrEmpty()) {
-                return underlyingReport.labels.toList()
-            }
+            return underlyingReport.labels?.toList() ?: emptyList()
         } catch (e: Exception) {
             Logger.e(TAG, "getLabels failed", e)
         }

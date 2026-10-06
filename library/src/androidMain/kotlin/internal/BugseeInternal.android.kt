@@ -1,61 +1,53 @@
 package com.bugsee.kmp.internal
 
-import android.app.Application
 import android.view.View
 import com.bugsee.kmp.*
-import com.bugsee.library.attachment.CustomAttachment
-import com.bugsee.library.attachment.ExtendedReport
-import com.bugsee.library.attachment.Report
-import com.bugsee.library.attachment.ReportAttachmentsProvider
-import com.bugsee.library.data.IssueSeverity
-import com.bugsee.library.lifecycle.LifecycleEventTypes
-import com.bugsee.library.logs.BugseeLog
-import com.bugsee.library.logs.LogListener
-import com.bugsee.library.network.NetworkEventListener
-import com.bugsee.library.network.data.BugseeNetworkEvent
-import com.bugsee.library.send.OnChangeReportFieldsListener
-import com.bugsee.library.send.ReportFields
-import com.bugsee.library.send.ReportFieldsFilter
+import com.bugsee.library.contracts.common.Callback1
+import com.bugsee.library.contracts.exchange.EventFilter
+import com.bugsee.library.contracts.exchange.LogEvent
+import com.bugsee.library.contracts.exchange.NetworkEvent
+import com.bugsee.library.contracts.lifecycle.LifecycleEventListener
+import com.bugsee.library.contracts.reporting.Report
+import com.bugsee.library.contracts.reporting.ReportCreationListener
+import com.bugsee.library.contracts.reporting.ReportHandler
+import java.io.Serializable
 
 private typealias BugseeSDK = com.bugsee.library.Bugsee
 
 public actual class BugseeInternal {
 
+    private companion object {
+        private const val TAG = "BugseeInternal"
+    }
+
+    // Read on the SDK's report-handler thread, written from the caller's thread.
+    @Volatile
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
+    @Volatile
     private var reportFieldsFilter: BugseeReportFieldsFilter? = null
+    @Volatile
+    private var attachmentsProvider: BugseeAttachmentsProvider? = null
 
-    public actual val appearance: BugseeAppearance
-        get() = BugseeAppearance(BugseeSDK.getAppearance())
+    // The SDK appearance is a process-wide singleton; one wrapper keeps wrapper-side state
+    // (notificationTitleResId) stable across accesses.
+    public actual val appearance: BugseeAppearance by lazy { BugseeAppearance(BugseeSDK.getAppearance()) }
 
-    // Launch methods - these are already working
+    // Launch methods
     public actual fun launch(apiKey: String, options: Map<String, Any>?) {
         val context = applicationContext ?: run {
-            Logger.d("BugseeInternal", "Bugsee KMP: cannot launch() — applicationContext is not gathered")
+            Logger.d(TAG, "Bugsee KMP: cannot launch() — applicationContext is not gathered")
             return
         }
 
-        val app: Application = context as Application
-        BugseeSDK.launch(app, apiKey, options?.let { HashMap(it) } ?: HashMap())
+        BugseeSDK.launch(context, apiKey, BugseeAndroidUtils.toSerializableMap(options, "launch"))
     }
 
     public actual fun launch(apiKey: String) {
-        val context = applicationContext ?: run {
-            Logger.d("BugseeInternal", "Bugsee KMP: cannot launch() — applicationContext is not gathered")
-            return
-        }
-
-        val app: Application = context as Application
-        BugseeSDK.launch(app, apiKey)
+        BugseeSDK.launch(apiKey)
     }
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
-        val context = applicationContext ?: run {
-            Logger.d("BugseeInternal", "Bugsee KMP: cannot launch() — applicationContext is not gathered")
-            return
-        }
-
-        val app: Application = context as Application
-        BugseeSDK.launch(app, apiKey, if (options != null) HashMap(options.toMap()) else HashMap())
+        launch(apiKey, options?.toMap())
     }
 
     public actual fun stop() {
@@ -67,57 +59,28 @@ public actual class BugseeInternal {
     }
 
     public actual fun relaunch(options: BugseeLaunchOptions?) {
-        BugseeSDK.relaunch(if (options != null) HashMap(options.toMap()) else HashMap())
+        relaunch(options?.toMap())
     }
 
     public actual fun relaunch(options: Map<String, Any>?) {
-        BugseeSDK.relaunch(options?.let { HashMap(it) } ?: HashMap())
+        BugseeSDK.relaunch(BugseeAndroidUtils.toSerializableMap(options, "relaunch"))
     }
 
 
     // Feedback methods
+    // In 7.x feedback lives in the separate bugsee-android-feedback module; these become
+    // available again through the KMP feedback module.
     public actual fun showFeedback() {
-        val context = applicationContext ?: run {
-            Logger.d("BugseeInternal", "Bugsee KMP: cannot launch() — applicationContext is not gathered")
-            return
-        }
-
-        val app: Application = context as Application
-        BugseeSDK.showFeedbackActivity(app)
+        Logger.e(TAG, "showFeedback: feedback is not available in this build")
     }
 
     public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
-        BugseeSDK.setOnNewFeedbackListener(listener)
+        Logger.e(TAG, "setOnNewFeedbackListener: feedback is not available in this build")
     }
 
     public actual fun setDefaultFeedbackGreeting(greeting: String) {
-        BugseeSDK.setDefaultFeedbackGreeting(greeting)
+        Logger.e(TAG, "setDefaultFeedbackGreeting: feedback is not available in this build")
     }
-
-    // Network logging methods
-//    public actual fun addNetworkLoggingToOkHttpBuilder(clientBuilder: OkHttpClient.Builder): OkHttpClient.Builder {
-//        return BugseeSDK.addNetworkLoggingToOkHttpBuilder(clientBuilder)
-//    }
-//
-//    public actual fun addNetworkLoggingToOkHttpClient(client: com.squareup.okhttp.OkHttpClient) {
-//        BugseeSDK.addNetworkLoggingToOkHttpClient(client)
-//    }
-//
-//    public actual fun addNetworkLoggingToKtorHttpClient(client: HttpClient) {
-//        BugseeSDK.addNetworkLoggingToKtorHttpClient(client)
-//    }
-//
-//    public actual fun addNetworkLoggingToPicassoDownloader(downloader: OkHttp3Downloader): Boolean {
-//        return BugseeSDK.addNetworkLoggingToPicassoDownloader(downloader)
-//    }
-//
-//    public actual fun newOkHttpWrappedWebSocket(
-//        okHttpClient: OkHttpClient,
-//        request: Request,
-//        listener: WebSocketListener
-//    ): WebSocket {
-//        return BugseeSDK.newOkHttpWrappedWebSocket(okHttpClient, request, listener)
-//    }
 
 
     // Logging methods
@@ -128,7 +91,7 @@ public actual class BugseeInternal {
     public actual fun log(message: String, level: BugseeLogLevel) {
         BugseeSDK.log(
             message,
-            BugseeAndroidUtils.Companion.convertLogLevel(level)
+            BugseeAndroidUtils.convertLogLevel(level)
         )
     }
 
@@ -165,7 +128,7 @@ public actual class BugseeInternal {
         BugseeSDK.showReportDialog(
             summary,
             description,
-            BugseeAndroidUtils.Companion.convertSeverity(severity)
+            BugseeAndroidUtils.convertSeverity(severity)
         )
     }
 
@@ -183,7 +146,7 @@ public actual class BugseeInternal {
         BugseeSDK.showReportDialog(
             summary,
             description,
-            IssueSeverity.fromIntValue(severity.getLevel()),
+            BugseeAndroidUtils.convertSeverity(severity),
             ArrayList(labels)
         )
     }
@@ -191,7 +154,7 @@ public actual class BugseeInternal {
 
     // Bug report upload methods
     public actual fun upload(summary: String, description: String, severity: BugseeSeverity) {
-        BugseeSDK.upload(summary, description, BugseeAndroidUtils.Companion.convertSeverity(severity))
+        BugseeSDK.upload(summary, description, BugseeAndroidUtils.convertSeverity(severity))
     }
 
     public actual fun upload(
@@ -208,11 +171,12 @@ public actual class BugseeInternal {
         BugseeSDK.upload(
             summary,
             description,
-            BugseeAndroidUtils.Companion.convertSeverity(severity),
+            BugseeAndroidUtils.convertSeverity(severity),
             ArrayList(labels)
         )
     }
 
+    // 7.x reports always include video; includeVideo = false cannot be honored.
     public actual fun upload(
         summary: String,
         description: String,
@@ -220,13 +184,11 @@ public actual class BugseeInternal {
         labels: List<String>?,
         includeVideo: Boolean
     ) {
-        BugseeSDK.upload(
-            summary,
-            description,
-            BugseeAndroidUtils.Companion.convertSeverity(severity),
-            if (labels == null) ArrayList() else ArrayList(labels),
-            includeVideo
-        )
+        if (!includeVideo) {
+            Logger.d(TAG, "upload: includeVideo = false is not supported by the Android SDK — video is included")
+        }
+
+        upload(summary, description, severity, labels)
     }
 
 
@@ -236,16 +198,16 @@ public actual class BugseeInternal {
     }
 
     public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
-        BugseeSDK.logException(ex, BugseeAndroidUtils.Companion.convertExceptionLoggingOptions(options))
+        BugseeSDK.logException(ex, BugseeAndroidUtils.convertExceptionLoggingOptions(options))
     }
 
     // Privacy control methods
     public actual fun pause() {
-        BugseeSDK.pause()
+        BugseeSDK.startBlackout()
     }
 
     public actual fun resume() {
-        BugseeSDK.resume()
+        BugseeSDK.endBlackout()
     }
 
 
@@ -260,7 +222,7 @@ public actual class BugseeInternal {
             BugseeSDK.addSecureView(view)
         } else {
             Logger.e(
-                "BugseeInternal",
+                TAG,
                 "addSecureView: expected android.view.View on Android, got ${view?.let { it::class.simpleName } ?: "null"} — ignoring"
             )
         }
@@ -271,7 +233,7 @@ public actual class BugseeInternal {
             BugseeSDK.removeSecureView(view)
         } else {
             Logger.e(
-                "BugseeInternal",
+                TAG,
                 "removeSecureView: expected android.view.View on Android, got ${view?.let { it::class.simpleName } ?: "null"} — ignoring"
             )
         }
@@ -279,80 +241,51 @@ public actual class BugseeInternal {
 
 
     // Filter and listener methods
+    // 7.x filters are callback-based: callback.run(event) keeps the (mutated) event,
+    // callback.run(null) drops it. On a filter exception the original event is kept.
     public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         if (filter == null) {
             BugseeSDK.setNetworkEventFilter(null)
             return
         }
 
-        BugseeSDK.setNetworkEventFilter(
-            object : com.bugsee.library.network.NetworkEventFilter {
-                override fun filter(
-                    p0: BugseeNetworkEvent?,
-                    p1: NetworkEventListener?
-                ) {
-                    try {
-                        if (p0 == null || p1 == null) {
-                            p1?.onEvent(p0);
-                            return
-                        }
-
-                        val filteredEvent = filter.invoke(
-                            BugseeNetworkEvent(
-                                p0
-                            )
-                        )
-                        if (filteredEvent == null) {
-                            return
-                        }
-
-                        p1?.onEvent(filteredEvent.underlyingEvent)
-                    } catch (e: Exception) {
-                        Logger.e("BugseeInternal", "exception during setNetworkEventFilter execution: ${e.message}")
-                        Bugsee.log("BugseeInternal.android: exception during setNetworkEventFilter execution: ${e.message}", BugseeLogLevel.Warning)
-                        p1?.onEvent(p0)
-                    }
+        BugseeSDK.setNetworkEventFilter(object : EventFilter<NetworkEvent> {
+            override fun filter(event: NetworkEvent, callback: Callback1<NetworkEvent>) {
+                // Timing updates have no 0.1.x stage; don't let a filter written for
+                // BugseeNetworkEventStage.Before drop them.
+                if (event.networkEventType == NetworkEvent.NetworkEventStage.RequestTimingsReceived) {
+                    callback.run(event)
+                    return
                 }
+
+                val result = try {
+                    filter.invoke(BugseeNetworkEvent(event))?.underlyingEvent
+                } catch (e: Exception) {
+                    Logger.e(TAG, "exception during setNetworkEventFilter execution", e)
+                    event
+                }
+                callback.run(result)
             }
-        )
+        })
     }
 
     public actual fun setLogFilter(filter: BugseeLogFilter?) {
         if (filter == null) {
-            BugseeSDK.setLogFilter(null)
+            BugseeSDK.setLogEventFilter(null)
             return
         }
 
-        BugseeSDK.setLogFilter(
-            object : com.bugsee.library.logs.LogFilter {
-                override fun filter(
-                    p0: BugseeLog?,
-                    p1: LogListener?
-                ) {
-                    try {
-                        if (p0 == null || p1 == null) {
-                            p1?.onLog(p0);
-                            return
-                        }
-
-                        val filteredEvent = filter.invoke(
-                            BugseeLogEvent(
-                                p0
-                            )
-                        )
-                        if (filteredEvent == null) {
-                            return
-                        }
-
-                        p1.onLog(filteredEvent.underlyingEvent)
-                    } catch (e: Exception) {
-                        Logger.e("BugseeInternal", "exception during setLogFilter execution: ${e.message}")
-                        Bugsee.log("BugseeInternal: exception during setLogFilter execution: ${e.message}", BugseeLogLevel.Warning)
-                        p1?.onLog(p0)
-                    }
+        BugseeSDK.setLogEventFilter(object : EventFilter<LogEvent> {
+            override fun filter(event: LogEvent, callback: Callback1<LogEvent>) {
+                val result = try {
+                    filter.invoke(BugseeLogEvent(event))?.underlyingEvent
+                } catch (e: Exception) {
+                    Logger.e(TAG, "exception during setLogFilter execution", e)
+                    event
                 }
+                callback.run(result)
             }
-        )
+        })
     }
 
     public actual fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?) {
@@ -361,41 +294,43 @@ public actual class BugseeInternal {
             return
         }
 
-        BugseeSDK.setLifecycleEventsListener(
-            object : com.bugsee.library.lifecycle.LifecycleEventListener {
-                override fun onEvent(p0: LifecycleEventTypes?) {
-                    if (p0 == null) {
-                        return
-                    }
+        BugseeSDK.setLifecycleEventsListener(object : LifecycleEventListener {
+            override fun onEvent(event: String, payload: Any?) {
+                val converted = BugseeAndroidUtils.convertLifecycleEvent(event) ?: return
 
-                    try {
-                        listener.invoke(BugseeAndroidUtils.Companion.convertLifecycleEvent(p0))
-                    } catch (e: Exception) {
-                        Logger.e("BugseeInternal", "exception during setLifecycleEventsListener execution: ${e.message}")
-                        Bugsee.log("BugseeInternal.android: exception during setLifecycleEventsListener execution: ${e.message}", BugseeLogLevel.Warning)
-                    }
+                try {
+                    listener.invoke(converted)
+                } catch (e: Exception) {
+                    Logger.e(TAG, "exception during setLifecycleEventsListener execution", e)
                 }
             }
-        )
+        })
     }
 
     // User management methods
+    // 7.x removed the global email; it is replaced by the user identifier, which the
+    // user-identity API will expose.
     public actual fun setEmail(email: String) {
-        BugseeSDK.setEmail(email)
+        Logger.e(TAG, "setEmail: not supported by Android SDK 7.x — ignoring")
     }
 
     public actual fun getEmail(): String? {
-        return BugseeSDK.getEmail()
+        Logger.e(TAG, "getEmail: not supported by Android SDK 7.x — returning null")
+        return null
     }
 
     public actual fun clearEmail() {
-        BugseeSDK.setEmail(null)
+        Logger.e(TAG, "clearEmail: not supported by Android SDK 7.x — ignoring")
     }
 
 
     // Attribute methods
     public actual fun setAttribute(name: String, value: Any) {
-        BugseeSDK.setAttribute(name, value)
+        if (value is Serializable) {
+            BugseeSDK.setAttribute(name, value)
+        } else {
+            Logger.e(TAG, "setAttribute: value for '$name' is not Serializable (${value::class.simpleName}) — ignoring")
+        }
     }
 
     public actual fun clearAttribute(name: String) {
@@ -412,114 +347,102 @@ public actual class BugseeInternal {
 
 
     // Report attachments provider
+    @Synchronized
     public actual fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
-        if (provider == null) {
-            BugseeSDK.setReportAttachmentsProvider(null)
-            return
-        }
-
-        BugseeSDK.setReportAttachmentsProvider(
-            object : ReportAttachmentsProvider {
-                override fun getAttachments(p0: Report?): ArrayList<CustomAttachment?>? {
-                    if (p0 == null) {
-                        return null
-                    }
-
-                    val gatheredAttachments = provider.invoke(BugseeAndroidUtils.convertReport(p0))
-                    if (gatheredAttachments == null) {
-                        return null
-                    }
-
-                    return ArrayList(gatheredAttachments.map(BugseeAndroidUtils.Companion::convertAttachment))
-                }
-            }
-        )
+        attachmentsProvider = provider
+        synchronizeReportHandler()
     }
 
 
     // Data management
+    // 6.x deleted everything collected; includingIntermediate = true keeps that behavior.
     public actual fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
-        BugseeSDK.deleteCollectedDataOnDevice(deletionEventListener)
+        BugseeSDK.deleteCollectedDataOnDevice(
+            true,
+            deletionEventListener?.let { listener -> Callback1<Boolean> { listener.invoke(it == true) } }
+        )
     }
 
 
     // Extended report methods
     public actual fun createReport(provider: BugseeExtendedReportProvider) {
-        BugseeSDK.createReport(
-            object : com.bugsee.library.Bugsee.ExtendedReportCreatedListener {
-                override fun onCreated(p0: ExtendedReport?) {
-                    if (p0 == null) {
-                        Logger.d("BugseeInternal", "createReport: native SDK returned null, provider not invoked")
-                        return
-                    }
-
-                    provider.invoke(BugseeAndroidUtils.Companion.convertExtendedReport(p0))
-                }
+        BugseeSDK.createReport(ReportCreationListener { report ->
+            if (report == null) {
+                Logger.d(TAG, "createReport: native SDK returned null, provider not invoked")
+                return@ReportCreationListener
             }
-        )
+
+            provider.invoke(BugseeExtendedReport(report))
+        })
     }
 
     public actual fun upload(report: BugseeExtendedReport) {
-        BugseeSDK.upload(BugseeAndroidUtils.Companion.convertExtendedReport(report))
+        BugseeSDK.upload(report.underlyingReport)
     }
 
 
     // Report fields filter
+    @Synchronized
     public actual fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?) {
         reportFieldsFiller = filler
-        synchronizeReportFilter()
+        synchronizeReportHandler()
     }
 
+    @Synchronized
     public actual fun setReportFieldsPostFilter(filter: BugseeReportFieldsFilter?) {
         reportFieldsFilter = filter
-        synchronizeReportFilter()
+        synchronizeReportHandler()
     }
 
-    private fun synchronizeReportFilter() {
-        if (reportFieldsFiller == null && reportFieldsFilter == null) {
-            BugseeSDK.setReportFieldsFilter(null)
+    // 7.x folds the 6.x report fields filter and attachments provider into a single
+    // ReportHandler: the pre-filter runs before the report is created, the post-filter
+    // and the attachments provider after. The completion callback is always invoked.
+    private fun synchronizeReportHandler() {
+        if (reportFieldsFiller == null && reportFieldsFilter == null && attachmentsProvider == null) {
+            BugseeSDK.setReportHandler(null)
             return
         }
 
-        BugseeSDK.setReportFieldsFilter(
-            object : ReportFieldsFilter {
-                override fun addFieldsBeforeReportCreated(
-                    p0: ReportFields?,
-                    p1: OnChangeReportFieldsListener?
-                ) {
-                    // Use copy here to avoid race conditions
-                    // in the logic below
-                    val filler = reportFieldsFiller
-
-                    if (filler == null || p0 == null) {
-                        p1?.onChanged(p0)
-                        return
+        BugseeSDK.setReportHandler(object : ReportHandler {
+            override fun onBeforeReportCreated(report: Report, isTerminating: Boolean, completionCallback: Runnable) {
+                try {
+                    reportFieldsFiller?.let { filler ->
+                        val original = BugseeAndroidUtils.convertReportFieldsFromNative(report)
+                        val fields = BugseeAndroidUtils.convertReportFieldsFromNative(report)
+                        filler.invoke(fields)
+                        BugseeAndroidUtils.applyReportFieldsToNative(fields, original, report)
                     }
-
-                    val convertedFields = BugseeAndroidUtils.convertReportFieldsFromNative(p0)
-                    filler.invoke(convertedFields)
-
-                    p1?.onChanged(BugseeAndroidUtils.convertReportFieldsToNative(convertedFields))
-                }
-
-                override fun changeFieldsAfterReportCreated(
-                    p0: ReportFields?,
-                    p1: OnChangeReportFieldsListener?
-                ) {
-                    val filter = reportFieldsFilter
-
-                    if (filter == null || p0 == null) {
-                        p1?.onChanged(p0);
-                        return
-                    }
-
-                    val convertedFields = BugseeAndroidUtils.convertReportFieldsFromNative(p0)
-                    filter.invoke(convertedFields)
-
-                    p1?.onChanged(BugseeAndroidUtils.convertReportFieldsToNative(convertedFields))
+                } catch (e: Exception) {
+                    Logger.e(TAG, "exception during report fields pre-filter execution", e)
+                } finally {
+                    completionCallback.run()
                 }
             }
-        )
+
+            override fun onAfterReportCreated(report: Report, isTerminating: Boolean, completionCallback: Runnable) {
+                // The post-filter and the attachments provider were independent hooks in 6.x:
+                // a failure in one must not cancel the other.
+                try {
+                    reportFieldsFilter?.let { filter ->
+                        val original = BugseeAndroidUtils.convertReportFieldsFromNative(report)
+                        val fields = BugseeAndroidUtils.convertReportFieldsFromNative(report)
+                        BugseeAndroidUtils.applyReportFieldsToNative(filter.invoke(fields), original, report)
+                    }
+                } catch (e: Exception) {
+                    Logger.e(TAG, "exception during report fields post-filter execution", e)
+                }
+
+                try {
+                    attachmentsProvider?.invoke(BugseeAndroidUtils.convertReport(report))?.let { attachments ->
+                        BugseeAndroidUtils.addProviderAttachments(attachments, report)
+                    }
+                } catch (e: Exception) {
+                    Logger.e(TAG, "exception during report attachments provider execution", e)
+                } finally {
+                    completionCallback.run()
+                }
+            }
+        })
     }
 
 
