@@ -7,7 +7,7 @@ inputs:
   xcode-version:
     description: Xcode to select; must exist as /Applications/Xcode_<version>.app on the image.
     required: false
-    # gradle.properties carries Xcode 16.4 compatibility workarounds.
+    # Pinned rather than trusting the image default; bump deliberately.
     default: '16.4'
 
 runs:
