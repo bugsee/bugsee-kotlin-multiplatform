@@ -76,6 +76,7 @@ Filters transform events in-place (return modified or null to suppress). Listene
 ## Key Build Configuration
 
 - Kotlin: 2.4.20, Compose Multiplatform: 1.9.3
+- Gradle wrapper: 8.14.5 (Kotlin 2.5 requires ≥ 8.14.4; Gradle 9 deferred to an AGP upgrade), AGP 8.6.0
 - Android: minSdk 24, compileSdk 35, JVM target 1.8 (library) / 11 (sample)
 - iOS: deployment target 15.0 (library), 16.6 (sample)
 - `kotlin.mpp.enableCInteropCommonization=true`
