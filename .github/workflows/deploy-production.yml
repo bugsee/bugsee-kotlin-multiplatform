@@ -28,7 +28,7 @@ permissions:
 jobs:
   deploy:
     name: build + test + publish (RELEASE)
-    runs-on: macos-15
+    runs-on: macos-26
     environment: production
     timeout-minutes: 120
 
@@ -76,8 +76,8 @@ jobs:
             exit 1
           fi
 
-      # setup-gradle only saves its cache from the default branch, so this job
-      # (dispatched from `release`) restores but never writes it.
+      # The setup action writes the Gradle cache only from main / nextgen, so
+      # this job (dispatched from `release`) restores but never writes it.
       - uses: ./.github/actions/setup
 
       - name: Build
