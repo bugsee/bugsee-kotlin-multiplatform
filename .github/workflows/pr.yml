@@ -4,9 +4,12 @@ name: PR
 # both test lanes (Robolectric + iOS simulator) for :library and :library-protect.
 #
 # No secrets are used here, so it is safe for pull requests from forks.
+#
+# No base-branch filter: stacked PRs (one PR based on another's branch) get the
+# same check as PRs into main / release / nextgen. Hosted runners are free for a
+# public repository, so an extra run costs only wall-clock time.
 on:
   pull_request:
-    branches: [main, release, nextgen]
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
@@ -18,7 +21,7 @@ permissions:
 jobs:
   test:
     name: build + test
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 90
 
     env:
@@ -37,7 +40,8 @@ jobs:
       - name: Test
         run: bash -xe ./scripts/test.sh all
 
-      # Failure-only with short retention: artifact storage is an org-wide quota.
+      # Failure-only with short retention, so the run list carries only reports
+      # someone may still need.
       - name: Upload test reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@v7
