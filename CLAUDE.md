@@ -81,7 +81,7 @@ Filters transform events in-place (return modified or null to suppress). Listene
 - `kotlin.mpp.enableCInteropCommonization=true`
 - Language opt-ins (iOS/native code): `kotlinx.cinterop.ExperimentalForeignApi`, `kotlinx.cinterop.UnsafeNumber`, `kotlin.experimental.ExperimentalNativeApi`
 - Publishing: Maven Central via `com.vanniktech:maven-publish` plugin (Sonatype Central Portal). Coordinates: `com.bugsee:bugsee-kotlin-multiplatform` and `com.bugsee:bugsee-kotlin-multiplatform-protect`. Version sourced from `version.txt` (`-SNAPSHOT` appended unless `RELEASE=true`). Release via the **Deploy (production)** GitHub Actions workflow from the `release` branch (or `RELEASE=true ./scripts/deploy.sh` locally).
-- CI/CD: GitHub Actions on hosted `macos-15` runners — `pr.yml` (build + test), `main.yml` (build + test + mavenLocal publish), `deploy-production.yml` (manual release). See `.github/CI.md`.
+- CI/CD: GitHub Actions on hosted `macos-26` runners with Xcode 26.4.1 pinned (Kotlin/Native 2.4.20's Xcode) — `pr.yml` (build + test, every PR), `main.yml` (build + test + mavenLocal publish on push to `main` / `nextgen`), `deploy-production.yml` (manual release). See `.github/CI.md`.
 
 ## Testing
 

@@ -5,8 +5,8 @@ repo's own `scripts/{build,test,deploy}.sh`, so CI and local runs stay identical
 
 | Workflow | Trigger | Environment | `RELEASE` | What it does |
 |---|---|---|---|---|
-| `pr.yml` | PR → `main` / `release` | — | `false` | `build.sh` + `test.sh all` |
-| `main.yml` | push to `main`, manual | — | `false` | `build.sh` + `test.sh all` + `deploy.sh --local` (mavenLocal) |
+| `pr.yml` | any PR (stacked PRs included) | — | `false` | `build.sh` + `test.sh all` |
+| `main.yml` | push to `main` / `nextgen`, manual | — | `false` | `build.sh` + `test.sh all` + `deploy.sh --local` (mavenLocal) |
 | `deploy-production.yml` | manual dispatch from `release` | `production` | `true` | `build.sh` + `test.sh all` + `deploy.sh --skip-tests` (publish + auto-release to Maven Central) |
 
 `test.sh all` = Robolectric unit tests and iOS simulator tests for both
@@ -30,20 +30,32 @@ GitHub-hosted runners are free and unmetered for public repositories, and each
 job gets a clean VM — so none of the shared-runner workarounds (`--clean`,
 disabled file watching, on-disk report archiving) are needed.
 
+Every job runs on **`macos-26`** (standard arm64). It is the only hosted image
+with an Xcode 26.4.x, which is what Kotlin/Native 2.4.20 is built against;
+`macos-15` stops at Xcode 26.3. Image contents (Xcodes, simulators, JDKs,
+Android SDK) are listed in
+[actions/runner-images](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md)
+and change weekly. Avoid the `-xlarge` / `-large` labels: larger runners are
+billed even for public repositories.
+
 The shared `.github/actions/setup` action:
 
-- selects **Xcode 16.4** explicitly rather than trusting the image default —
-  bump its `xcode-version` default deliberately;
+- selects **Xcode 26.4.1** explicitly rather than trusting the image default
+  (26.6) — move its `xcode-version` default together with the Kotlin version;
 - installs Temurin **JDK 21** (AGP 8 needs 17+);
-- restores the Gradle cache (`gradle/actions/setup-gradle`, written only from
-  `main`) and `~/.konan` (Kotlin/Native toolchain, keyed on
-  `gradle/libs.versions.toml`).
+- restores the Gradle cache (`gradle/actions/setup-gradle`) and `~/.konan`
+  (Kotlin/Native toolchain, keyed on `gradle/libs.versions.toml`). The Gradle
+  cache is written only by pushes to `main` and `nextgen` (via `main.yml`);
+  a PR reads its base branch's cache, falling back to `main`'s.
 
 The Android SDK and CocoaPods (needed for the `Bugsee` pod cinterop) come with the
-`macos-15` image.
+image.
 
-Test reports are uploaded as an artifact **only on failure**, kept 7 days —
-artifact storage is an org-wide quota shared with every repo.
+Test reports are uploaded as an artifact **only on failure**, kept 7 days.
+Unlike `bugsee-android` / `bugsee-cocoa` (private, hence their "no uploads from
+CI" guard), a public repository's Actions usage is free and does not draw on the
+org's shared storage allowance — see
+[Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
 
 ## Why there is no staging / SNAPSHOT deploy
 
