@@ -1,0 +1,5 @@
+# Pin the wrapper scripts' line endings to what `./gradlew wrapper` writes, so
+# core.autocrlf, a later `* text=auto`, or an editor cannot flip them back and forth.
+gradlew      text eol=lf
+gradlew.bat  text eol=crlf
+*.jar        binary
