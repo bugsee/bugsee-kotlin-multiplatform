@@ -448,12 +448,12 @@ class BugseeInternalAndroidSimpleTest {
     fun `test BugseeLaunchOptions integration`() {
         // Test BugseeLaunchOptions integration - this should not throw exceptions
         val options = BugseeLaunchOptions().apply {
-            shakeToReport = true
-            videoEnabled = true
-            frameRate = BugseeFrameRate.High
-            screenshotEnabled = true
+            reportingTriggerByShake = true
+            captureVideo = true
+            captureVideoFrameRate = BugseeFrameRate.High
+            captureScreenshot = true
             wifiOnlyUpload = false
-            maxRecordingTime = 300
+            duration = 300
         }
         
         bugseeInternal.launch("test-api-key", options)

@@ -33,13 +33,9 @@ public actual class BugseeInternal {
     public actual val appearance: BugseeAppearance by lazy { BugseeAppearance(BugseeSDK.getAppearance()) }
 
     // Launch methods
+    // A raw map goes through BugseeLaunchOptions, as on iOS: defaults, type checks and wrapper info.
     public actual fun launch(apiKey: String, options: Map<String, Any>?) {
-        val context = applicationContext ?: run {
-            Logger.d(TAG, "Bugsee KMP: cannot launch() — applicationContext is not gathered")
-            return
-        }
-
-        BugseeSDK.launch(context, apiKey, BugseeAndroidUtils.toSerializableMap(options, "launch"))
+        launch(apiKey, options?.let { BugseeLaunchOptions(it) })
     }
 
     public actual fun launch(apiKey: String) {
@@ -47,7 +43,12 @@ public actual class BugseeInternal {
     }
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
-        launch(apiKey, options?.toMap())
+        val context = applicationContext ?: run {
+            Logger.d(TAG, "Bugsee KMP: cannot launch() — applicationContext is not gathered")
+            return
+        }
+
+        BugseeSDK.launch(context, apiKey, BugseeAndroidUtils.toSerializableMap(options?.toMap(), "launch"))
     }
 
     public actual fun stop() {

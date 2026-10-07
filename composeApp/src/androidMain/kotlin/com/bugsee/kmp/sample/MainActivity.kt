@@ -19,13 +19,13 @@ class KMPSample: Application() {
         super.onCreate()
 
         val options = BugseeLaunchOptions()
-        options.monitorNetwork = true
+        options.captureNetwork = true
         options.captureLogs = true
-        options.videoEnabled = true
-        options.viewHierarchyEnabled = true
-        options.shakeToReport = true
-        options.reportLabelsEnabled = true
-        options.reportLabelsRequired = false
+        options.captureVideo = true
+        options.captureViewHierarchy = true
+        options.reportingTriggerByShake = true
+        options.reportingUILabelsEnabled = true
+        options.reportingUILabelsRequired = false
         // Internal Android SDK 7 keys; the 6.x "endpoint" / "debug" keys are ignored.
         options.setCustomOption("com.bugsee.option.\$\$ENDPOINT", getPlatform().appdevEndpoint)
         options.setCustomOption("com.bugsee.option.\$\$DEBUG", true)

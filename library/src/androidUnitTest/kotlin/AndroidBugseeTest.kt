@@ -2,6 +2,7 @@ package com.bugsee.kmp
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -19,12 +20,12 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Test Android-specific shake to report key
-        options.shakeToReport = true
+        options.reportingTriggerByShake = true
         val map = options.toMap()
         
-        // On Android, it should use "ShakeToTrigger" key
-        assertTrue(map.containsKey("ShakeToTrigger"))
-        assertEquals(true, map["ShakeToTrigger"])
+        // On Android, it should use the shake trigger key
+        assertTrue(map.containsKey(BugseeOptions.ReportingTriggerByShake))
+        assertEquals(true, map[BugseeOptions.ReportingTriggerByShake])
     }
 
     @Test
@@ -48,16 +49,16 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Set various options to test Android-specific behavior
-        options.crashReport = true
-        options.videoEnabled = true
-        options.screenshotEnabled = true
+        options.detectAndReportCrash = true
+        options.captureVideo = true
+        options.captureScreenshot = true
         
         val map = options.toMap()
         
         // Verify options are properly set
-        assertEquals(true, map["CrashReport"])
-        assertEquals(true, map["VideoEnabled"])
-        assertEquals(true, map["ScreenshotEnabled"])
+        assertEquals(true, map[BugseeOptions.DetectAndReportCrash])
+        assertEquals(true, map[BugseeOptions.CaptureVideo])
+        assertEquals(true, map[BugseeOptions.CaptureScreenshot])
     }
 
     @Test
@@ -65,15 +66,17 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Test Android-specific configuration
-        options.maxNetworkBodySize = 1024
+        options.captureNetworkBodySizeLimit = 1024
         options.wifiOnlyUpload = true
         options.captureDeviceAndNetworkNames = true
         
         val map = options.toMap()
         
-        assertEquals(1024, map["bodySizeLimit"])
-        assertEquals(true, map["WifiOnlyUpload"])
-        assertEquals(true, map["CaptureDeviceAndNetworkNames"])
+        assertEquals(1024, map[BugseeOptions.CaptureNetworkBodySizeLimit])
+        assertEquals(true, map[BugseeOptions.WifiOnlyUpload])
+        // iOS-only option: kept for the getter, never sent to the Android SDK
+        assertTrue(options.captureDeviceAndNetworkNames)
+        assertFalse(map.containsKey(BugseeOptions.CaptureDeviceAndNetworkNames))
     }
 
     @Test
@@ -81,19 +84,19 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Test report-related options
-        options.reportSummaryRequired = true
-        options.reportDescriptionRequired = true
-        options.reportEmailRequired = false
-        options.reportLabelsRequired = true
-        options.reportLabelsEnabled = true
+        options.reportingUISummaryRequired = true
+        options.reportingUIDescriptionRequired = true
+        options.reportingUIEmailRequired = false
+        options.reportingUILabelsRequired = true
+        options.reportingUILabelsEnabled = true
         
         val map = options.toMap()
         
-        assertEquals(true, map["ReportSummaryRequired"])
-        assertEquals(true, map["ReportDescriptionRequired"])
-        assertEquals(false, map["ReportEmailRequired"])
-        assertEquals(true, map["ReportLabelsRequired"])
-        assertEquals(true, map["ReportLabelsEnabled"])
+        assertEquals(true, map[BugseeOptions.ReportingUISummaryRequired])
+        assertEquals(true, map[BugseeOptions.ReportingUIDescriptionRequired])
+        assertEquals(false, map[BugseeOptions.ReportingUIEmailRequired])
+        assertEquals(true, map[BugseeOptions.ReportingUILabelsRequired])
+        assertEquals(true, map[BugseeOptions.ReportingUILabelsEnabled])
     }
 
     @Test
@@ -101,15 +104,19 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Test frame rate options
-        options.frameRate = BugseeFrameRate.High
-        options.minFrameRate = 15
-        options.maxFrameRate = 60
+        options.captureVideoFrameRate = BugseeFrameRate.High
+        options.captureVideoMinFrameRate = 15
+        options.captureVideoMaxFrameRate = 60
         
         val map = options.toMap()
         
-        assertEquals(BugseeFrameRate.High.getIntValue(), map["FrameRate"])
-        assertEquals(15, map["MinFrameRate"])
-        assertEquals(60, map["MaxFrameRate"])
+        // The Android SDK takes enum options by constant name
+        assertEquals(BugseeFrameRate.High.name, map[BugseeOptions.CaptureVideoFrameRate])
+        // iOS-only options: kept for the getters, never sent to the Android SDK
+        assertEquals(15, options.captureVideoMinFrameRate)
+        assertEquals(60, options.captureVideoMaxFrameRate)
+        assertFalse(map.containsKey(BugseeOptions.CaptureVideoMinFrameRate))
+        assertFalse(map.containsKey(BugseeOptions.CaptureVideoMaxFrameRate))
     }
 
     @Test
@@ -117,13 +124,13 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Test severity options
-        options.defaultCrashPriority = BugseeSeverity.Critical
-        options.defaultBugPriority = BugseeSeverity.High
+        options.reportingDefaultCrashPriority = BugseeSeverity.Critical
+        options.reportingDefaultBugPriority = BugseeSeverity.High
         
         val map = options.toMap()
         
-        assertEquals(BugseeSeverity.Critical.getLevel(), map["BugseeDefaultCrashPriority"])
-        assertEquals(BugseeSeverity.High.getLevel(), map["BugseeDefaultBugPriority"])
+        assertEquals(BugseeSeverity.Critical.name, map[BugseeOptions.ReportingDefaultCrashPriority])
+        assertEquals(BugseeSeverity.High.name, map[BugseeOptions.ReportingDefaultBugPriority])
     }
 
     @Test
@@ -147,42 +154,41 @@ class AndroidBugseeTest {
         val options = BugseeLaunchOptions()
         
         // Set comprehensive Android configuration
-        options.maxNetworkBodySize = 2048
-        options.shakeToReport = true
-        options.crashReport = true
-        options.videoEnabled = true
-        options.screenshotEnabled = true
+        options.captureNetworkBodySizeLimit = 2048
+        options.reportingTriggerByShake = true
+        options.detectAndReportCrash = true
+        options.captureVideo = true
+        options.captureScreenshot = true
         options.captureLogs = true
-        options.monitorNetwork = true
+        options.captureNetwork = true
         options.wifiOnlyUpload = false
         options.maxDataSize = 100000
-        options.frameRate = BugseeFrameRate.Medium
-        options.defaultCrashPriority = BugseeSeverity.Blocker
-        options.defaultBugPriority = BugseeSeverity.High
-        options.reportSummaryRequired = true
-        options.reportDescriptionRequired = true
-        options.viewHierarchyEnabled = true
-        options.detectAppExit = true
+        options.captureVideoFrameRate = BugseeFrameRate.Medium
+        options.reportingDefaultCrashPriority = BugseeSeverity.Blocker
+        options.reportingDefaultBugPriority = BugseeSeverity.High
+        options.reportingUISummaryRequired = true
+        options.reportingUIDescriptionRequired = true
+        options.captureViewHierarchy = true
+        options.detectAndReportExit = true
         
         val map = options.toMap()
         
         // Verify all options are set correctly
-        assertEquals(2048, map["bodySizeLimit"])
-        assertEquals(true, map["ShakeToTrigger"])
-        assertEquals(true, map["CrashReport"])
-        assertEquals(true, map["VideoEnabled"])
-        assertEquals(true, map["ScreenshotEnabled"])
-        assertEquals(true, map["CaptureLogs"])
-        assertEquals(true, map["MonitorNetwork"])
-        assertEquals(true, map["monitorNetwork"])
-        assertEquals(false, map["WifiOnlyUpload"])
-        assertEquals(100000, map["MaxDataSize"])
-        assertEquals(BugseeFrameRate.Medium.getIntValue(), map["FrameRate"])
-        assertEquals(BugseeSeverity.Blocker.getLevel(), map["BugseeDefaultCrashPriority"])
-        assertEquals(BugseeSeverity.High.getLevel(), map["BugseeDefaultBugPriority"])
-        assertEquals(true, map["ReportSummaryRequired"])
-        assertEquals(true, map["ReportDescriptionRequired"])
-        assertEquals(true, map["ViewHierarchyEnabled"])
-        assertEquals(true, map["DetectAppExit"])
+        assertEquals(2048, map[BugseeOptions.CaptureNetworkBodySizeLimit])
+        assertEquals(true, map[BugseeOptions.ReportingTriggerByShake])
+        assertEquals(true, map[BugseeOptions.DetectAndReportCrash])
+        assertEquals(true, map[BugseeOptions.CaptureVideo])
+        assertEquals(true, map[BugseeOptions.CaptureScreenshot])
+        assertEquals(true, map[BugseeOptions.CaptureLogs])
+        assertEquals(true, map[BugseeOptions.CaptureNetwork])
+        assertEquals(false, map[BugseeOptions.WifiOnlyUpload])
+        assertEquals(100000, map[BugseeOptions.MaxDataSize])
+        assertEquals(BugseeFrameRate.Medium.name, map[BugseeOptions.CaptureVideoFrameRate])
+        assertEquals(BugseeSeverity.Blocker.name, map[BugseeOptions.ReportingDefaultCrashPriority])
+        assertEquals(BugseeSeverity.High.name, map[BugseeOptions.ReportingDefaultBugPriority])
+        assertEquals(true, map[BugseeOptions.ReportingUISummaryRequired])
+        assertEquals(true, map[BugseeOptions.ReportingUIDescriptionRequired])
+        assertEquals(true, map[BugseeOptions.CaptureViewHierarchy])
+        assertEquals(true, map[BugseeOptions.DetectAndReportExit])
     }
 }
