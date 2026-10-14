@@ -16,7 +16,7 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
     private val customOptions = HashMap<String, Any>()
 
     fun put(key: String, value: Any?) {
-        if (key == WRAPPER_INFO_KEY) {
+        if (key == WRAPPER_INFO_KEY || key == ANDROID_WRAPPER_KEY) {
             return // always injected by toMap()
         }
 
@@ -32,9 +32,9 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
             return
         }
 
-        val coerced = type.coerce(value)
+        val coerced = type.coerce(value, isAndroid)
         if (coerced == null) {
-            Logger.e(TAG, "Ignoring launch option $key: ${value::class.simpleName} value '$value' does not fit the option type")
+            Logger.e(TAG, "Ignoring launch option $key: ${value::class.simpleName} value '$value' does not fit the option on this platform")
             return
         }
         values[key] = coerced
@@ -64,36 +64,27 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
         val known = BugseeOptionsSpec.knownKeys(isAndroid)
         values.forEach { (key, value) ->
             if (key in known) {
-                result[key] = toNative(value)
+                result[key] = BugseeOptionsSpec.types.getValue(key).toNative(value, isAndroid)
             }
         }
-        result[WRAPPER_INFO_KEY] = wrapperInfo()
+        if (isAndroid) {
+            result[ANDROID_WRAPPER_KEY] = androidWrapperInfo()
+        } else {
+            result[WRAPPER_INFO_KEY] = iosWrapperInfo()
+        }
         return result
     }
 
-    // The Android SDK resolves enum options by constant name; the iOS SDK takes the Int value.
-    private fun toNative(value: Any): Any = when {
-        value !is Enum<*> -> value
-        isAndroid -> value.name
-        else -> iosEnumValue(value)
-    }
+    // Hidden option of the Android SDK 7: {type, version, build, context}.
+    private fun androidWrapperInfo(): HashMap<String, Any> = hashMapOf(
+        "type" to WRAPPER_TYPE,
+        "version" to BuildKonfig.libraryVersion,
+        "build" to BuildKonfig.buildChecksum,
+        "context" to hashMapOf("runtime" to KotlinVersion.CURRENT.toString()),
+    )
 
-    private fun iosEnumValue(value: Enum<*>): Any = when (value) {
-        is BugseeLogLevel -> value.getLevel()
-        is BugseeFrameRate -> value.getIntValue()
-        is BugseeVideoMode -> value.toIntValue()
-        is BugseeVideoQuality -> value.toIntValue()
-        is BugseeSeverity -> value.getLevel()
-        is BugseeDataEncryptionMode -> value.toIntValue()
-        is BugseeStyle -> value.toIntValue()
-        else -> {
-            Logger.e(TAG, "No iOS value for ${value::class.simpleName}.${value.name}; sending the name")
-            value.name
-        }
-    }
-
-    private fun wrapperInfo(): Map<String, Any> = mapOf(
-        "type" to "kmp",
+    private fun iosWrapperInfo(): Map<String, Any> = mapOf(
+        "type" to WRAPPER_TYPE,
         "version" to BuildKonfig.libraryVersion,
         "build" to BuildKonfig.buildChecksum,
         "runtime" to KotlinVersion.CURRENT.toString(),
@@ -101,6 +92,8 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
     private companion object {
         const val TAG = "BugseeLaunchOptions"
+        const val WRAPPER_TYPE = "kmp"
         const val WRAPPER_INFO_KEY = "wrapper_info"
+        const val ANDROID_WRAPPER_KEY = "com.bugsee.option.\$\$WRAPPER"
     }
 }

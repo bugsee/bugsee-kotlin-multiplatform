@@ -112,13 +112,25 @@ class BugseeLaunchOptionsTest {
     }
 
     @Test
-    fun `toMap includes wrapper info`() {
-        val wrapperInfo = BugseeLaunchOptions().toMap()["wrapper_info"] as Map<*, *>
+    fun `toMap includes wrapper info under the platform key`() {
+        val map = BugseeLaunchOptions().toMap()
 
-        assertEquals("kmp", wrapperInfo["type"])
-        assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
-        assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
-        assertEquals(KotlinVersion.CURRENT.toString(), wrapperInfo["runtime"])
+        if (isAndroid) {
+            // Hidden Android SDK 7 option {type, version, build, context}
+            val wrapperInfo = map[ANDROID_WRAPPER_KEY] as Map<*, *>
+            assertEquals("kmp", wrapperInfo["type"])
+            assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
+            assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
+            assertEquals(KotlinVersion.CURRENT.toString(), (wrapperInfo["context"] as Map<*, *>)["runtime"])
+            assertFalse("wrapper_info" in map)
+        } else {
+            val wrapperInfo = map["wrapper_info"] as Map<*, *>
+            assertEquals("kmp", wrapperInfo["type"])
+            assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
+            assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
+            assertEquals(KotlinVersion.CURRENT.toString(), wrapperInfo["runtime"])
+            assertFalse(ANDROID_WRAPPER_KEY in map)
+        }
     }
 
     // --- nullable string options ---
@@ -164,8 +176,11 @@ class BugseeLaunchOptionsTest {
     fun `wrapper info cannot be overridden`() {
         val options = BugseeLaunchOptions()
         options.setCustomOption("wrapper_info", "fake")
+        options.setCustomOption(ANDROID_WRAPPER_KEY, "fake")
 
-        assertTrue(options.toMap()["wrapper_info"] is Map<*, *>)
+        val map = options.toMap()
+        assertTrue(map[if (isAndroid) ANDROID_WRAPPER_KEY else "wrapper_info"] is Map<*, *>)
+        assertFalse((if (isAndroid) "wrapper_info" else ANDROID_WRAPPER_KEY) in map)
     }
 
     @Test
@@ -256,6 +271,68 @@ class BugseeLaunchOptionsTest {
         }
     }
 
+    // --- enum values ---
+
+    @Test
+    fun `enums accept native Int values`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.CaptureVideoFrameRate to 1,
+                BugseeOptions.ReportingDefaultBugPriority to 5,
+                BugseeOptions.CaptureLogsLevel to 1,
+            )
+        )
+
+        assertEquals(BugseeFrameRate.Low, options.captureVideoFrameRate)
+        assertEquals(BugseeSeverity.Blocker, options.reportingDefaultBugPriority)
+        assertEquals(BugseeLogLevel.Error, options.captureLogsLevel)
+    }
+
+    @Test
+    fun `enums accept the native constant names of both SDKs`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.ReportingDefaultBugPriority to "Low", // iOS name of VeryLow
+                BugseeOptions.DetectMemoryLeaksMode to "DEEP_DEBUG_ONLY", // Android constant
+            )
+        )
+
+        assertEquals(BugseeSeverity.VeryLow, options.reportingDefaultBugPriority)
+        assertEquals(BugseeMemoryLeakMode.DeepDebugOnly, options.detectMemoryLeaksMode)
+    }
+
+    @Test
+    fun `an enum value the platform does not support is rejected`() {
+        val options = BugseeLaunchOptions()
+        options.captureVideoFrameRate = BugseeFrameRate.Raw // Android only
+
+        if (isAndroid) {
+            assertEquals(BugseeFrameRate.Raw, options.captureVideoFrameRate)
+            assertEquals("Raw", options.toMap()[BugseeOptions.CaptureVideoFrameRate])
+        } else {
+            assertEquals(BugseeFrameRate.High, options.captureVideoFrameRate)
+            assertEquals(3, options.toMap()[BugseeOptions.CaptureVideoFrameRate])
+        }
+    }
+
+    @Test
+    fun `native toMap output builds the same options`() {
+        val original = BugseeLaunchOptions().apply {
+            captureVideoFrameRate = BugseeFrameRate.Medium
+            reportingDefaultCrashPriority = BugseeSeverity.Critical
+            captureLogsLevel = BugseeLogLevel.Warning
+            duration = 90
+        }
+
+        val copy = BugseeLaunchOptions(original.toMap())
+
+        assertEquals(BugseeFrameRate.Medium, copy.captureVideoFrameRate)
+        assertEquals(BugseeSeverity.Critical, copy.reportingDefaultCrashPriority)
+        assertEquals(BugseeLogLevel.Warning, copy.captureLogsLevel)
+        assertEquals(90, copy.duration)
+        assertEquals(original.toMap(), copy.toMap())
+    }
+
     // --- spec ---
 
     @Test
@@ -267,5 +344,9 @@ class BugseeLaunchOptionsTest {
             BugseeOptionsSpec.knownKeys(isAndroid = true) + BugseeOptionsSpec.knownKeys(isAndroid = false)
         )
         assertTrue(BugseeOptionsSpec.manifestEnumEntries.isNotEmpty())
+    }
+
+    private companion object {
+        const val ANDROID_WRAPPER_KEY = "com.bugsee.option.\$\$WRAPPER"
     }
 }

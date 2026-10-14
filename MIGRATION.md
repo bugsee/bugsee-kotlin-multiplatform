@@ -62,11 +62,17 @@ iOS 7.0.0-beta5) and follows the Android SDK 7 naming.
   options override options declared as `<meta-data>` in the app manifest.
 - Options of the other platform can be set but are not sent; each property's KDoc names its
   platforms and, for Android extension options, the required module.
-- Values are checked against the option type when set (numbers are converted between Int and
-  Float, enums also accept their name as a String). A value that does not fit is ignored with an
-  error in the log, and the option keeps its previous value.
-- The `Map` overload of `launch` goes through `BugseeLaunchOptions` on both platforms, so it also
-  gets the defaults and the type checks. Keys that are not options are passed through unchanged.
+- Values are checked against the option type when set: numbers are converted between Int and
+  Float, and enum options also accept the native Int value or a native constant name of either SDK
+  (`1`, `"Low"`, `"DEEP_DEBUG_ONLY"`). A value that does not fit, or an enum value the platform does
+  not support (`BugseeFrameRate.Raw` on iOS), is ignored with an error in the log, and the option
+  keeps its previous value.
+- The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
+  so they also get the defaults and the type checks. Keys that are not options are passed through
+  unchanged.
+- Some defaults change with SDK 7: on Android `maxDataSize` is 150 (was 50) and
+  `detectAndReportExit` is on (`detectAppExit` was off); on iOS `reportingTriggerByShake` will be on
+  once the library links iOS SDK 7.
 - iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
   is sent, set `captureScreenshot = false` yourself when you turn video off.
 - `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos` are removed; all options live on
@@ -114,4 +120,3 @@ These do not work yet; the API calls among them log an error:
 - Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.
 - `setEmail` / `getEmail` / `clearEmail` (replaced by the user identifier API).
 - iOS: launch options use the SDK 7 keys, which the iOS SDK 6.x the library still links ignores.
-- Android: wrapper identification (Android SDK 7 ignores `wrapper_info`; iOS reads it).

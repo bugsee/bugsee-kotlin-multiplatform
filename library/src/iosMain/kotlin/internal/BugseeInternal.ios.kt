@@ -65,11 +65,12 @@ public actual class BugseeInternal {
             @Suppress("UNCHECKED_CAST")
             nativeOptions = BugseeOptions.optionsFrom(options.toMap() as? Map<Any?, *>)
         }
+        // Decided from the KMP option: the linked iOS SDK 6 does not read the SDK 7 keys, so
+        // nativeOptions.crashReport would always be its default.
+        val installExceptionHook = shouldInstallUnhandledExceptionHook(options)
         BugseeSDK.launchWithToken(apiKey, nativeOptions) { started ->
             // set Bugsee exception hook only after successful launch
-            // and if crashReport option is set to true.
-            // Note: the default value for crashReport is true.
-            if (started && (nativeOptions?.crashReport ?: true)) {
+            if (started && installExceptionHook) {
                 setBugseeUnhandledExceptionHook()
             }
         }
@@ -84,12 +85,13 @@ public actual class BugseeInternal {
     }
 
     public actual fun relaunch(options: BugseeLaunchOptions?) {
-        relaunch(HashMap(if (options != null) HashMap(options.toMap()) else HashMap()))
+        @Suppress("UNCHECKED_CAST")
+        BugseeSDK.relaunchWithDictionaryOptions(options?.toMap() as? Map<Any?, *>)
     }
 
+    // Like launch: a raw map goes through BugseeLaunchOptions.
     public actual fun relaunch(options: Map<String, Any>?) {
-        @Suppress("UNCHECKED_CAST")
-        BugseeSDK.relaunchWithDictionaryOptions(options as? Map<Any?, *>)
+        relaunch(options?.let { BugseeLaunchOptions(it) })
     }
 
     // Feedback methods
@@ -351,3 +353,7 @@ public actual class BugseeInternal {
         return BugseeSDK.sharedInstance()?.launched ?: false
     }
 }
+
+/** The KMP unhandled-exception hook follows [BugseeLaunchOptions.detectAndReportCrash] (default on). */
+internal fun shouldInstallUnhandledExceptionHook(options: BugseeLaunchOptions?): Boolean =
+    options?.detectAndReportCrash ?: true

@@ -27,6 +27,9 @@ class BugseeOptionsGenerator(
         val kmpEnum: String?,
         val android: Side?,
         val ios: Side?,
+        /** KMP entry -> Kotlin literal of the native value, per platform; null without the option. */
+        val androidEnum: Map<String, String>? = null,
+        val iosEnum: Map<String, String>? = null,
     ) {
         /** Deprecated only when every platform that has the option deprecates it. */
         val deprecated: Boolean get() = listOfNotNull(android, ios).all { it.option.deprecatedSince != null }
@@ -38,6 +41,24 @@ class BugseeOptionsGenerator(
 
     /** KMP enum class -> entry names, in manifest order. */
     private val enumEntries = LinkedHashMap<String, LinkedHashSet<String>>()
+
+    /** Lower-cased names and native Int values that resolve to an entry of one KMP enum. */
+    private class EnumTable(val kmpEnum: String) {
+        val names = LinkedHashMap<String, String>()
+        val values = LinkedHashMap<Int, String>()
+
+        fun addName(name: String, entry: String) = add(names, name.lowercase(), entry)
+        fun addValue(value: Int, entry: String) = add(values, value, entry)
+
+        private fun <K> add(map: MutableMap<K, String>, key: K, entry: String) {
+            val existing = map.putIfAbsent(key, entry)
+            check(existing == null || existing == entry) {
+                "$kmpEnum: '$key' resolves to both $existing and $entry"
+            }
+        }
+    }
+
+    private val enumTables = LinkedHashMap<String, EnumTable>()
 
     /** Warnings that do not stop generation (e.g. names for keys no manifest has). */
     val warnings = mutableListOf<String>()
@@ -96,6 +117,15 @@ class BugseeOptionsGenerator(
                 addAll(androidEntries.values)
                 addAll(iosEntries.values)
             }
+            val table = enumTables.getOrPut(kmpEnum) { EnumTable(kmpEnum) }
+            listOfNotNull(a?.enum?.to(androidEntries), i?.enum?.to(iosEntries)).forEach { (nativeEnum, entries) ->
+                nativeEnum.values.forEach { (constant, value) ->
+                    val entry = entries.getValue(constant)
+                    table.addName(entry, entry)
+                    table.addName(constant, entry)
+                    if (value is String) table.addName(value, entry) else table.addValue((value as Number).toInt(), entry)
+                }
+            }
         }
 
         return Merged(
@@ -105,7 +135,17 @@ class BugseeOptionsGenerator(
             kmpEnum = kmpEnum,
             android = a?.let { Side(it, renderDefault(it, type, kmpEnum, androidEntries)) },
             ios = i?.let { Side(it, renderDefault(it, type, kmpEnum, iosEntries)) },
+            // Android resolves enum options by constant name; iOS takes the native value.
+            androidEnum = a?.enum?.let { androidEntries.entries.associate { (constant, entry) -> entry to kotlinString(constant) } },
+            iosEnum = i?.enum?.let { nativeEnum ->
+                iosEntries.entries.associate { (constant, entry) -> entry to nativeLiteral(nativeEnum.values.getValue(constant)) }
+            },
         )
+    }
+
+    private fun nativeLiteral(value: Any): String = when (value) {
+        is String -> kotlinString(value)
+        else -> (value as Number).toInt().toString()
     }
 
     private fun kmpType(option: ManifestOption): KmpType = when (option.type) {
@@ -306,6 +346,15 @@ class BugseeOptionsGenerator(
         iosOnly.forEach { option -> option.ios!!.default?.let { append(put(option, it, "            ")) } }
         append("        }\n")
         append("    }\n\n")
+        enumTables.values.forEach { table ->
+            val prefix = table.kmpEnum.replaceFirstChar { it.lowercaseChar() }
+            append("    private val ${prefix}Names: Map<String, Enum<*>> = mapOf(\n")
+            table.names.forEach { (name, entry) -> append("        ${kotlinString(name)} to ${table.kmpEnum}.$entry,\n") }
+            append("    )\n\n")
+            append("    private val ${prefix}Values: Map<Int, Enum<*>> = mapOf(\n")
+            table.values.forEach { (value, entry) -> append("        $value to ${table.kmpEnum}.$entry,\n") }
+            append("    )\n\n")
+        }
         append("    /** Value type of every option, used to reject values the native SDKs cannot read. */\n")
         append("    val types: Map<String, BugseeOptionType> = mapOf(\n")
         options.forEach { option ->
@@ -314,7 +363,7 @@ class BugseeOptionsGenerator(
                 KmpType.INT -> "BugseeOptionType.IntType"
                 KmpType.FLOAT -> "BugseeOptionType.FloatType"
                 KmpType.STRING -> "BugseeOptionType.StringType"
-                KmpType.ENUM -> "BugseeOptionType.EnumType(${option.kmpEnum}.entries)"
+                KmpType.ENUM -> enumType(option)
             }
             append("        BugseeOptions.${option.name} to $type,\n")
         }
@@ -329,6 +378,22 @@ class BugseeOptionsGenerator(
         }
         append("    )\n")
         append("}\n")
+    }
+
+    private fun enumType(option: Merged): String {
+        val prefix = option.kmpEnum!!.replaceFirstChar { it.lowercaseChar() }
+        fun nativeMap(map: Map<String, String>?): String = map?.entries?.joinToString(
+            separator = ", ",
+            prefix = "mapOf<Enum<*>, Any>(",
+            postfix = ")",
+        ) { (entry, native) -> "${option.kmpEnum}.$entry to $native" } ?: "null"
+
+        return "BugseeOptionType.EnumType(\n" +
+            "            names = ${prefix}Names,\n" +
+            "            values = ${prefix}Values,\n" +
+            "            android = ${nativeMap(option.androidEnum)},\n" +
+            "            ios = ${nativeMap(option.iosEnum)},\n" +
+            "        )"
     }
 
     private fun kotlinString(value: String): String = "\"" + value

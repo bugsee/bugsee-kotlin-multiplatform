@@ -143,7 +143,9 @@ class BugseeOptionsGeneratorTest {
 
         assertContains(spec, "put(BugseeOptions.LeakMode, BugseeMemoryLeakMode.Fast)")
         assertContains(spec, "BugseeMemoryLeakMode.DeepDebugOnly,")
-        assertContains(spec, "BugseeOptions.LeakMode to BugseeOptionType.EnumType(BugseeMemoryLeakMode.entries)")
+        assertContains(spec, "\"deep_debug_only\" to BugseeMemoryLeakMode.DeepDebugOnly,")
+        assertContains(spec, "android = mapOf<Enum<*>, Any>(BugseeMemoryLeakMode.Fast to \"FAST\", BugseeMemoryLeakMode.DeepDebugOnly to \"DEEP_DEBUG_ONLY\")")
+        assertContains(spec, "ios = null")
     }
 
     @Test
@@ -178,6 +180,25 @@ class BugseeOptionsGeneratorTest {
         ).getValue("BugseeLaunchOptions.kt")
         assertFalse("@Deprecated" in androidOnly)
         assertContains(androidOnly, "Deprecated by the native SDK on Android since 7.1.")
+    }
+
+    @Test
+    fun `enum types list the native values each platform accepts`() {
+        val androidRate = ManifestEnum("FrameRate", mapOf("Low" to 1, "High" to 3, "Raw" to 4))
+        val iosRate = ManifestEnum("BugseeFrameRate", mapOf("Low" to 1, "High" to 3))
+        val rateConfig = config.copy(
+            names = config.names + ("k.rate" to "Rate"),
+            enums = config.enums + mapOf("FrameRate" to "BugseeFrameRate", "BugseeFrameRate" to "BugseeFrameRate"),
+        )
+        val spec = BugseeOptionsGenerator(
+            rateConfig,
+            manifest("android", option("k.rate", "enum", "High", androidRate)),
+            manifest("ios", option("k.rate", "enum", "High", iosRate)),
+        ).generate().getValue("BugseeOptionsSpec.kt")
+
+        assertContains(spec, "4 to BugseeFrameRate.Raw,")
+        assertContains(spec, "android = mapOf<Enum<*>, Any>(BugseeFrameRate.Low to \"Low\", BugseeFrameRate.High to \"High\", BugseeFrameRate.Raw to \"Raw\")")
+        assertContains(spec, "ios = mapOf<Enum<*>, Any>(BugseeFrameRate.Low to 1, BugseeFrameRate.High to 3)")
     }
 
     @Test

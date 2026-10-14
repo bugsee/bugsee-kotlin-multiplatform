@@ -50,7 +50,23 @@ class BugseeLaunchAndroidTest {
         assertEquals(true, map[BugseeOptions.CaptureLogs]) // invalid value ignored, default sent
         assertEquals(150, map[BugseeOptions.MaxDataSize]) // Android default
         assertEquals(1, map["custom"])
-        assertTrue("wrapper_info" in map)
+        assertTrue("com.bugsee.option.\$\$WRAPPER" in map)
+        assertTrue("wrapper_info" !in map)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun `raw map relaunch goes through the launch options`() {
+        mockStatic(com.bugsee.library.Bugsee::class.java).use { sdk ->
+            BugseeInternal().relaunch(mapOf(BugseeOptions.CaptureVideoFrameRate to BugseeFrameRate.Low))
+
+            val captor = ArgumentCaptor.forClass(Map::class.java) as ArgumentCaptor<Map<String, Serializable>>
+            sdk.verify { com.bugsee.library.Bugsee.relaunch(captor.capture()) }
+            val map = captor.value
+            assertEquals("Low", map[BugseeOptions.CaptureVideoFrameRate]) // constant name, not the KMP enum
+            assertEquals(60, map[BugseeOptions.Duration])
+            assertTrue("com.bugsee.option.\$\$WRAPPER" in map)
+        }
     }
 
     @Test

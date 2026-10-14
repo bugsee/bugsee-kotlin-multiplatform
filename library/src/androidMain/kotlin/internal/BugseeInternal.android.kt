@@ -60,11 +60,12 @@ public actual class BugseeInternal {
     }
 
     public actual fun relaunch(options: BugseeLaunchOptions?) {
-        relaunch(options?.toMap())
+        BugseeSDK.relaunch(BugseeAndroidUtils.toSerializableMap(options?.toMap(), "relaunch"))
     }
 
+    // Like launch: a raw map goes through BugseeLaunchOptions.
     public actual fun relaunch(options: Map<String, Any>?) {
-        BugseeSDK.relaunch(BugseeAndroidUtils.toSerializableMap(options, "relaunch"))
+        relaunch(options?.let { BugseeLaunchOptions(it) })
     }
 
 
