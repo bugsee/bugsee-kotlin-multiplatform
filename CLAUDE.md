@@ -77,7 +77,7 @@ Filters transform events in-place (return modified or null to suppress). Listene
 
 - Kotlin: 2.2.21, Compose Multiplatform: 1.9.3
 - Android: minSdk 24, compileSdk 35, JVM target 1.8 (library) / 11 (sample)
-- iOS: deployment target 12.0 (library), 16.6 (sample)
+- iOS: deployment target 15.0 (library), 16.6 (sample)
 - `kotlin.native.cacheKind=none` for Xcode 16.4 compatibility
 - `kotlin.mpp.enableCInteropCommonization=true`
 - Language opt-ins (iOS/native code): `kotlinx.cinterop.ExperimentalForeignApi`, `kotlinx.cinterop.UnsafeNumber`, `kotlin.experimental.ExperimentalNativeApi`

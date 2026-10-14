@@ -6,7 +6,7 @@ name: PR
 # No secrets are used here, so it is safe for pull requests from forks.
 on:
   pull_request:
-    branches: [main, release]
+    branches: [main, release, nextgen]
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}

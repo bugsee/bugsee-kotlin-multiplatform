@@ -89,21 +89,10 @@ kotlin {
 
         androidMain {
             dependencies {
-                 implementation(libs.bugsee.android)
-                 
-                 // Compile-only dependencies for Bugsee SDK integration
-                 compileOnly(libs.okhttp3)
-                 compileOnly(libs.animal.sniffer.annotations)
-                 compileOnly(libs.jsr305)
-                 compileOnly(libs.conscrypt.openjdk.uber)
-                 
-                 compileOnly(libs.okhttp2)
-                 compileOnly(libs.material)
-                 compileOnly(libs.picasso)
-                 
-                 compileOnly(libs.kotlin.stdlib.jdk8)
-                 compileOnly(libs.kotlinx.coroutines.core)
-                 compileOnly(libs.ktor.client.core)
+                // Core SDK only. Network-client extensions (OkHttp, Ktor, Cronet, Compose) are
+                // added by the consumer app: the Bugsee Gradle plugin auto-adds them for plain
+                // Android app modules, but does not see dependencies declared in KMP source sets.
+                implementation(libs.bugsee.android)
             }
         }
         
@@ -149,7 +138,7 @@ kotlin {
 //            extraOpts += listOf("-compiler-option", "-fmodules")
 //        }
 
-        ios.deploymentTarget = "12.0"
+        ios.deploymentTarget = "15.0"
     }
 
     // Fix for Xcode 16.4 compatibility issues

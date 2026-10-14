@@ -25,15 +25,16 @@ public expect class BugseeExtendedReport {
      * Unsupported types are logged and ignored.
      *
      * **Getter** returns the platform-native image object
-     * (`Bitmap` on Android, `UIImage` on iOS), or `null`.
+     * (`Bitmap` on Android, `UIImage` on iOS), or `null`. On Android it returns only an image
+     * assigned through this property: Android SDK 7 exposes the captured screenshot
+     * asynchronously, so it is not available here.
      */
     public var screenshot: Any?
 
     /**
      * Whether the screenshot has been modified since the report was created.
      *
-     * Implementation note: on Android this is tracked by the KMP wrapper;
-     * on iOS it delegates to the native SDK's change tracking.
+     * Delegates to the native SDK's change tracking on both platforms.
      */
     public val screenshotChanged: Boolean
 
