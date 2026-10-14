@@ -67,7 +67,7 @@ The library's core abstraction. Common code defines `expect` classes/declaration
 
 ### Launch Options
 
-`BugseeLaunchOptions` provides typed configuration that converts to `Map<String, Any>` for native SDKs. Platform-aware defaults exist (e.g., `shakeToReport` defaults true on Android, `screenshotToReport` defaults true on iOS). Wrapper info (`type: "kmp"`) is injected automatically.
+`BugseeOptions` (keys), `BugseeLaunchOptions` (typed builder) and the internal `BugseeOptionsSpec` (per-platform defaults/known keys) are **generated** into `library/build/generated/bugseeOptions/` by `:library:generateBugseeOptions` (sources in `buildSrc/`). Inputs live in `library/options/`: the committed native SDK option manifests (`android-<version>.json`, `ios-<version>.json`, refreshed with `./gradlew :library:updateBugseeOptionsManifests` after bumping `bugsee-android` / `bugsee-options-ios` in the version catalog) and the hand-maintained `kmp-options.json` (key → name in Android `Options.*` style, native enum → KMP enum). The build fails on a manifest key without a name; a KMP enum missing a manifest value fails compilation of the generated `BugseeOptionsSpec`. Option enums (`BugseeFrameRate`, `BugseeVideoMode`, …) and the storage (`BugseeLaunchOptionsStore`) are hand-written. `toMap()` sends every option the current platform knows (enums as Android constant names / iOS Ints) plus custom options and `wrapper_info`.
 
 ### Callback Types (Types.kt)
 

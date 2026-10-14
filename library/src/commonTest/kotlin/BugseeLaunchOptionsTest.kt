@@ -1,355 +1,352 @@
 package com.bugsee.kmp
 
+import com.bugsee.kmp.internal.Platform
+import com.bugsee.kmp.internal.PlatformInfo
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BugseeLaunchOptionsTest {
 
+    private val isAndroid = PlatformInfo.getPlatformType() == Platform.ANDROID
+
+    // --- defaults ---
+
     @Test
-    fun `test BugseeLaunchOptions default initialization`() {
+    fun `defaults match the native SDK manifests`() {
         val options = BugseeLaunchOptions()
-        
-        // Test that options map is initialized
-        assertNotNull(options.toMap())
-        
-        // Test wrapper info is included
+
+        assertEquals(60, options.duration)
+        assertTrue(options.reportingTriggerByShake)
+        assertFalse(options.reportingTriggerByScreenshot)
+        assertEquals(BugseeFrameRate.High, options.captureVideoFrameRate)
+        assertEquals(BugseeLogLevel.Verbose, options.captureLogsLevel)
+        assertEquals(BugseeSeverity.Blocker, options.reportingDefaultCrashPriority)
+        assertEquals(0.01f, options.performanceSampleRate)
+    }
+
+    @Test
+    fun `defaults differ per platform where the SDKs differ`() {
+        val options = BugseeLaunchOptions()
+
+        assertEquals(if (isAndroid) 150 else 50, options.maxDataSize)
+        assertEquals(!isAndroid, options.captureVideoAdaptive)
+    }
+
+    @Test
+    fun `options of the other platform report that platform's default`() {
+        val options = BugseeLaunchOptions()
+
+        // Android only
+        assertTrue(options.ndkDetectAndReport)
+        assertEquals(BugseeMemoryLeakMode.Fast, options.detectMemoryLeaksMode)
+        // iOS only
+        assertFalse(options.captureAVPlayer)
+        assertNull(options.buildTarget)
+    }
+
+    // --- toMap ---
+
+    @Test
+    fun `toMap sends every default the current platform knows`() {
+        val map = BugseeLaunchOptions().toMap()
+
+        BugseeOptionsSpec.defaults(isAndroid).keys.forEach { key ->
+            assertTrue(key in map, "missing default for $key")
+        }
+        assertEquals(60, map[BugseeOptions.Duration])
+        assertEquals(if (isAndroid) 150 else 50, map[BugseeOptions.MaxDataSize])
+    }
+
+    @Test
+    fun `toMap never sends options of the other platform`() {
+        val options = BugseeLaunchOptions()
+        options.ndkDetectAndReport = false
+        options.captureAVPlayer = true
+
         val map = options.toMap()
-        assertTrue(map.containsKey("wrapper_info"))
-        
-        val wrapperInfo = map["wrapper_info"] as Map<String, Any>
-        assertEquals("kmp", wrapperInfo["type"])
-        assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
-        assertNotNull(wrapperInfo["runtime"])
+
+        if (isAndroid) {
+            assertEquals(false, map[BugseeOptions.NdkDetectAndReport])
+            assertFalse(BugseeOptions.CaptureAVPlayer in map)
+        } else {
+            assertEquals(true, map[BugseeOptions.CaptureAVPlayer])
+            assertFalse(BugseeOptions.NdkDetectAndReport in map)
+        }
+        // The getter still returns what was set
+        assertFalse(options.ndkDetectAndReport)
+        assertTrue(options.captureAVPlayer)
     }
 
     @Test
-    fun `test BugseeLaunchOptions custom options`() {
+    fun `toMap sends set values`() {
         val options = BugseeLaunchOptions()
-        
-        options.setCustomOption("customKey", "customValue")
-        options.setCustomOption("customNumber", 42)
-        options.setCustomOption("customBoolean", true)
-        
+        options.duration = 120
+        options.captureNetwork = false
+        options.captureVideoScale = 0.5f
+
         val map = options.toMap()
-        assertEquals("customValue", map["customKey"])
-        assertEquals(42, map["customNumber"])
-        assertEquals(true, map["customBoolean"])
+
+        assertEquals(120, map[BugseeOptions.Duration])
+        assertEquals(false, map[BugseeOptions.CaptureNetwork])
+        assertEquals(0.5f, map[BugseeOptions.CaptureVideoScale])
     }
 
     @Test
-    fun `test BugseeLaunchOptions maxNetworkBodySize`() {
+    fun `toMap sends enums as Android constant names or iOS Int values`() {
         val options = BugseeLaunchOptions()
-        
-        options.maxNetworkBodySize = 1024
-        assertEquals(1024, options.maxNetworkBodySize)
-        
+        options.captureVideoFrameRate = BugseeFrameRate.Low
+        options.reportingDefaultBugPriority = BugseeSeverity.VeryLow
+
         val map = options.toMap()
-        assertEquals(1024, map["bodySizeLimit"])
+
+        if (isAndroid) {
+            assertEquals("Low", map[BugseeOptions.CaptureVideoFrameRate])
+            assertEquals("VeryLow", map[BugseeOptions.ReportingDefaultBugPriority])
+        } else {
+            assertEquals(1, map[BugseeOptions.CaptureVideoFrameRate])
+            assertEquals(1, map[BugseeOptions.ReportingDefaultBugPriority])
+        }
     }
 
     @Test
-    fun `test BugseeLaunchOptions shakeToReport`() {
-        val options = BugseeLaunchOptions()
-        
-        options.shakeToReport = true
-        assertTrue(options.shakeToReport)
-        
-        options.shakeToReport = false
-        assertFalse(options.shakeToReport)
+    fun `toMap includes wrapper info under the platform key`() {
+        val map = BugseeLaunchOptions().toMap()
+
+        if (isAndroid) {
+            // Hidden Android SDK 7 option {type, version, build, context}
+            val wrapperInfo = map[ANDROID_WRAPPER_KEY] as Map<*, *>
+            assertEquals("kmp", wrapperInfo["type"])
+            assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
+            assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
+            assertEquals(KotlinVersion.CURRENT.toString(), (wrapperInfo["context"] as Map<*, *>)["runtime"])
+            assertFalse("wrapper_info" in map)
+        } else {
+            val wrapperInfo = map["wrapper_info"] as Map<*, *>
+            assertEquals("kmp", wrapperInfo["type"])
+            assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
+            assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
+            assertEquals(KotlinVersion.CURRENT.toString(), wrapperInfo["runtime"])
+            assertFalse(ANDROID_WRAPPER_KEY in map)
+        }
     }
 
-    @Test
-    fun `test BugseeLaunchOptions crashReport`() {
-        val options = BugseeLaunchOptions()
-        
-        options.crashReport = true
-        assertTrue(options.crashReport)
-        
-        options.crashReport = false
-        assertFalse(options.crashReport)
-    }
+    // --- nullable string options ---
 
     @Test
-    fun `test BugseeLaunchOptions maxRecordingTime`() {
+    fun `a nullable option is sent only once set`() {
         val options = BugseeLaunchOptions()
-        
-        options.maxRecordingTime = 300
-        assertEquals(300, options.maxRecordingTime)
-        
+        assertFalse(BugseeOptions.BuildTarget in options.toMap())
+
+        options.buildTarget = "Release"
+        assertEquals("Release", options.buildTarget)
+        assertEquals(!isAndroid, BugseeOptions.BuildTarget in options.toMap())
+
+        options.buildTarget = null
+        assertNull(options.buildTarget)
+        assertFalse(BugseeOptions.BuildTarget in options.toMap())
+    }
+
+    // --- custom options and raw maps ---
+
+    @Test
+    fun `custom options pass through unchanged`() {
+        val options = BugseeLaunchOptions()
+        options.setCustomOption("com.bugsee.option.\$\$ENDPOINT", "https://example.com")
+        options.setCustomOption("myKey", 42)
+
         val map = options.toMap()
-        assertEquals(300, map["MaxRecordingTime"])
+
+        assertEquals("https://example.com", map["com.bugsee.option.\$\$ENDPOINT"])
+        assertEquals(42, map["myKey"])
     }
 
     @Test
-    fun `test BugseeLaunchOptions videoEnabled`() {
+    fun `a custom option with a known key sets the property`() {
         val options = BugseeLaunchOptions()
-        
-        options.videoEnabled = true
-        assertTrue(options.videoEnabled)
-        
-        options.videoEnabled = false
-        assertFalse(options.videoEnabled)
+        options.setCustomOption(BugseeOptions.Duration, 30)
+
+        assertEquals(30, options.duration)
+        assertEquals(30, options.toMap()[BugseeOptions.Duration])
     }
 
     @Test
-    fun `test BugseeLaunchOptions screenshotEnabled`() {
+    fun `wrapper info cannot be overridden`() {
         val options = BugseeLaunchOptions()
-        
-        options.screenshotEnabled = true
-        assertTrue(options.screenshotEnabled)
-        
-        options.screenshotEnabled = false
-        assertFalse(options.screenshotEnabled)
+        options.setCustomOption("wrapper_info", "fake")
+        options.setCustomOption(ANDROID_WRAPPER_KEY, "fake")
+
+        val map = options.toMap()
+        assertTrue(map[if (isAndroid) ANDROID_WRAPPER_KEY else "wrapper_info"] is Map<*, *>)
+        assertFalse((if (isAndroid) "wrapper_info" else ANDROID_WRAPPER_KEY) in map)
     }
 
     @Test
-    fun `test BugseeLaunchOptions captureLogs`() {
-        val options = BugseeLaunchOptions()
-        
-        options.captureLogs = true
-        assertTrue(options.captureLogs)
-        
-        options.captureLogs = false
+    fun `raw map sets properties and keeps unknown keys`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.Duration to 45.0, // numbers are coerced
+                BugseeOptions.CaptureVideoFrameRate to "medium", // enums resolve by name
+                BugseeOptions.CaptureLogs to false,
+                "custom" to "value",
+            )
+        )
+
+        assertEquals(45, options.duration)
+        assertEquals(BugseeFrameRate.Medium, options.captureVideoFrameRate)
         assertFalse(options.captureLogs)
+        assertEquals("value", options.toMap()["custom"])
     }
 
     @Test
-    fun `test BugseeLaunchOptions monitorNetwork`() {
+    fun `invalid raw values fall back to the default`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.CaptureLogs to "yes",
+                BugseeOptions.CaptureVideoFrameRate to "Ultra",
+            )
+        )
+
+        assertTrue(options.captureLogs)
+        assertEquals(BugseeFrameRate.High, options.captureVideoFrameRate)
+    }
+
+    @Test
+    fun `invalid raw values are not sent to the native SDK`() {
+        val map = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.CaptureLogs to "yes",
+                BugseeOptions.Duration to "long",
+                BugseeOptions.CaptureVideoFrameRate to BugseeVideoQuality.High, // wrong enum
+            )
+        ).toMap()
+
+        assertEquals(true, map[BugseeOptions.CaptureLogs])
+        assertEquals(60, map[BugseeOptions.Duration])
+        assertEquals(if (isAndroid) "High" else 3, map[BugseeOptions.CaptureVideoFrameRate])
+    }
+
+    @Test
+    fun `an invalid value keeps the previous one`() {
         val options = BugseeLaunchOptions()
-        
-        options.monitorNetwork = true
-        assertTrue(options.monitorNetwork)
-        
+        options.duration = 30
+        options.setCustomOption(BugseeOptions.Duration, "forever")
+
+        assertEquals(30, options.duration)
+        assertEquals(30, options.toMap()[BugseeOptions.Duration])
+    }
+
+    @Test
+    fun `numbers are converted to the option type`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.CaptureVideoScale to 1, // Int for a Float option
+                BugseeOptions.Duration to 45L,
+            )
+        )
         val map = options.toMap()
-        assertEquals(true, map["MonitorNetwork"])
-        assertEquals(true, map["monitorNetwork"])
-        
-        options.monitorNetwork = false
-        assertFalse(options.monitorNetwork)
+
+        assertEquals(1.0f, map[BugseeOptions.CaptureVideoScale])
+        assertEquals(45, map[BugseeOptions.Duration])
     }
 
     @Test
-    fun `test BugseeLaunchOptions wifiOnlyUpload`() {
-        val options = BugseeLaunchOptions()
-        
-        options.wifiOnlyUpload = true
-        assertTrue(options.wifiOnlyUpload)
-        
-        options.wifiOnlyUpload = false
-        assertFalse(options.wifiOnlyUpload)
+    fun `every enum option is sent in the native representation`() {
+        val map = BugseeLaunchOptions().toMap()
+        val enumKeys = BugseeOptionsSpec.types
+            .filterValues { it is BugseeOptionType.EnumType }
+            .keys
+            .filter { it in BugseeOptionsSpec.knownKeys(isAndroid) }
+
+        assertTrue(enumKeys.isNotEmpty())
+        enumKeys.forEach { key ->
+            val value = map[key]
+            if (isAndroid) {
+                assertTrue(value is String, "$key should be sent as a constant name, was $value")
+            } else {
+                assertTrue(value is Int, "$key should be sent as an Int, was $value")
+            }
+        }
+    }
+
+    // --- enum values ---
+
+    @Test
+    fun `enums accept native Int values`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.CaptureVideoFrameRate to 1,
+                BugseeOptions.ReportingDefaultBugPriority to 5,
+                BugseeOptions.CaptureLogsLevel to 1,
+            )
+        )
+
+        assertEquals(BugseeFrameRate.Low, options.captureVideoFrameRate)
+        assertEquals(BugseeSeverity.Blocker, options.reportingDefaultBugPriority)
+        assertEquals(BugseeLogLevel.Error, options.captureLogsLevel)
     }
 
     @Test
-    fun `test BugseeLaunchOptions maxDataSize`() {
-        val options = BugseeLaunchOptions()
-        
-        options.maxDataSize = 50000
-        assertEquals(50000, options.maxDataSize)
-        
-        val map = options.toMap()
-        assertEquals(50000, map["MaxDataSize"])
+    fun `enums accept the native constant names of both SDKs`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                BugseeOptions.ReportingDefaultBugPriority to "Low", // iOS name of VeryLow
+                BugseeOptions.DetectMemoryLeaksMode to "DEEP_DEBUG_ONLY", // Android constant
+            )
+        )
+
+        assertEquals(BugseeSeverity.VeryLow, options.reportingDefaultBugPriority)
+        assertEquals(BugseeMemoryLeakMode.DeepDebugOnly, options.detectMemoryLeaksMode)
     }
 
     @Test
-    fun `test BugseeLaunchOptions reportPrioritySelector`() {
+    fun `an enum value the platform does not support is rejected`() {
         val options = BugseeLaunchOptions()
-        
-        options.reportPrioritySelector = true
-        assertTrue(options.reportPrioritySelector)
-        
-        options.reportPrioritySelector = false
-        assertFalse(options.reportPrioritySelector)
+        options.captureVideoFrameRate = BugseeFrameRate.Raw // Android only
+
+        if (isAndroid) {
+            assertEquals(BugseeFrameRate.Raw, options.captureVideoFrameRate)
+            assertEquals("Raw", options.toMap()[BugseeOptions.CaptureVideoFrameRate])
+        } else {
+            assertEquals(BugseeFrameRate.High, options.captureVideoFrameRate)
+            assertEquals(3, options.toMap()[BugseeOptions.CaptureVideoFrameRate])
+        }
     }
 
     @Test
-    fun `test BugseeLaunchOptions defaultCrashPriority`() {
-        val options = BugseeLaunchOptions()
-        
-        options.defaultCrashPriority = BugseeSeverity.Critical
-        assertEquals(BugseeSeverity.Critical, options.defaultCrashPriority)
-        
-        val map = options.toMap()
-        assertEquals(BugseeSeverity.Critical.getLevel(), map["BugseeDefaultCrashPriority"])
+    fun `native toMap output builds the same options`() {
+        val original = BugseeLaunchOptions().apply {
+            captureVideoFrameRate = BugseeFrameRate.Medium
+            reportingDefaultCrashPriority = BugseeSeverity.Critical
+            captureLogsLevel = BugseeLogLevel.Warning
+            duration = 90
+        }
+
+        val copy = BugseeLaunchOptions(original.toMap())
+
+        assertEquals(BugseeFrameRate.Medium, copy.captureVideoFrameRate)
+        assertEquals(BugseeSeverity.Critical, copy.reportingDefaultCrashPriority)
+        assertEquals(BugseeLogLevel.Warning, copy.captureLogsLevel)
+        assertEquals(90, copy.duration)
+        assertEquals(original.toMap(), copy.toMap())
     }
 
-    @Test
-    fun `test BugseeLaunchOptions defaultBugPriority`() {
-        val options = BugseeLaunchOptions()
-        
-        options.defaultBugPriority = BugseeSeverity.High
-        assertEquals(BugseeSeverity.High, options.defaultBugPriority)
-        
-        val map = options.toMap()
-        assertEquals(BugseeSeverity.High.getLevel(), map["BugseeDefaultBugPriority"])
-    }
+    // --- spec ---
 
     @Test
-    fun `test BugseeLaunchOptions frameRate`() {
-        val options = BugseeLaunchOptions()
-        
-        options.frameRate = BugseeFrameRate.Low
-        assertEquals(BugseeFrameRate.Low, options.frameRate)
-        
-        val map = options.toMap()
-        assertEquals(BugseeFrameRate.Low.getIntValue(), map["FrameRate"])
+    fun `spec covers both platforms`() {
+        assertTrue(BugseeOptionsSpec.knownKeys(isAndroid = true).all { it in BugseeOptionsSpec.allKeys })
+        assertTrue(BugseeOptionsSpec.knownKeys(isAndroid = false).all { it in BugseeOptionsSpec.allKeys })
+        assertEquals(
+            BugseeOptionsSpec.allKeys,
+            BugseeOptionsSpec.knownKeys(isAndroid = true) + BugseeOptionsSpec.knownKeys(isAndroid = false)
+        )
+        assertTrue(BugseeOptionsSpec.manifestEnumEntries.isNotEmpty())
     }
 
-    @Test
-    fun `test BugseeLaunchOptions minFrameRate`() {
-        val options = BugseeLaunchOptions()
-        
-        options.minFrameRate = 15
-        assertEquals(15, options.minFrameRate)
-        
-        val map = options.toMap()
-        assertEquals(15, map["MinFrameRate"])
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions maxFrameRate`() {
-        val options = BugseeLaunchOptions()
-        
-        options.maxFrameRate = 60
-        assertEquals(60, options.maxFrameRate)
-        
-        val map = options.toMap()
-        assertEquals(60, map["MaxFrameRate"])
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions captureDeviceAndNetworkNames`() {
-        val options = BugseeLaunchOptions()
-        
-        options.captureDeviceAndNetworkNames = true
-        assertTrue(options.captureDeviceAndNetworkNames)
-        
-        options.captureDeviceAndNetworkNames = false
-        assertFalse(options.captureDeviceAndNetworkNames)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions reportSummaryRequired`() {
-        val options = BugseeLaunchOptions()
-        
-        options.reportSummaryRequired = true
-        assertTrue(options.reportSummaryRequired)
-        
-        options.reportSummaryRequired = false
-        assertFalse(options.reportSummaryRequired)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions reportDescriptionRequired`() {
-        val options = BugseeLaunchOptions()
-        
-        options.reportDescriptionRequired = true
-        assertTrue(options.reportDescriptionRequired)
-        
-        options.reportDescriptionRequired = false
-        assertFalse(options.reportDescriptionRequired)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions reportEmailRequired`() {
-        val options = BugseeLaunchOptions()
-        
-        options.reportEmailRequired = true
-        assertTrue(options.reportEmailRequired)
-        
-        options.reportEmailRequired = false
-        assertFalse(options.reportEmailRequired)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions reportLabelsRequired`() {
-        val options = BugseeLaunchOptions()
-        
-        options.reportLabelsRequired = true
-        assertTrue(options.reportLabelsRequired)
-        
-        options.reportLabelsRequired = false
-        assertFalse(options.reportLabelsRequired)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions reportLabelsEnabled`() {
-        val options = BugseeLaunchOptions()
-        
-        options.reportLabelsEnabled = true
-        assertTrue(options.reportLabelsEnabled)
-        
-        options.reportLabelsEnabled = false
-        assertFalse(options.reportLabelsEnabled)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions viewHierarchyEnabled`() {
-        val options = BugseeLaunchOptions()
-        
-        options.viewHierarchyEnabled = true
-        assertTrue(options.viewHierarchyEnabled)
-        
-        options.viewHierarchyEnabled = false
-        assertFalse(options.viewHierarchyEnabled)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions detectAppExit`() {
-        val options = BugseeLaunchOptions()
-        
-        options.detectAppExit = true
-        assertTrue(options.detectAppExit)
-        
-        options.detectAppExit = false
-        assertFalse(options.detectAppExit)
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions multiple properties`() {
-        val options = BugseeLaunchOptions()
-        
-        // Set multiple properties
-        options.maxNetworkBodySize = 2048
-        options.shakeToReport = true
-        options.crashReport = false
-        options.videoEnabled = true
-        options.frameRate = BugseeFrameRate.Medium
-        options.defaultCrashPriority = BugseeSeverity.Blocker
-        options.setCustomOption("testKey", "testValue")
-        
-        // Verify all properties
-        assertEquals(2048, options.maxNetworkBodySize)
-        assertTrue(options.shakeToReport)
-        assertFalse(options.crashReport)
-        assertTrue(options.videoEnabled)
-        assertEquals(BugseeFrameRate.Medium, options.frameRate)
-        assertEquals(BugseeSeverity.Blocker, options.defaultCrashPriority)
-        
-        val map = options.toMap()
-        assertEquals(2048, map["bodySizeLimit"])
-        assertEquals(true, map["ShakeToTrigger"] ?: map["ShakeToReport"])
-        assertEquals(false, map["CrashReport"])
-        assertEquals(true, map["VideoEnabled"])
-        assertEquals(BugseeFrameRate.Medium.getIntValue(), map["FrameRate"])
-        assertEquals(BugseeSeverity.Blocker.getLevel(), map["BugseeDefaultCrashPriority"])
-        assertEquals("testValue", map["testKey"])
-    }
-
-    @Test
-    fun `test BugseeLaunchOptions custom options override built-in`() {
-        val options = BugseeLaunchOptions()
-        
-        // Set built-in option
-        options.maxNetworkBodySize = 1024
-        
-        // Set custom option with same key
-        options.setCustomOption("bodySizeLimit", 2048)
-        
-        val map = options.toMap()
-        // Custom option should NOT override built-in
-        assertEquals(1024, map["bodySizeLimit"])
+    private companion object {
+        const val ANDROID_WRAPPER_KEY = "com.bugsee.option.\$\$WRAPPER"
     }
 }

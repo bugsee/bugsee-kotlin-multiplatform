@@ -3,7 +3,12 @@ package com.bugsee.kmp
 public enum class BugseeFrameRate(private val value: Int) {
     Low(1),
     Medium(2),
-    High(3);
+    High(3),
+
+    /**
+     * Uncapped frame rate. Android only.
+     */
+    Raw(4);
 
 
     public fun getIntValue(): Int {
@@ -20,6 +25,7 @@ public enum class BugseeFrameRate(private val value: Int) {
                 1 -> Low
                 2 -> Medium
                 3 -> High
+                4 -> Raw
                 else -> defaultValue
             }
         }

@@ -107,7 +107,7 @@ class CommonBugseeTest {
     @Test
     fun `test BugseeFrameRate fromIntValue with invalid values`() {
         assertEquals(BugseeFrameRate.High, BugseeFrameRate.fromIntValue(0))
-        assertEquals(BugseeFrameRate.High, BugseeFrameRate.fromIntValue(4))
+        assertEquals(BugseeFrameRate.High, BugseeFrameRate.fromIntValue(99))
         assertEquals(BugseeFrameRate.High, BugseeFrameRate.fromIntValue(-1))
         assertEquals(BugseeFrameRate.High, BugseeFrameRate.fromIntValue(null))
     }
@@ -115,7 +115,7 @@ class CommonBugseeTest {
     @Test
     fun `test BugseeFrameRate fromIntValue with custom default`() {
         assertEquals(BugseeFrameRate.Low, BugseeFrameRate.fromIntValue(0, BugseeFrameRate.Low))
-        assertEquals(BugseeFrameRate.Medium, BugseeFrameRate.fromIntValue(4, BugseeFrameRate.Medium))
+        assertEquals(BugseeFrameRate.Medium, BugseeFrameRate.fromIntValue(99, BugseeFrameRate.Medium))
     }
 
     // BugseeSecureRectangle Tests

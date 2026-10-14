@@ -23,15 +23,15 @@ class BugseeAndroidSimpleTest {
         val options = BugseeLaunchOptions()
         
         // Test Android-specific properties
-        options.shakeToReport = true
-        assertTrue(options.shakeToReport, "shakeToReport should be settable")
+        options.reportingTriggerByShake = true
+        assertTrue(options.reportingTriggerByShake, "reportingTriggerByShake should be settable")
         
         // Test that Android-specific keys are properly handled
         val map = options.toMap()
         assertNotNull(map, "toMap() should return a valid map")
         
         // Verify Android-specific keys are present
-        assertTrue(map.containsKey("ShakeToTrigger"), "Should contain Android-specific ShakeToTrigger key")
+        assertTrue(map.containsKey(BugseeOptions.ReportingTriggerByShake), "Should contain the shake trigger key")
     }
 
     @Test
@@ -39,13 +39,12 @@ class BugseeAndroidSimpleTest {
         val options = BugseeLaunchOptions()
         
         // Test platform-specific behavior
-        options.monitorNetwork = true
+        options.captureNetwork = true
         
         val map = options.toMap()
         
-        // On Android, monitorNetwork should map to the correct keys
-        assertTrue(map.containsKey("MonitorNetwork"), "Should contain MonitorNetwork key")
-        assertTrue(map.containsKey("monitorNetwork"), "Should contain monitorNetwork key")
+        // On Android, captureNetwork should map to the correct key
+        assertTrue(map.containsKey(BugseeOptions.CaptureNetwork), "Should contain CaptureNetwork key")
     }
 
     @Test
@@ -53,18 +52,18 @@ class BugseeAndroidSimpleTest {
         val options = BugseeLaunchOptions()
         
         // Test Android-specific configuration
-        options.maxNetworkBodySize = 1024 * 1024 // 1MB
-        options.frameRate = BugseeFrameRate.High
-        options.videoEnabled = true
-        options.screenshotEnabled = true
+        options.captureNetworkBodySizeLimit = 1024 * 1024 // 1MB
+        options.captureVideoFrameRate = BugseeFrameRate.High
+        options.captureVideo = true
+        options.captureScreenshot = true
         
         val map = options.toMap()
         
         // Verify Android-specific values
-        assertTrue(map.containsKey("bodySizeLimit"), "Should contain bodySizeLimit")
-        assertTrue(map.containsKey("FrameRate"), "Should contain FrameRate")
-        assertTrue(map.containsKey("VideoEnabled"), "Should contain VideoEnabled")
-        assertTrue(map.containsKey("ScreenshotEnabled"), "Should contain ScreenshotEnabled")
+        assertTrue(map.containsKey(BugseeOptions.CaptureNetworkBodySizeLimit), "Should contain CaptureNetworkBodySizeLimit")
+        assertTrue(map.containsKey(BugseeOptions.CaptureVideoFrameRate), "Should contain CaptureVideoFrameRate")
+        assertTrue(map.containsKey(BugseeOptions.CaptureVideo), "Should contain CaptureVideo")
+        assertTrue(map.containsKey(BugseeOptions.CaptureScreenshot), "Should contain CaptureScreenshot")
     }
 
     @Test
@@ -143,17 +142,16 @@ class BugseeAndroidSimpleTest {
         // Test Android network monitoring functionality
         
         val options = BugseeLaunchOptions()
-        options.monitorNetwork = true
-        options.maxNetworkBodySize = 1024 * 1024 // 1MB
+        options.captureNetwork = true
+        options.captureNetworkBodySizeLimit = 1024 * 1024 // 1MB
         options.wifiOnlyUpload = true
         
         val map = options.toMap()
         
         // Verify network monitoring options
-        assertTrue(map.containsKey("MonitorNetwork"), "Should contain MonitorNetwork")
-        assertTrue(map.containsKey("monitorNetwork"), "Should contain monitorNetwork")
-        assertTrue(map.containsKey("bodySizeLimit"), "Should contain bodySizeLimit")
-        assertTrue(map.containsKey("WifiOnlyUpload"), "Should contain WifiOnlyUpload")
+        assertTrue(map.containsKey(BugseeOptions.CaptureNetwork), "Should contain CaptureNetwork")
+        assertTrue(map.containsKey(BugseeOptions.CaptureNetworkBodySizeLimit), "Should contain CaptureNetworkBodySizeLimit")
+        assertTrue(map.containsKey(BugseeOptions.WifiOnlyUpload), "Should contain WifiOnlyUpload")
     }
 
     @Test
@@ -161,17 +159,17 @@ class BugseeAndroidSimpleTest {
         // Test Android video and screenshot functionality
         
         val options = BugseeLaunchOptions()
-        options.videoEnabled = true
-        options.screenshotEnabled = true
-        options.frameRate = BugseeFrameRate.High
-        options.maxRecordingTime = 30 // 30 seconds
+        options.captureVideo = true
+        options.captureScreenshot = true
+        options.captureVideoFrameRate = BugseeFrameRate.High
+        options.duration = 30 // 30 seconds
         
         val map = options.toMap()
         
         // Verify video and screenshot options
-        assertTrue(map.containsKey("VideoEnabled"), "Should contain VideoEnabled")
-        assertTrue(map.containsKey("ScreenshotEnabled"), "Should contain ScreenshotEnabled")
-        assertTrue(map.containsKey("FrameRate"), "Should contain FrameRate")
-        assertTrue(map.containsKey("MaxRecordingTime"), "Should contain MaxRecordingTime")
+        assertTrue(map.containsKey(BugseeOptions.CaptureVideo), "Should contain CaptureVideo")
+        assertTrue(map.containsKey(BugseeOptions.CaptureScreenshot), "Should contain CaptureScreenshot")
+        assertTrue(map.containsKey(BugseeOptions.CaptureVideoFrameRate), "Should contain CaptureVideoFrameRate")
+        assertTrue(map.containsKey(BugseeOptions.Duration), "Should contain Duration")
     }
 }

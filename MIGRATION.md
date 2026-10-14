@@ -49,11 +49,74 @@
 - The internal `endpoint` / `debug` custom options are now `com.bugsee.option.$$ENDPOINT` /
   `com.bugsee.option.$$DEBUG` on Android.
 
-## Temporarily unavailable on Android (nextgen only)
+## Launch options
 
-These are no-ops that log an error until the corresponding API lands on `nextgen`:
+`BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,
+iOS 7.0.0-beta5) and follows the Android SDK 7 naming.
+
+- **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
+  `BugseeOptions` object. Use them with `setCustomOption` or the `Map` overload of `launch`.
+- **Defaults** are the native SDK defaults of the current platform; a few differ between platforms
+  (for example `maxDataSize`, `captureVideoAdaptive`).
+- **Every option the platform knows is passed to the SDK on launch**, so on Android the launch
+  options override options declared as `<meta-data>` in the app manifest.
+- Options of the other platform can be set but are not sent; each property's KDoc names its
+  platforms and, for Android extension options, the required module.
+- Values are checked against the option type when set: numbers are converted between Int and
+  Float, and enum options also accept the native Int value or a native constant name of either SDK
+  (`1`, `"Low"`, `"DEEP_DEBUG_ONLY"`). A value that does not fit, or an enum value the platform does
+  not support (`BugseeFrameRate.Raw` on iOS), is ignored with an error in the log, and the option
+  keeps its previous value.
+- The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
+  so they also get the defaults and the type checks. Keys that are not options are passed through
+  unchanged.
+- Some defaults change with SDK 7: on Android `maxDataSize` is 150 (was 50) and
+  `detectAndReportExit` is on (`detectAppExit` was off); on iOS `reportingTriggerByShake` will be on
+  once the library links iOS SDK 7.
+- iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
+  is sent, set `captureScreenshot = false` yourself when you turn video off.
+- `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos` are removed; all options live on
+  `BugseeLaunchOptions`. The class is no longer `open`.
+
+Renamed properties:
+
+| 0.1.x | 0.2.0 |
+|---|---|
+| `maxRecordingTime` | `duration` |
+| `shakeToReport` / `screenshotToReport` | `reportingTriggerByShake` / `reportingTriggerByScreenshot` |
+| `notificationBarTrigger` (Android) | `reportingTriggerByNotification` |
+| `crashReport` | `detectAndReportCrash` |
+| `detectAppExit` | `detectAndReportExit` |
+| `killDetection` (iOS) | `detectAndReportKill` |
+| `ndkCrashReport` (Android) | `ndkDetectAndReport` (needs `bugsee-android-ndk`) |
+| `videoEnabled` / `screenshotEnabled` | `captureVideo` / `captureScreenshot` |
+| `videoMode` / `videoQuality` (Android) | `captureVideoMode` / `captureVideoQuality` |
+| `videoScale` (iOS, `Double`) | `captureVideoScale` (`Float`) |
+| `frameRate` / `minFrameRate` / `maxFrameRate` | `captureVideoFrameRate` / `captureVideoMinFrameRate` / `captureVideoMaxFrameRate` |
+| `viewHierarchyEnabled` | `captureViewHierarchy` |
+| `monitorNetwork` / `maxNetworkBodySize` | `captureNetwork` / `captureNetworkBodySizeLimit` |
+| `monitorWebSocket` (iOS) | `captureWebSocket` |
+| `monitorDiskSpace` / `monitorBluetoothStatus` (iOS) | `captureDiskSpace` / `captureBluetoothStatus` |
+| `enableMachExceptions` / `statusBarInfo` (iOS) | `captureMachExceptions` / `captureStatusBarInfo` |
+| `defaultCrashPriority` / `defaultBugPriority` / `defaultErrorPriority` | `reportingDefaultCrashPriority` / `reportingDefaultBugPriority` / `reportingDefaultErrorPriority` |
+| `reportSummaryRequired` / `reportDescriptionRequired` / `reportEmailRequired` | `reportingUISummaryRequired` / `reportingUIDescriptionRequired` / `reportingUIEmailRequired` |
+| `reportLabelsEnabled` / `reportLabelsRequired` | `reportingUILabelsEnabled` / `reportingUILabelsRequired` |
+| `reportPrioritySelector` | `reportingUIPrioritySelectorEnabled` |
+| `bugseeStyle` (iOS, `String`) | `reportingUIStyle` (`BugseeStyle`) |
+
+Unchanged: `captureLogs`, `wifiOnlyUpload`, `maxDataSize`, `captureAVPlayer`, `captureOSLogs`,
+`captureDeviceAndNetworkNames` (now iOS only).
+
+Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (Android; use
+`captureVideoMode`), `handleAnr` (Android; see the `detectAndReportExitNotResponding` family).
+
+Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
+`Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`.
+
+## Temporarily unavailable (nextgen only)
+
+These do not work yet; the API calls among them log an error:
 
 - Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.
 - `setEmail` / `getEmail` / `clearEmail` (replaced by the user identifier API).
-- Typed `BugseeLaunchOptions` values (still emitted with 6.x keys, which SDK 7 ignores).
-- Wrapper identification (`wrapper_info` is dropped by SDK 7).
+- iOS: launch options use the SDK 7 keys, which the iOS SDK 6.x the library still links ignores.

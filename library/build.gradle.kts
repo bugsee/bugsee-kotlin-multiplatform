@@ -1,3 +1,5 @@
+import com.bugsee.gradle.options.GenerateBugseeOptionsTask
+import com.bugsee.gradle.options.UpdateBugseeOptionsManifestsTask
 import com.codingfeline.buildkonfig.compiler.FieldSpec
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -42,6 +44,31 @@ tasks.withType<KotlinCompile> {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
 }
 
+// Launch options are generated from the native SDK option manifests. The snapshots in
+// options/ are committed so builds are reproducible offline; refresh them with
+// `./gradlew :library:updateBugseeOptionsManifests` after bumping an SDK version.
+val bugseeOptionsDir = layout.projectDirectory.dir("options")
+val bugseeAndroidVersion = libs.versions.bugsee.android.get()
+val bugseeIosOptionsVersion = libs.versions.bugsee.options.ios.get()
+
+tasks.register<UpdateBugseeOptionsManifestsTask>("updateBugseeOptionsManifests") {
+    group = "bugsee"
+    description = "Downloads the Bugsee SDK option manifests into library/options/."
+    androidVersion.set(bugseeAndroidVersion)
+    iosVersion.set(bugseeIosOptionsVersion)
+    baseUrl.set("https://download.bugsee.com/sdk/options")
+    outputDir.set(bugseeOptionsDir)
+}
+
+val generateBugseeOptions = tasks.register<GenerateBugseeOptionsTask>("generateBugseeOptions") {
+    group = "bugsee"
+    description = "Generates BugseeOptions and BugseeLaunchOptions from the option manifests."
+    androidManifest.set(bugseeOptionsDir.file("android-$bugseeAndroidVersion.json"))
+    iosManifest.set(bugseeOptionsDir.file("ios-$bugseeIosOptionsVersion.json"))
+    config.set(bugseeOptionsDir.file("kmp-options.json"))
+    outputDir.set(layout.buildDirectory.dir("generated/bugseeOptions/commonMain/kotlin"))
+}
+
 kotlin {
     explicitApi()
     applyDefaultHierarchyTemplate()
@@ -77,6 +104,7 @@ kotlin {
         }
 
         val commonMain by getting {
+            kotlin.srcDir(generateBugseeOptions)
             dependencies {
                 //put your multiplatform dependencies here
             }

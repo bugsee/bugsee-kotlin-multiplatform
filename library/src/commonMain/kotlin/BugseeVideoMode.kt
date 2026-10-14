@@ -12,31 +12,32 @@ public enum class BugseeVideoMode(private val value: Int) {
      */
     V2(2),
     /**
-     * User is not asked to allow video recording, but frame rate is lower comparing to {@link VideoMode#V2} and system views like status bar
-     * and soft keyboard are not recorded. This mode is <b>experimental</b> and works only on Android API level 24 and higher. On lower API
-     * levels video mode is automatically switched to {@link VideoMode#V1}.
+     * All windows on the screen are recorded, including system UI, but user is asked to allow video
+     * recording. This mode may capture windows of other applications, so consider privacy and
+     * security before using it.
      */
-    V3(3),
+    Fullscreen(20),
     /**
-     * Special for Unity.
+     * Video is recorded from raw pixel buffers supplied from outside of the SDK.
      */
-    V4(4);
+    DirectBuffers(21);
 
     public fun toIntValue(): Int {
         return value
     }
 
     public companion object {
-        public fun fromIntValue(value: Int?, defaultValue: BugseeVideoMode = V3): BugseeVideoMode {
+        public fun fromIntValue(value: Int?, defaultValue: BugseeVideoMode = V2): BugseeVideoMode {
             if (value == null) {
                 return defaultValue
             }
 
             return when (value) {
+                0 -> None
                 1 -> V1
                 2 -> V2
-                3 -> V3
-                4 -> V4
+                20 -> Fullscreen
+                21 -> DirectBuffers
                 else -> defaultValue
             }
         }

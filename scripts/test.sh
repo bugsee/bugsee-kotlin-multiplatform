@@ -84,8 +84,19 @@ fi
 # ---------- run ----------
 ANDROID_STATUS="skipped"
 IOS_STATUS="skipped"
+BUILD_LOGIC_STATUS="skipped"
 
 if [ "$RUN_ANDROID" = "1" ]; then
+    # JVM-only, so it rides with the Android lane: the launch options generator in buildSrc.
+    echo ""
+    echo "=== Build logic tests (buildSrc) ==="
+    if ./gradlew -p buildSrc test "${GRADLE_ARGS[@]}"; then
+        BUILD_LOGIC_STATUS="passed"
+    else
+        BUILD_LOGIC_STATUS="failed"
+    fi
+
+
     echo ""
     echo "=== Android tests (Robolectric): ${ANDROID_TASKS[*]} ==="
     if ./gradlew "${ANDROID_TASKS[@]}" "${GRADLE_ARGS[@]}"; then
@@ -108,11 +119,12 @@ fi
 echo ""
 echo "=== Summary ==="
 printf "  %-10s %s\n" "android:" "$ANDROID_STATUS"
+printf "  %-10s %s\n" "buildSrc:" "$BUILD_LOGIC_STATUS"
 printf "  %-10s %s (%s on %s)\n" "ios:" "$IOS_STATUS" "$IOS_TEST_NAME" "$ARCH"
 echo "  modules:   ${MODULES[*]}"
 echo ""
-echo "Reports: */build/reports/tests/"
+echo "Reports: */build/reports/tests/, buildSrc/build/reports/tests/"
 
-if [ "$ANDROID_STATUS" = "failed" ] || [ "$IOS_STATUS" = "failed" ]; then
+if [ "$ANDROID_STATUS" = "failed" ] || [ "$IOS_STATUS" = "failed" ] || [ "$BUILD_LOGIC_STATUS" = "failed" ]; then
     exit 1
 fi

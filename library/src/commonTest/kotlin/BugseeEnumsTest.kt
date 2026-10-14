@@ -33,8 +33,8 @@ class BugseeEnumsTest {
         assertNotNull(BugseeVideoMode.None)
         assertNotNull(BugseeVideoMode.V1)
         assertNotNull(BugseeVideoMode.V2)
-        assertNotNull(BugseeVideoMode.V3)
-        assertNotNull(BugseeVideoMode.V4)
+        assertNotNull(BugseeVideoMode.Fullscreen)
+        assertNotNull(BugseeVideoMode.DirectBuffers)
     }
 
     // BugseeVideoQuality Tests
@@ -100,22 +100,6 @@ class BugseeEnumsTest {
         // Note: BugseeAppearance is an expect class, so we can't instantiate it in common tests
         // This test verifies that the class exists and is accessible
         assertNotNull(BugseeAppearance::class)
-    }
-
-    // BugseeLaunchOptionsAndroid Tests
-    @Test
-    fun `test BugseeLaunchOptionsAndroid creation`() {
-        // Note: BugseeLaunchOptionsAndroid is an expect class, so we can't instantiate it in common tests
-        // This test verifies that the class exists and is accessible
-        assertNotNull(BugseeLaunchOptionsAndroid::class)
-    }
-
-    // BugseeLaunchOptionsIos Tests
-    @Test
-    fun `test BugseeLaunchOptionsIos creation`() {
-        // Note: BugseeLaunchOptionsIos is an expect class, so we can't instantiate it in common tests
-        // This test verifies that the class exists and is accessible
-        assertNotNull(BugseeLaunchOptionsIos::class)
     }
 
     // Type alias tests
