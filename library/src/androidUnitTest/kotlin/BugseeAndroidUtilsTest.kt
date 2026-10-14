@@ -7,7 +7,6 @@ import com.bugsee.library.contracts.options.IssueSeverity
 import com.bugsee.library.contracts.options.IssueType
 import com.bugsee.library.contracts.options.LogLevel
 import com.bugsee.library.contracts.reporting.Attachment
-import com.bugsee.library.contracts.reporting.ExceptionOptions
 import com.bugsee.library.contracts.reporting.Report
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -347,42 +346,6 @@ class BugseeAndroidUtilsTest {
         )
         val kmpFields = BugseeAndroidUtils.convertReportFieldsFromNative(nativeReport)
         assertTrue(kmpFields.labels.isEmpty())
-    }
-
-    // --- convertExceptionLoggingOptions ---
-
-    @Test
-    fun `convertExceptionLoggingOptions - null returns null`() {
-        assertNull(BugseeAndroidUtils.convertExceptionLoggingOptions(null))
-    }
-
-    @Test
-    fun `convertExceptionLoggingOptions - populated options`() {
-        val options = BugseeExceptionLoggingOptions()
-        options.exceptionDomain = "com.test"
-        options.includeVideo = false
-        options.labels = arrayListOf("label1", "label2")
-        options.rules.skipFrames = 3
-        options.rules.setCustomOption("customKey", "customValue")
-
-        val nativeOptions = BugseeAndroidUtils.convertExceptionLoggingOptions(options)
-        assertNotNull(nativeOptions)
-        assertEquals("com.test", nativeOptions[ExceptionOptions.Domain])
-        assertEquals(false, nativeOptions["includeVideo"])
-        assertEquals(arrayListOf("label1", "label2"), nativeOptions["labels"])
-        assertEquals(3, nativeOptions[ExceptionOptions.SkipFrames])
-        assertEquals("customValue", nativeOptions["customKey"])
-    }
-
-    @Test
-    fun `convertExceptionLoggingOptions - default values`() {
-        val options = BugseeExceptionLoggingOptions()
-        val nativeOptions = BugseeAndroidUtils.convertExceptionLoggingOptions(options)
-        assertNotNull(nativeOptions)
-        assertFalse(nativeOptions.containsKey(ExceptionOptions.Domain))
-        assertEquals(true, nativeOptions["includeVideo"])
-        assertFalse(nativeOptions.containsKey("labels"))
-        assertEquals(0, nativeOptions[ExceptionOptions.SkipFrames])
     }
 
     // --- convertLifecycleEvent ---

@@ -8,7 +8,6 @@ import com.bugsee.library.contracts.lifecycle.LifecycleEvents
 import com.bugsee.library.contracts.options.IssueSeverity
 import com.bugsee.library.contracts.options.IssueType
 import com.bugsee.library.contracts.options.LogLevel
-import com.bugsee.library.contracts.reporting.ExceptionOptions
 import com.bugsee.library.contracts.reporting.Report
 import java.io.File
 import java.io.Serializable
@@ -165,28 +164,6 @@ internal class BugseeAndroidUtils {
                 }
                 addAttachmentToReport(attachment, report)
             }
-        }
-
-        fun convertExceptionLoggingOptions(options: BugseeExceptionLoggingOptions?): Map<String, Any>? {
-            if (options == null) {
-                return null
-            }
-
-            val result = HashMap<String, Any>()
-            // Merging-rule custom options first, so the documented keys below win
-            for ((key, value) in options.rules.toMap()) {
-                if (value != null) {
-                    result[key] = value
-                }
-            }
-            result[ExceptionOptions.SkipFrames] = options.rules.skipFrames
-            options.exceptionDomain?.let { result[ExceptionOptions.Domain] = it }
-            // "labels" and "includeVideo" are documented on Bugsee.logException, but SDK 7.3.0
-            // does not read them yet; they are passed for forward compatibility.
-            options.labels?.let { result["labels"] = ArrayList(it) }
-            result["includeVideo"] = options.includeVideo
-
-            return result
         }
 
         /**

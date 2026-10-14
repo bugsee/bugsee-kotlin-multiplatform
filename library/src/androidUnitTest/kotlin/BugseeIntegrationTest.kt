@@ -1,7 +1,6 @@
 package com.bugsee.kmp
 
 import com.bugsee.library.contracts.options.IssueSeverity
-import com.bugsee.library.contracts.reporting.ExceptionOptions
 import com.bugsee.library.contracts.reporting.Report
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -82,25 +81,6 @@ class BugseeIntegrationTest {
         assertEquals(original.description, roundTrip.description)
         assertEquals(original.severity, roundTrip.severity)
         assertEquals(original.labels, roundTrip.labels)
-    }
-
-    @Test
-    fun `integration - ExceptionLoggingOptions conversion preserves all fields`() {
-        val options = BugseeExceptionLoggingOptions()
-        options.exceptionDomain = "com.bugsee.integration"
-        options.includeVideo = false
-        options.labels = arrayListOf("integration", "test")
-        options.rules.skipFrames = 5
-        options.rules.setCustomOption("severity", "high")
-
-        val nativeOptions = BugseeAndroidUtils.convertExceptionLoggingOptions(options)
-        assertNotNull(nativeOptions)
-
-        assertEquals(options.exceptionDomain, nativeOptions[ExceptionOptions.Domain])
-        assertEquals(options.includeVideo, nativeOptions["includeVideo"])
-        assertEquals(options.labels, nativeOptions["labels"])
-        assertEquals(options.rules.skipFrames, nativeOptions[ExceptionOptions.SkipFrames])
-        assertEquals("high", nativeOptions["severity"])
     }
 
     @Test

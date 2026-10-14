@@ -197,8 +197,18 @@ public actual class BugseeInternal {
         BugseeSDK.logException(ex)
     }
 
+    // SDK 7 reads only the domain and skipFrames; labels, includeVideo and custom merging rules
+    // have no Android equivalent (labels can be added to the report in a report handler).
     public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
-        BugseeSDK.logException(ex, BugseeAndroidUtils.convertExceptionLoggingOptions(options))
+        if (options == null) {
+            logException(ex)
+            return
+        }
+
+        if (options.labels != null || !options.includeVideo) {
+            Logger.d(TAG, "logException: labels and includeVideo are not supported by the Android SDK — ignored")
+        }
+        BugseeSDK.logException(ex, options.exceptionDomain, options.rules.skipFrames)
     }
 
     // Privacy control methods
@@ -355,9 +365,11 @@ public actual class BugseeInternal {
 
 
     // Data management
-    // 6.x deleted everything collected; includingIntermediate = true keeps that behavior.
+    // 6.x deleted everything collected; deleting intermediate capture data and unsent report
+    // bundles keeps that behavior.
     public actual fun deleteCollectedDataOnDevice(deletionEventListener: EventHandler<Boolean>?) {
         BugseeSDK.deleteCollectedDataOnDevice(
+            true,
             true,
             deletionEventListener?.let { listener -> Callback1<Boolean> { listener.invoke(it == true) } }
         )
