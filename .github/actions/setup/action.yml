@@ -7,8 +7,10 @@ inputs:
   xcode-version:
     description: Xcode to select; must exist as /Applications/Xcode_<version>.app on the image.
     required: false
-    # Pinned rather than trusting the image default; bump deliberately.
-    default: '16.4'
+    # Kotlin/Native 2.4.20 is built against Xcode 26.4, and of the hosted images
+    # only macos-26 carries a 26.4.x. Pinned rather than trusting the image
+    # default (26.6 there); move it together with the Kotlin version.
+    default: '26.4.1'
 
 runs:
   using: composite
@@ -37,9 +39,12 @@ runs:
         distribution: temurin
         java-version: '21'
 
-    # Caches ~/.gradle; only the default branch writes the cache, so PRs cannot
-    # poison it.
+    # Caches ~/.gradle. Only pushes to the long-lived branches write it, so PRs
+    # cannot poison it. nextgen writes too: its toolchain differs from main's,
+    # and a PR restores the cache of its base branch.
     - uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/nextgen' }}
 
     # Kotlin/Native toolchain + dependencies (~1 GB) that Gradle's cache does
     # not cover. Keyed on the version catalog, which pins the Kotlin version.
