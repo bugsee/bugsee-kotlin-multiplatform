@@ -75,10 +75,9 @@ Filters transform events in-place (return modified or null to suppress). Listene
 
 ## Key Build Configuration
 
-- Kotlin: 2.2.21, Compose Multiplatform: 1.9.3
+- Kotlin: 2.4.20, Compose Multiplatform: 1.9.3
 - Android: minSdk 24, compileSdk 35, JVM target 1.8 (library) / 11 (sample)
 - iOS: deployment target 15.0 (library), 16.6 (sample)
-- `kotlin.native.cacheKind=none` for Xcode 16.4 compatibility
 - `kotlin.mpp.enableCInteropCommonization=true`
 - Language opt-ins (iOS/native code): `kotlinx.cinterop.ExperimentalForeignApi`, `kotlinx.cinterop.UnsafeNumber`, `kotlin.experimental.ExperimentalNativeApi`
 - Publishing: Maven Central via `com.vanniktech:maven-publish` plugin (Sonatype Central Portal). Coordinates: `com.bugsee:bugsee-kotlin-multiplatform` and `com.bugsee:bugsee-kotlin-multiplatform-protect`. Version sourced from `version.txt` (`-SNAPSHOT` appended unless `RELEASE=true`). Release via the **Deploy (production)** GitHub Actions workflow from the `release` branch (or `RELEASE=true ./scripts/deploy.sh` locally).
