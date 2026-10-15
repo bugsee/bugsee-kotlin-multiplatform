@@ -82,7 +82,6 @@
     "com.bugsee.option.detect.hang.level.severe": "DetectAndReportHangSevereLevel",
     "com.bugsee.option.detect.hang.sampling": "DetectAndReportHangSampling",
     "com.bugsee.option.detect.http-errors": "DetectAndReportHttpErrors",
-    "com.bugsee.option.detect.kill": "DetectAndReportKill",
     "com.bugsee.option.detect.main_thread_misuse": "DetectAndReportMainThreadMisuse",
     "com.bugsee.option.detect.memory_leaks": "DetectMemoryLeaks",
     "com.bugsee.option.detect.memory_leaks.deep_sample_rate": "DetectMemoryLeaksDeepSampleRate",

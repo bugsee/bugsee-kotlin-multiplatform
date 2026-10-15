@@ -52,7 +52,7 @@
 ## Launch options
 
 `BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,
-iOS 7.0.0-beta5) and follows the Android SDK 7 naming.
+iOS 7.0.0-beta7) and follows the Android SDK 7 naming.
 
 - **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
   `BugseeOptions` object. Use them with `setCustomOption` or the `Map` overload of `launch`.
@@ -87,7 +87,6 @@ Renamed properties:
 | `notificationBarTrigger` (Android) | `reportingTriggerByNotification` |
 | `crashReport` | `detectAndReportCrash` |
 | `detectAppExit` | `detectAndReportExit` |
-| `killDetection` (iOS) | `detectAndReportKill` |
 | `ndkCrashReport` (Android) | `ndkDetectAndReport` (needs `bugsee-android-ndk`) |
 | `videoEnabled` / `screenshotEnabled` | `captureVideo` / `captureScreenshot` |
 | `videoMode` / `videoQuality` (Android) | `captureVideoMode` / `captureVideoQuality` |
@@ -108,7 +107,8 @@ Unchanged: `captureLogs`, `wifiOnlyUpload`, `maxDataSize`, `captureAVPlayer`, `c
 `captureDeviceAndNetworkNames` (now iOS only).
 
 Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (Android; use
-`captureVideoMode`), `handleAnr` (Android; see the `detectAndReportExitNotResponding` family).
+`captureVideoMode`), `handleAnr` (Android; see the `detectAndReportExitNotResponding` family),
+`killDetection` (iOS; out-of-memory kills are reported through `detectAndReportExit`).
 
 Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
 `Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`.
