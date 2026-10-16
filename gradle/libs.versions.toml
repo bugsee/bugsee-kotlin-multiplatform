@@ -1,5 +1,5 @@
 [versions]
-agp = "8.6.0"
+agp = "9.4.1"
 kotlin = "2.2.21"
 bugsee-ios = "6.1.3"
 bugsee-android = "6.0.2"
