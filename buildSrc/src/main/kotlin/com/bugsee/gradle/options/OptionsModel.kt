@@ -35,6 +35,8 @@ data class KmpOptionsConfig(
     val names: Map<String, String>,
     /** Native manifest enum name -> KMP enum class name. */
     val enums: Map<String, String>,
+    /** Option key -> extra KDoc paragraph for the key constant and the property (optional). */
+    val docs: Map<String, String> = emptyMap(),
 )
 
 internal object OptionsJson {
@@ -73,6 +75,7 @@ internal object OptionsJson {
         return KmpOptionsConfig(
             names = root["names"] as Map<String, String>,
             enums = root["enums"] as Map<String, String>,
+            docs = root["docs"] as Map<String, String>? ?: emptyMap(),
         )
     }
 
