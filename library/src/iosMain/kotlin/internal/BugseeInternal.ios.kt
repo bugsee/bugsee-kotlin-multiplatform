@@ -42,8 +42,7 @@ public actual class BugseeInternal {
         bugsee?.setDelegate(bugseeDelegate)
     }
 
-    public actual val appearance: BugseeAppearance
-        get() = BugseeAppearance()
+    public actual val appearance: BugseeAppearance by lazy { BugseeAppearance() }
 
     // Execution control methods
     public actual fun launch(apiKey: String) {

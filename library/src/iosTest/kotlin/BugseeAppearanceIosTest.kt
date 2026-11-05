@@ -1,5 +1,6 @@
 package com.bugsee.kmp
 
+import platform.UIKit.UIColor
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,7 +25,7 @@ class BugseeAppearanceIosTest {
         appearance.reportTextColor = 0x80FF0000.toInt()
 
         assertEquals(0x80FF0000.toInt(), appearance.reportTextColor)
-        assertNotNull(BugseeSDK.appearance().reportTextColor)
+        assertEquals(UIColor(red = 1.0, green = 0.0, blue = 0.0, alpha = 128 / 255.0), BugseeSDK.appearance().reportTextColor)
     }
 
     @Test
@@ -32,9 +33,7 @@ class BugseeAppearanceIosTest {
         appearance.feedbackEmailSkipTextColor = 0xFF00FF00.toInt()
 
         assertEquals(0xFF00FF00.toInt(), appearance.feedbackEmailSkipTextColor)
-        val native = BugseeSDK.appearance().feedbackEmailSkipColor
-        assertNotNull(native)
-        assertEquals(0xFF00FF00.toInt(), BugseeAppearance().feedbackEmailSkipTextColor)
+        assertEquals(UIColor(red = 0.0, green = 1.0, blue = 0.0, alpha = 1.0), BugseeSDK.appearance().feedbackEmailSkipColor)
     }
 
     @Test

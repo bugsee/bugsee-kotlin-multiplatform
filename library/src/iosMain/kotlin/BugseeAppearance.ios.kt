@@ -61,11 +61,17 @@ private fun string(ref: KMutableProperty1<BugseeTheme, String?>) = object : Read
     }
 }
 
+// Shared theme code in commonMain sets every property, so the log line is written once per property.
 private fun <T> androidOnly() = object : ReadWriteProperty<Any?, T?> {
+    private var logged = false
+
     override fun getValue(thisRef: Any?, property: KProperty<*>): T? = null
 
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T?) {
-        if (value != null) Logger.e(TAG, "${property.name} is Android only and is ignored on iOS")
+        if (value != null && !logged) {
+            logged = true
+            Logger.i(TAG, "${property.name} is Android only and is ignored on iOS")
+        }
     }
 }
 

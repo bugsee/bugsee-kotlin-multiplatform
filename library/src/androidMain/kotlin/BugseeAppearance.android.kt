@@ -18,36 +18,42 @@ public actual class BugseeAppearance internal constructor(
         private fun feedback(name: String): String = "Feedback::$name"
     }
 
-    private fun <T> call(key: String, block: () -> T?): T? = try {
+    private fun <T> call(op: String, key: String, block: () -> T?): T? = try {
         block()
     } catch (e: Throwable) {
-        Logger.e(TAG, "'$key' failed", e)
+        Logger.e(TAG, "$op '$key' failed", e)
         null
     }
 
     private fun color(key: String) = object : ReadWriteProperty<Any?, Int?> {
         override fun getValue(thisRef: Any?, property: KProperty<*>): Int? =
-            call(key) { bugseeAppearance.getColor(key) }
+            call("get", key) { bugseeAppearance.getColor(key) }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int?) {
-            call(key) { bugseeAppearance.setColor(key, value) }
+            call("set", key) { bugseeAppearance.setColor(key, value) }
         }
     }
 
     private fun string(key: String) = object : ReadWriteProperty<Any?, String?> {
         override fun getValue(thisRef: Any?, property: KProperty<*>): String? =
-            call(key) { bugseeAppearance.getString(key) }
+            call("get", key) { bugseeAppearance.getString(key) }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: String?) {
-            call(key) { bugseeAppearance.setString(key, value) }
+            call("set", key) { bugseeAppearance.setString(key, value) }
         }
     }
 
+    // Shared theme code in commonMain sets every property, so the log line is written once per property.
     private fun iosOnly() = object : ReadWriteProperty<Any?, Int?> {
+        private var logged = false
+
         override fun getValue(thisRef: Any?, property: KProperty<*>): Int? = null
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int?) {
-            if (value != null) Logger.e(TAG, "${property.name} is iOS only and is ignored on Android")
+            if (value != null && !logged) {
+                logged = true
+                Logger.i(TAG, "${property.name} is iOS only and is ignored on Android")
+            }
         }
     }
 

@@ -4,16 +4,14 @@ package com.bugsee.kmp
  * Colors and texts of the Bugsee UI, available as [Bugsee.appearance].
  *
  * Colors are ARGB [Int]s (`0xAARRGGBB`). Each property names the platforms it applies to; on the
- * other platform, setting it logs an error and reading it returns `null`.
+ * other platform, setting it is ignored (logged once per property) and reading it returns `null`.
  *
- * Reading a property returns the native SDK's current value: on Android `null` until it is set, on
- * iOS the SDK default until it is set.
+ * Reading a property returns the native SDK's current value: on Android `null` until it is set; on
+ * iOS the SDK default until it is set, or `null` for the placeholders.
  *
  * On Android the feedback properties take effect only with the `bugsee-android-feedback` module.
  *
- * The native SDKs do not apply every property they declare: the iOS SDK 7.0 feedback screens use
- * only [feedbackBackgroundColor] and the feedback e-mail screen colors, and Android SDK 7.4 ignores
- * [feedbackLoadingBarBackgroundColor], [feedbackLoadingTextColor] and [feedbackErrorTextColor].
+ * Some properties are declared by a native SDK but not applied by its current UI; their KDoc says so.
  */
 public expect class BugseeAppearance {
 
@@ -45,34 +43,58 @@ public expect class BugseeAppearance {
     /** Background color of the feedback screen. Android and iOS. */
     public var feedbackBackgroundColor: Int?
 
-    /** Background color of incoming message bubbles. Android and iOS. */
+    /**
+     * Background color of incoming message bubbles. Android and iOS.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackIncomingBubbleColor: Int?
 
-    /** Background color of outgoing message bubbles. Android and iOS. */
+    /**
+     * Background color of outgoing message bubbles. Android and iOS.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackOutgoingBubbleColor: Int?
 
-    /** Text color of incoming messages. Android and iOS. */
+    /**
+     * Text color of incoming messages. Android and iOS.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackIncomingTextColor: Int?
 
-    /** Text color of outgoing messages. Android and iOS. */
+    /**
+     * Text color of outgoing messages. Android and iOS.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackOutgoingTextColor: Int?
 
-    /** Title text color of the feedback screen. Android and iOS. */
+    /**
+     * Title text color of the feedback screen. Android and iOS.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackTitleTextColor: Int?
 
     /** Background color of the feedback e-mail screen. Android and iOS. */
     public var feedbackEmailBackgroundColor: Int?
 
-    /** Continue button background on the feedback e-mail screen while the e-mail is not valid. Android and iOS. */
+    /**
+     * Continue button background on the feedback e-mail screen while the e-mail is not valid. Android and iOS.
+     */
     public var feedbackEmailContinueNotActiveColor: Int?
 
-    /** Continue button background on the feedback e-mail screen once the e-mail is valid. Android and iOS. */
+    /**
+     * Continue button background on the feedback e-mail screen once the e-mail is valid. Android and iOS.
+     */
     public var feedbackEmailContinueActiveColor: Int?
 
-    /** Skip button text color on the feedback e-mail screen. Android and iOS (`feedbackEmailSkipColor`). */
+    /**
+     * Skip button text color on the feedback e-mail screen. Android and iOS (`feedbackEmailSkipColor`).
+     */
     public var feedbackEmailSkipTextColor: Int?
 
-    /** Text color of the message input. Android and iOS. */
+    /**
+     * Text color of the message input. Android and iOS.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackInputTextColor: Int?
 
     // --- Android only ---
@@ -89,7 +111,10 @@ public expect class BugseeAppearance {
     /** Action bar text color of the report screen. Android only. */
     public var reportActionBarTextColor: Int?
 
-    /** Background of a pressed action bar button on the report screen. Android only. */
+    /**
+     * Background of a pressed action bar button on the report screen. Android only.
+     * Android SDK 7.4 does not apply it.
+     */
     public var reportActionBarButtonBackgroundClickedColor: Int?
 
     /** Color of the selected severity label on the report screen. Android only. */
@@ -98,16 +123,25 @@ public expect class BugseeAppearance {
     /** Action bar color of the feedback screen. Android only. */
     public var feedbackActionBarColor: Int?
 
-    /** Background of a pressed action bar button on the feedback screen. Android only. */
+    /**
+     * Background of a pressed action bar button on the feedback screen. Android only.
+     * Android SDK 7.4 does not apply it.
+     */
     public var feedbackActionBarButtonBackgroundClickedColor: Int?
 
     /** Text color of message dates. Android only. */
     public var feedbackDateTextColor: Int?
 
-    /** Background of the pressed Skip button on the feedback e-mail screen. Android only. */
+    /**
+     * Background of the pressed Skip button on the feedback e-mail screen. Android only.
+     * Android SDK 7.4 does not apply it.
+     */
     public var feedbackEmailSkipBackgroundClickedColor: Int?
 
-    /** Background of the pressed Continue button on the feedback e-mail screen. Android only. */
+    /**
+     * Background of the pressed Continue button on the feedback e-mail screen. Android only.
+     * Android SDK 7.4 does not apply it.
+     */
     public var feedbackEmailContinueClickedColor: Int?
 
     /** Hint text color of the message input. Android only. */
@@ -116,16 +150,21 @@ public expect class BugseeAppearance {
     /** Color of the line above the message input. Android only. */
     public var feedbackBottomDelimiterColor: Int?
 
-    /** Background color of the feedback loading bar. Android only. */
+    /**
+     * Background color of the feedback loading bar. Android only.
+     * Android SDK 7.4 does not apply it.
+     */
     public var feedbackLoadingBarBackgroundColor: Int?
 
-    /** Text color of the feedback loading bar. Android only. */
+    /** Text color of the feedback loading bar. Android only. Android SDK 7.4 does not apply it. */
     public var feedbackLoadingTextColor: Int?
 
-    /** Text color of feedback errors. Android only. */
+    /** Text color of feedback errors. Android only. Android SDK 7.4 does not apply it. */
     public var feedbackErrorTextColor: Int?
 
-    /** Background color of the "app version changed" notice in the feedback thread. Android only. */
+    /**
+     * Background color of the "app version changed" notice in the feedback thread. Android only.
+     */
     public var feedbackVersionChangedBackgroundColor: Int?
 
     /** Text color of the "app version changed" notice in the feedback thread. Android only. */
@@ -160,19 +199,33 @@ public expect class BugseeAppearance {
     /** Navigation bar color of the report screen. iOS only. */
     public var reportNavigationBarColor: Int?
 
-    /** Navigation bar and bottom bar color of the feedback screen. iOS only. */
+    /**
+     * Navigation bar and bottom bar color of the feedback screen. iOS only.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackBarsColor: Int?
 
-    /** Background color of the message input. iOS only. */
+    /**
+     * Background color of the message input. iOS only.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackInputBackgroundColor: Int?
 
-    /** Close button color of the feedback screen. iOS only. */
+    /**
+     * Close button color of the feedback screen. iOS only.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackCloseButtonColor: Int?
 
-    /** Navigation bar color of the feedback screen. iOS only. */
+    /**
+     * Navigation bar color of the feedback screen. iOS only.
+     * The iOS SDK 7.0 feedback screens do not apply it.
+     */
     public var feedbackNavigationBarColor: Int?
 
-    /** Main Bugsee color: the logo and the high, critical and blocker severity marks. Read-only. iOS only. */
+    /**
+     * Main Bugsee color: the logo and the high, critical and blocker severity marks. Read-only. iOS only.
+     */
     public val mainBugseeColor: Int?
 
     /** Color of the low severity mark. Read-only. iOS only. */

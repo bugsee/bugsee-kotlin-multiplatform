@@ -4,12 +4,17 @@ import com.bugsee.library.contracts.appearance.Appearance
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import android.util.Log
+import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLog
 import kotlin.test.assertEquals
@@ -27,6 +32,8 @@ class BugseeAppearanceAndroidTest {
     fun clearLog() {
         ShadowLog.clear()
     }
+
+    private fun logs() = ShadowLog.getLogsForTag("BugseeAppearance")
 
     @Test
     fun `colors are set and read under the SDK 7 keys`() {
@@ -65,22 +72,57 @@ class BugseeAppearanceAndroidTest {
 
     @Test
     @Suppress("DEPRECATION")
-    fun `iOS-only properties are ignored with an error in the log`() {
+    fun `iOS-only properties are ignored and logged once per property`() {
         appearance.reportNavigationBarColor = 1
+        appearance.reportNavigationBarColor = 3 // shared theme code runs again
         appearance.reportSendButtonColor = 2
         appearance.feedbackBarsColor = null // clearing is not worth a log line
 
         verifyNoInteractions(native)
         assertNull(appearance.reportNavigationBarColor)
         assertNull(appearance.mainBugseeColor)
-        val errors = ShadowLog.getLogsForTag("BugseeAppearance").map { it.msg }
         assertEquals(
             listOf(
                 "reportNavigationBarColor is iOS only and is ignored on Android",
                 "reportSendButtonColor is iOS only and is ignored on Android",
             ),
-            errors,
+            logs().map { it.msg },
         )
+        assertTrue(logs().all { it.type == Log.INFO })
+    }
+
+    @Test
+    fun `notificationTitleResId is resolved to the title`() {
+        Robolectric.setupContentProvider(BugseeContextProvider::class.java)
+
+        appearance.notificationTitleResId = android.R.string.ok
+        verify(native).setString("Notification::Title", "OK")
+        assertEquals(android.R.string.ok, appearance.notificationTitleResId)
+
+        // Clearing the id clears the title it set
+        `when`(native.getString("Notification::Title")).thenReturn("OK")
+        appearance.notificationTitleResId = null
+        verify(native).setString("Notification::Title", null)
+    }
+
+    @Test
+    fun `clearing notificationTitleResId keeps a title set directly`() {
+        Robolectric.setupContentProvider(BugseeContextProvider::class.java)
+        appearance.notificationTitleResId = android.R.string.ok
+
+        `when`(native.getString("Notification::Title")).thenReturn("Custom")
+        appearance.notificationTitleResId = null
+
+        verify(native, never()).setString("Notification::Title", null)
+    }
+
+    @Test
+    fun `a failing native setter is logged and not thrown`() {
+        doThrow(IllegalStateException("boom")).`when`(native).setColor(anyString(), any())
+
+        appearance.reportTextColor = 1
+
+        assertTrue(logs().any { it.type == Log.ERROR && "set 'Report::TextColor' failed" in it.msg })
     }
 
     @Test
@@ -88,6 +130,6 @@ class BugseeAppearanceAndroidTest {
         `when`(native.getColor(anyString())).thenThrow(IllegalStateException("boom"))
 
         assertNull(appearance.reportTextColor)
-        assertTrue(ShadowLog.getLogsForTag("BugseeAppearance").any { "'Report::TextColor' failed" in it.msg })
+        assertTrue(logs().any { it.type == Log.ERROR && "get 'Report::TextColor' failed" in it.msg })
     }
 }
