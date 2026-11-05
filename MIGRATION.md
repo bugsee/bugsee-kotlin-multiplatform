@@ -52,7 +52,7 @@
 ## Launch options
 
 `BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,
-iOS 7.0.0) and follows the Android SDK 7 naming.
+iOS 7.0.1) and follows the Android SDK 7 naming.
 
 - **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
   `BugseeOptions` object. Use them with `setCustomOption` or the `Map` overload of `launch`.
