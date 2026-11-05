@@ -330,11 +330,11 @@ class BugseeLaunchOptionsTest {
             BugseeCrashHandlerType.BSD,
             BugseeLaunchOptions(mapOf(BugseeOptions.CaptureCrashHandlerType to "BSD")).captureCrashHandlerType,
         )
-        // 0 is not a value of the iOS enum
-        assertEquals(
-            BugseeCrashHandlerType.MachAndBSD,
-            BugseeLaunchOptions(mapOf(BugseeOptions.CaptureCrashHandlerType to 0)).captureCrashHandlerType,
-        )
+        // 0 is not a value of the iOS enum: rejected, the previous value stays
+        val options = BugseeLaunchOptions()
+        options.captureCrashHandlerType = BugseeCrashHandlerType.BSD
+        options.setCustomOption(BugseeOptions.CaptureCrashHandlerType, 0)
+        assertEquals(BugseeCrashHandlerType.BSD, options.captureCrashHandlerType)
     }
 
     @Test
