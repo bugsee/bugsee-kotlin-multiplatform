@@ -10,17 +10,22 @@ package com.bugsee.kmp
  * options.captureCrashSignals = BugseeCrashSignals.ABRT or BugseeCrashSignals.ILL or BugseeCrashSignals.TRAP
  * ```
  *
- * A bad memory access is intercepted when either [SEGV] or [BUS] is selected; leave both out to
- * leave bad memory accesses alone. Leaving out [ABRT] also stops uncaught exceptions, which end in
- * `abort()`, from being reported.
+ * With a Mach handler ([BugseeCrashHandlerType.Mach], [BugseeCrashHandlerType.MachAndBSD]) a bad
+ * memory access is intercepted when either [SEGV] or [BUS] is selected; leave both out to leave bad
+ * memory accesses alone. With [BugseeCrashHandlerType.BSD] only the selected one of the two is.
+ * Leaving out [ABRT] also stops uncaught Objective-C and C++ exceptions, which end in `abort()`,
+ * from being reported.
  *
  * The values are those of the iOS SDK `BugseeCrashSignals`.
  */
 public object BugseeCrashSignals {
-    /** No signals. */
+    /**
+     * No signals: native crashes and uncaught Objective-C and C++ exceptions are not reported, even
+     * with [BugseeLaunchOptions.detectAndReportCrash] on.
+     */
     public const val None: Int = 0
 
-    /** SIGABRT: `abort()`, failed assertions, uncaught exceptions. */
+    /** SIGABRT: `abort()`, failed assertions, uncaught Objective-C and C++ exceptions. */
     public const val ABRT: Int = 1 shl 0
 
     /** SIGSEGV: invalid memory access. */
