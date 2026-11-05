@@ -52,12 +52,12 @@
 ## Launch options
 
 `BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,
-iOS 7.0.0-beta7) and follows the Android SDK 7 naming.
+iOS 7.0.0) and follows the Android SDK 7 naming.
 
 - **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
   `BugseeOptions` object. Use them with `setCustomOption` or the `Map` overload of `launch`.
-- **Defaults** are the native SDK defaults of the current platform; a few differ between platforms
-  (for example `maxDataSize`, `captureVideoAdaptive`).
+- **Defaults** are the native SDK defaults of the current platform; they can differ between
+  platforms (today only `captureVideoAdaptive`).
 - **Every option the platform knows is passed to the SDK on launch**, so on Android the launch
   options override options declared as `<meta-data>` in the app manifest.
 - Options of the other platform can be set but are not sent; each property's KDoc names its
@@ -70,11 +70,15 @@ iOS 7.0.0-beta7) and follows the Android SDK 7 naming.
 - The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
   so they also get the defaults and the type checks. Keys that are not options are passed through
   unchanged.
-- Some defaults change with SDK 7: on Android `maxDataSize` is 150 (was 50) and
-  `detectAndReportExit` is on (`detectAppExit` was off); on iOS `reportingTriggerByShake` will be on
-  once the library links iOS SDK 7.
+- Some defaults change with SDK 7: `maxDataSize` is 150 (was 50); on Android `detectAndReportExit`
+  is on (`detectAppExit` was off); on iOS `reportingTriggerByShake` will be on once the library
+  links iOS SDK 7.
 - iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
   is sent, set `captureScreenshot = false` yourself when you turn video off.
+- `captureCrashSignals` (iOS) is a bit set of the signals the crash reporter handles: `1` SIGABRT,
+  `2` SIGSEGV, `4` SIGBUS, `8` SIGILL, `16` SIGFPE, `32` SIGTRAP. The default `128` lets the SDK
+  choose (every signal); combined with other bits it is ignored. Leaving out SIGABRT also stops
+  uncaught exceptions from being reported.
 - `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos` are removed; all options live on
   `BugseeLaunchOptions`. The class is no longer `open`.
 
@@ -96,7 +100,8 @@ Renamed properties:
 | `monitorNetwork` / `maxNetworkBodySize` | `captureNetwork` / `captureNetworkBodySizeLimit` |
 | `monitorWebSocket` (iOS) | `captureWebSocket` |
 | `monitorDiskSpace` / `monitorBluetoothStatus` (iOS) | `captureDiskSpace` / `captureBluetoothStatus` |
-| `enableMachExceptions` / `statusBarInfo` (iOS) | `captureMachExceptions` / `captureStatusBarInfo` |
+| `enableMachExceptions` (iOS, `Boolean`) | `captureCrashHandlerType` (`BugseeCrashHandlerType`): `true` → `MachAndBSD`, `false` → `BSD` |
+| `statusBarInfo` (iOS) | `captureStatusBarInfo` |
 | `defaultCrashPriority` / `defaultBugPriority` / `defaultErrorPriority` | `reportingDefaultCrashPriority` / `reportingDefaultBugPriority` / `reportingDefaultErrorPriority` |
 | `reportSummaryRequired` / `reportDescriptionRequired` / `reportEmailRequired` | `reportingUISummaryRequired` / `reportingUIDescriptionRequired` / `reportingUIEmailRequired` |
 | `reportLabelsEnabled` / `reportLabelsRequired` | `reportingUILabelsEnabled` / `reportingUILabelsRequired` |
@@ -111,7 +116,8 @@ Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (And
 `killDetection` (iOS; out-of-memory kills are reported through `detectAndReportExit`).
 
 Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
-`Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`.
+`Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`,
+`BugseeCrashHandlerType`.
 
 ## Temporarily unavailable (nextgen only)
 

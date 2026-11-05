@@ -1,6 +1,6 @@
 {
   "buildConfiguration" : "release",
-  "generatedAt" : "2026-10-07T01:52:34Z",
+  "generatedAt" : "2026-10-30T19:10:39Z",
   "manifestVersion" : 1,
   "options" : [
     {
@@ -46,6 +46,28 @@
       "type" : "boolean"
     },
     {
+      "default" : "MachAndBSD",
+      "enum" : {
+        "name" : "BugseeCrashHandlerType",
+        "values" : {
+          "BSD" : 1,
+          "Mach" : 2,
+          "MachAndBSD" : 3
+        }
+      },
+      "hidden" : false,
+      "key" : "com.bugsee.option.capture.crash-handler-type",
+      "module" : "Bugsee",
+      "type" : "enum"
+    },
+    {
+      "default" : 128,
+      "hidden" : false,
+      "key" : "com.bugsee.option.capture.crash-signals",
+      "module" : "Bugsee",
+      "type" : "int"
+    },
+    {
       "default" : false,
       "hidden" : false,
       "key" : "com.bugsee.option.capture.device-network-names",
@@ -87,13 +109,6 @@
       "default" : false,
       "hidden" : false,
       "key" : "com.bugsee.option.capture.logs.oslog",
-      "module" : "Bugsee",
-      "type" : "boolean"
-    },
-    {
-      "default" : true,
-      "hidden" : false,
-      "key" : "com.bugsee.option.capture.mach-exceptions",
       "module" : "Bugsee",
       "type" : "boolean"
     },
@@ -304,9 +319,23 @@
       "type" : "int"
     },
     {
-      "default" : 50,
+      "default" : 150,
       "hidden" : false,
       "key" : "com.bugsee.option.config.max-data-size",
+      "module" : "Bugsee",
+      "type" : "int"
+    },
+    {
+      "default" : 30,
+      "hidden" : false,
+      "key" : "com.bugsee.option.config.max-pending-report-age",
+      "module" : "Bugsee",
+      "type" : "int"
+    },
+    {
+      "default" : 30,
+      "hidden" : false,
+      "key" : "com.bugsee.option.config.max-pending-reports",
       "module" : "Bugsee",
       "type" : "int"
     },
@@ -405,13 +434,6 @@
       "default" : false,
       "hidden" : false,
       "key" : "com.bugsee.option.detect.http-errors",
-      "module" : "Bugsee",
-      "type" : "boolean"
-    },
-    {
-      "default" : false,
-      "hidden" : false,
-      "key" : "com.bugsee.option.detect.kill",
       "module" : "Bugsee",
       "type" : "boolean"
     },
@@ -568,5 +590,5 @@
     }
   ],
   "sdk" : "ios",
-  "sdkVersion" : "7.0.0-beta5"
+  "sdkVersion" : "7.0.0"
 }

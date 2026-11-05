@@ -6,13 +6,14 @@
     "com.bugsee.option.capture.breadcrumbs": "CaptureBreadcrumbs",
     "com.bugsee.option.capture.breadcrumbs.extras": "CaptureBreadcrumbsExtras",
     "com.bugsee.option.capture.camera-preview": "CaptureCameraPreview",
+    "com.bugsee.option.capture.crash-handler-type": "CaptureCrashHandlerType",
+    "com.bugsee.option.capture.crash-signals": "CaptureCrashSignals",
     "com.bugsee.option.capture.device-network-names": "CaptureDeviceAndNetworkNames",
     "com.bugsee.option.capture.disk-space": "CaptureDiskSpace",
     "com.bugsee.option.capture.logs": "CaptureLogs",
     "com.bugsee.option.capture.logs.allsources": "CaptureLogsUseAllSources",
     "com.bugsee.option.capture.logs.level": "CaptureLogsLevel",
     "com.bugsee.option.capture.logs.oslog": "CaptureOSLogs",
-    "com.bugsee.option.capture.mach-exceptions": "CaptureMachExceptions",
     "com.bugsee.option.capture.network": "CaptureNetwork",
     "com.bugsee.option.capture.network.body-size-limit": "CaptureNetworkBodySizeLimit",
     "com.bugsee.option.capture.network.body-without-type": "CaptureNetworkBodyWithoutType",
@@ -118,6 +119,7 @@
     "BugseeSeverityLevel": "BugseeSeverity",
     "MemoryLeakMode": "BugseeMemoryLeakMode",
     "BugseeDataEncryptionMode": "BugseeDataEncryptionMode",
-    "BugseeStyle": "BugseeStyle"
+    "BugseeStyle": "BugseeStyle",
+    "BugseeCrashHandlerType": "BugseeCrashHandlerType"
   }
 }
