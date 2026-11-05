@@ -49,6 +49,21 @@
 - The internal `endpoint` / `debug` custom options are now `com.bugsee.option.$$ENDPOINT` /
   `com.bugsee.option.$$DEBUG` on Android.
 
+## Appearance
+
+`BugseeAppearance` keeps its properties; each property's KDoc names the platforms it applies to.
+
+- Setting a property of the other platform now logs an error instead of being silently ignored;
+  reading it still returns `null`.
+- `feedbackEmailSkipTextColor` now also works on iOS (`BugseeTheme.feedbackEmailSkipColor`).
+- `reportSendButtonColor` and `reportCloseButtonColor` (iOS) are deprecated: iOS SDK 7 does not
+  apply them.
+- On iOS an unset placeholder (`reportSummaryPlaceholder`, …) reads as `null` instead of `""`.
+- On Android the feedback colors take effect only with the `bugsee-android-feedback` module.
+- The native SDKs do not apply every property: the iOS SDK 7.0 feedback screens use only
+  `feedbackBackgroundColor` and the feedback e-mail screen colors, and Android SDK 7.4 ignores
+  `feedbackLoadingBarBackgroundColor`, `feedbackLoadingTextColor` and `feedbackErrorTextColor`.
+
 ## Launch options
 
 `BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,

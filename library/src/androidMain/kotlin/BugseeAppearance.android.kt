@@ -3,268 +3,105 @@ package com.bugsee.kmp
 import com.bugsee.kmp.internal.Logger
 import com.bugsee.library.contracts.appearance.Appearance
 import com.bugsee.library.contracts.appearance.NotificationAppearance
+import com.bugsee.library.contracts.appearance.ReportAppearance
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 public actual class BugseeAppearance internal constructor(
     private val bugseeAppearance: Appearance
 ) {
     private companion object {
         private const val TAG = "BugseeAppearance"
-        private val legacyNamePattern = Regex("^(Report|Feedback|Notification)(.+)$")
+
+        // FeedbackAppearance lives in bugsee-android-feedback, which the library does not depend on;
+        // the keys take effect only when the app adds that module.
+        private fun feedback(name: String): String = "Feedback::$name"
     }
 
-    // Values for these keys are strings; every other appearance key holds a color.
-    private fun isStringKey(key: String): Boolean =
-        key.endsWith("Placeholder") || key == NotificationAppearance.Title
+    private fun <T> call(key: String, block: () -> T?): T? = try {
+        block()
+    } catch (e: Throwable) {
+        Logger.e(TAG, "'$key' failed", e)
+        null
+    }
 
-    // 6.x field name ("ReportActionBarColor") -> 7.x appearance key ("Report::ActionBarColor").
-    // Feedback keys take effect only when the bugsee-android-feedback module is present.
-    private fun toKey(name: String): String =
-        legacyNamePattern.matchEntire(name)?.let { "${it.groupValues[1]}::${it.groupValues[2]}" } ?: name
+    private fun color(key: String) = object : ReadWriteProperty<Any?, Int?> {
+        override fun getValue(thisRef: Any?, property: KProperty<*>): Int? =
+            call(key) { bugseeAppearance.getColor(key) }
 
-    private fun getPropertyValue(name: String): Any? {
-        val key = toKey(name)
-        return try {
-            if (isStringKey(key)) bugseeAppearance.getString(key) else bugseeAppearance.getColor(key)
-        } catch (e: Throwable) {
-            Logger.e(TAG, "get '$key' failed", e)
-            null
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int?) {
+            call(key) { bugseeAppearance.setColor(key, value) }
         }
     }
 
-    private fun setPropertyValue(name: String, value: Any?) {
-        val key = toKey(name)
-        try {
-            if (isStringKey(key)) {
-                bugseeAppearance.setString(key, value as? String)
-            } else {
-                bugseeAppearance.setColor(key, value as? Int)
-            }
-        } catch (e: Throwable) {
-            Logger.e(TAG, "set '$key' failed", e)
+    private fun string(key: String) = object : ReadWriteProperty<Any?, String?> {
+        override fun getValue(thisRef: Any?, property: KProperty<*>): String? =
+            call(key) { bugseeAppearance.getString(key) }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: String?) {
+            call(key) { bugseeAppearance.setString(key, value) }
         }
     }
+
+    private fun iosOnly() = object : ReadWriteProperty<Any?, Int?> {
+        override fun getValue(thisRef: Any?, property: KProperty<*>): Int? = null
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int?) {
+            if (value != null) Logger.e(TAG, "${property.name} is iOS only and is ignored on Android")
+        }
+    }
+
+    // --- Report screen, Android and iOS ---
+
+    public actual var reportSummaryPlaceholder: String? by string(ReportAppearance.SummaryPlaceholder)
+    public actual var reportDescriptionPlaceholder: String? by string(ReportAppearance.DescriptionPlaceholder)
+    public actual var reportLabelsPlaceholder: String? by string(ReportAppearance.LabelsPlaceholder)
+    public actual var reportEmailPlaceholder: String? by string(ReportAppearance.EmailPlaceholder)
+    public actual var reportVersionColor: Int? by color(ReportAppearance.VersionColor)
+    public actual var reportTextColor: Int? by color(ReportAppearance.TextColor)
+    public actual var reportBackgroundColor: Int? by color(ReportAppearance.BackgroundColor)
+
+    // --- Feedback screen, Android and iOS ---
+
+    public actual var feedbackBackgroundColor: Int? by color(feedback("BackgroundColor"))
+    public actual var feedbackIncomingBubbleColor: Int? by color(feedback("IncomingBubbleColor"))
+    public actual var feedbackOutgoingBubbleColor: Int? by color(feedback("OutgoingBubbleColor"))
+    public actual var feedbackIncomingTextColor: Int? by color(feedback("IncomingTextColor"))
+    public actual var feedbackOutgoingTextColor: Int? by color(feedback("OutgoingTextColor"))
+    public actual var feedbackTitleTextColor: Int? by color(feedback("TitleTextColor"))
+    public actual var feedbackEmailBackgroundColor: Int? by color(feedback("EmailBackgroundColor"))
+    public actual var feedbackEmailContinueNotActiveColor: Int? by color(feedback("EmailContinueNotActiveColor"))
+    public actual var feedbackEmailContinueActiveColor: Int? by color(feedback("EmailContinueActiveColor"))
+    public actual var feedbackEmailSkipTextColor: Int? by color(feedback("EmailSkipTextColor"))
+    public actual var feedbackInputTextColor: Int? by color(feedback("InputTextColor"))
+
+    // --- Android only ---
+
+    public actual var reportActionBarColor: Int? by color(ReportAppearance.ActionBarColor)
+    public actual var reportEditTextBackgroundColor: Int? by color(ReportAppearance.EditTextBackgroundColor)
+    public actual var reportHintColor: Int? by color(ReportAppearance.HintColor)
+    public actual var reportActionBarTextColor: Int? by color(ReportAppearance.ActionBarTextColor)
+    public actual var reportActionBarButtonBackgroundClickedColor: Int? by color(ReportAppearance.ActionBarButtonBackgroundClickedColor)
+    public actual var reportSeverityLabelActiveColor: Int? by color(ReportAppearance.SeverityLabelActiveColor)
+    public actual var feedbackActionBarColor: Int? by color(feedback("ActionBarColor"))
+    public actual var feedbackActionBarButtonBackgroundClickedColor: Int? by color(feedback("ActionBarButtonBackgroundClickedColor"))
+    public actual var feedbackDateTextColor: Int? by color(feedback("DateTextColor"))
+    public actual var feedbackEmailSkipBackgroundClickedColor: Int? by color(feedback("EmailSkipBackgroundClickedColor"))
+    public actual var feedbackEmailContinueClickedColor: Int? by color(feedback("EmailContinueClickedColor"))
+    public actual var feedbackInputTextHintColor: Int? by color(feedback("InputTextHintColor"))
+    public actual var feedbackBottomDelimiterColor: Int? by color(feedback("BottomDelimiterColor"))
+    public actual var feedbackLoadingBarBackgroundColor: Int? by color(feedback("LoadingBarBackgroundColor"))
+    public actual var feedbackLoadingTextColor: Int? by color(feedback("LoadingTextColor"))
+    public actual var feedbackErrorTextColor: Int? by color(feedback("ErrorTextColor"))
+    public actual var feedbackVersionChangedBackgroundColor: Int? by color(feedback("VersionChangedBackgroundColor"))
+    public actual var feedbackVersionChangedTextColor: Int? by color(feedback("VersionChangedTextColor"))
+
+    public actual var notificationTitle: String? by string(NotificationAppearance.Title)
 
     // 7.x has no resource-id variant of the notification title; the id is resolved to
     // a string and stored under Notification::Title.
     private var notificationTitleResIdValue: Int? = null
     private var titleResolvedFromResId: String? = null
-
-
-    public actual var reportActionBarColor: Int?
-        get() = getPropertyValue("ReportActionBarColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportActionBarColor", value)
-        }
-
-    public actual var reportEditTextBackgroundColor: Int?
-        get() = getPropertyValue("ReportEditTextBackgroundColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportEditTextBackgroundColor", value)
-        }
-
-    public actual var reportVersionColor: Int?
-        get() = getPropertyValue("ReportVersionColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportVersionColor", value)
-        }
-
-    public actual var reportTextColor: Int?
-        get() = getPropertyValue("ReportTextColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportTextColor", value)
-        }
-
-    public actual var reportHintColor: Int?
-        get() = getPropertyValue("ReportHintColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportHintColor", value)
-        }
-
-    public actual var reportActionBarTextColor: Int?
-        get() = getPropertyValue("ReportActionBarTextColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportActionBarTextColor", value)
-        }
-
-    public actual var reportActionBarButtonBackgroundClickedColor: Int?
-        get() = getPropertyValue("ReportActionBarButtonBackgroundClickedColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportActionBarButtonBackgroundClickedColor", value)
-        }
-
-    public actual var reportBackgroundColor: Int?
-        get() = getPropertyValue("ReportBackgroundColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportBackgroundColor", value)
-        }
-
-    public actual var reportSeverityLabelActiveColor: Int?
-        get() = getPropertyValue("ReportSeverityLabelActiveColor") as? Int?
-        set(value) {
-            setPropertyValue("ReportSeverityLabelActiveColor", value)
-        }
-
-    public actual var reportSummaryPlaceholder: String?
-        get() = getPropertyValue("ReportSummaryPlaceholder") as? String?
-        set(value) {
-            setPropertyValue("ReportSummaryPlaceholder", value)
-        }
-
-    public actual var reportDescriptionPlaceholder: String?
-        get() = getPropertyValue("ReportDescriptionPlaceholder") as? String?
-        set(value) {
-            setPropertyValue("ReportDescriptionPlaceholder", value)
-        }
-
-    public actual var reportLabelsPlaceholder: String?
-        get() = getPropertyValue("ReportLabelsPlaceholder") as? String?
-        set(value) {
-            setPropertyValue("ReportLabelsPlaceholder", value)
-        }
-
-    public actual var reportEmailPlaceholder: String?
-        get() = getPropertyValue("ReportEmailPlaceholder") as? String?
-        set(value) {
-            setPropertyValue("ReportEmailPlaceholder", value)
-        }
-
-    public actual var feedbackActionBarColor: Int?
-        get() = getPropertyValue("FeedbackActionBarColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackActionBarColor", value)
-        }
-
-    public actual var feedbackBackgroundColor: Int?
-        get() = getPropertyValue("FeedbackBackgroundColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackBackgroundColor", value)
-        }
-
-    public actual var feedbackActionBarButtonBackgroundClickedColor: Int?
-        get() = getPropertyValue("FeedbackActionBarButtonBackgroundClickedColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackActionBarButtonBackgroundClickedColor", value)
-        }
-
-    public actual var feedbackIncomingBubbleColor: Int?
-        get() = getPropertyValue("FeedbackIncomingBubbleColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackIncomingBubbleColor", value)
-        }
-
-    public actual var feedbackOutgoingBubbleColor: Int?
-        get() = getPropertyValue("FeedbackOutgoingBubbleColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackOutgoingBubbleColor", value)
-        }
-
-    public actual var feedbackIncomingTextColor: Int?
-        get() = getPropertyValue("FeedbackIncomingTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackIncomingTextColor", value)
-        }
-
-    public actual var feedbackOutgoingTextColor: Int?
-        get() = getPropertyValue("FeedbackOutgoingTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackOutgoingTextColor", value)
-        }
-
-    public actual var feedbackDateTextColor: Int?
-        get() = getPropertyValue("FeedbackDateTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackDateTextColor", value)
-        }
-
-    public actual var feedbackTitleTextColor: Int?
-        get() = getPropertyValue("FeedbackTitleTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackTitleTextColor", value)
-        }
-
-    public actual var feedbackEmailSkipTextColor: Int?
-        get() = getPropertyValue("FeedbackEmailSkipTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackEmailSkipTextColor", value)
-        }
-
-    public actual var feedbackEmailSkipBackgroundClickedColor: Int?
-        get() = getPropertyValue("FeedbackEmailSkipBackgroundClickedColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackEmailSkipBackgroundClickedColor", value)
-        }
-
-    public actual var feedbackEmailBackgroundColor: Int?
-        get() = getPropertyValue("FeedbackEmailBackgroundColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackEmailBackgroundColor", value)
-        }
-
-    public actual var feedbackEmailContinueNotActiveColor: Int?
-        get() = getPropertyValue("FeedbackEmailContinueNotActiveColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackEmailContinueNotActiveColor", value)
-        }
-
-    public actual var feedbackEmailContinueActiveColor: Int?
-        get() = getPropertyValue("FeedbackEmailContinueActiveColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackEmailContinueActiveColor", value)
-        }
-
-    public actual var feedbackEmailContinueClickedColor: Int?
-        get() = getPropertyValue("FeedbackEmailContinueClickedColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackEmailContinueClickedColor", value)
-        }
-
-    public actual var feedbackInputTextColor: Int?
-        get() = getPropertyValue("FeedbackInputTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackInputTextColor", value)
-        }
-
-    public actual var feedbackInputTextHintColor: Int?
-        get() = getPropertyValue("FeedbackInputTextHintColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackInputTextHintColor", value)
-        }
-
-    public actual var feedbackBottomDelimiterColor: Int?
-        get() = getPropertyValue("FeedbackBottomDelimiterColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackBottomDelimiterColor", value)
-        }
-
-    public actual var feedbackLoadingBarBackgroundColor: Int?
-        get() = getPropertyValue("FeedbackLoadingBarBackgroundColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackLoadingBarBackgroundColor", value)
-        }
-
-    public actual var feedbackLoadingTextColor: Int?
-        get() = getPropertyValue("FeedbackLoadingTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackLoadingTextColor", value)
-        }
-
-    public actual var feedbackErrorTextColor: Int?
-        get() = getPropertyValue("FeedbackErrorTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackErrorTextColor", value)
-        }
-
-    public actual var feedbackVersionChangedBackgroundColor: Int?
-        get() = getPropertyValue("FeedbackVersionChangedBackgroundColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackVersionChangedBackgroundColor", value)
-        }
-
-    public actual var feedbackVersionChangedTextColor: Int?
-        get() = getPropertyValue("FeedbackVersionChangedTextColor") as? Int?
-        set(value) {
-            setPropertyValue("FeedbackVersionChangedTextColor", value)
-        }
 
     public actual var notificationTitleResId: Int?
         get() = notificationTitleResIdValue
@@ -272,8 +109,8 @@ public actual class BugseeAppearance internal constructor(
             notificationTitleResIdValue = value
             if (value == null) {
                 // Clear only a title that came from the resource id, not one set directly.
-                if (titleResolvedFromResId != null && getPropertyValue("NotificationTitle") == titleResolvedFromResId) {
-                    setPropertyValue("NotificationTitle", null)
+                if (titleResolvedFromResId != null && notificationTitle == titleResolvedFromResId) {
+                    notificationTitle = null
                 }
                 titleResolvedFromResId = null
                 return
@@ -287,50 +124,28 @@ public actual class BugseeAppearance internal constructor(
             }
             if (title != null) {
                 titleResolvedFromResId = title
-                setPropertyValue("NotificationTitle", title)
+                notificationTitle = title
             }
         }
 
-    public actual var notificationTitle: String?
-        get() = getPropertyValue("NotificationTitle") as? String?
-        set(value) {
-            setPropertyValue("NotificationTitle", value)
-        }
+    // --- iOS only ---
 
-    // iOS specific fields — no-op on Android
-    public actual var reportCellBackgroundColor: Int?
-        get() = null
-        set(value) {}
-    public actual var reportSendButtonColor: Int?
-        get() = null
-        set(value) {}
-    public actual var reportCloseButtonColor: Int?
-        get() = null
-        set(value) {}
-    public actual var reportPlaceholderColor: Int?
-        get() = null
-        set(value) {}
-    public actual var reportNavigationBarColor: Int?
-        get() = null
-        set(value) {}
-    public actual var feedbackBarsColor: Int?
-        get() = null
-        set(value) {}
-    public actual var feedbackInputBackgroundColor: Int?
-        get() = null
-        set(value) {}
-    public actual var feedbackCloseButtonColor: Int?
-        get() = null
-        set(value) {}
-    public actual var feedbackNavigationBarColor: Int?
-        get() = null
-        set(value) {}
-    public actual val mainBugseeColor: Int?
-        get() = null
-    public actual val lowBugColor: Int?
-        get() = null
-    public actual val mediumBugColor: Int?
-        get() = null
-    public actual val dotSelectorColor: Int?
-        get() = null
+    public actual var reportCellBackgroundColor: Int? by iosOnly()
+
+    @Deprecated("Not applied by iOS SDK 7: the report screen uses the system Done button.")
+    public actual var reportSendButtonColor: Int? by iosOnly()
+
+    @Deprecated("Not applied by iOS SDK 7: the report screen uses the system Cancel button.")
+    public actual var reportCloseButtonColor: Int? by iosOnly()
+
+    public actual var reportPlaceholderColor: Int? by iosOnly()
+    public actual var reportNavigationBarColor: Int? by iosOnly()
+    public actual var feedbackBarsColor: Int? by iosOnly()
+    public actual var feedbackInputBackgroundColor: Int? by iosOnly()
+    public actual var feedbackCloseButtonColor: Int? by iosOnly()
+    public actual var feedbackNavigationBarColor: Int? by iosOnly()
+    public actual val mainBugseeColor: Int? get() = null
+    public actual val lowBugColor: Int? get() = null
+    public actual val mediumBugColor: Int? get() = null
+    public actual val dotSelectorColor: Int? get() = null
 }
