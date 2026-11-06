@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.kotlinCocoapods)
 
     alias(libs.plugins.bugsee.gradle.plugin)
 }
@@ -24,41 +23,15 @@ kotlin {
         }
     }
 
-    iosArm64()
-//    iosSimulatorArm64()
-
-    cocoapods {
-        summary = "Kotlin sample project with CocoaPods Compose dependencies"
-        homepage = "https://github.com/Kotlin/kotlin-with-cocoapods-compose-sample"
-
-        podfile = project.file("../iosApp/Podfile")
-
-        ios.deploymentTarget = "16.6"
-
-        /*
-         * https://youtrack.jetbrains.com/issue/KT-41830/
-         * Only link against pods the library (bugsee) depends on.
-         */
-        pod("Bugsee") {
-            version = libs.versions.bugsee.ios.get()
-        }
-
-        /*
-         * If you want to debug Bugsee XCF,
-         * then create local Bugsee pod,
-         * and use below pod module description
-         */
-//        pod("Bugsee") {
-//            version = "26.0.0"
-//            source = path(project.file("/Users/dsheikherev/WorkDir/Cocoapods/Local/Bugsee"))
-//            extraOpts += listOf("-compiler-option", "-fmodules")
-//        }
-
-        framework {
+    // Built into iosApp by the embedAndSignAppleFrameworkForXcode build phase. Bugsee comes in
+    // transitively from :library's SwiftPM dependency, through the linkage package in iosApp.
+    iosArm64 {
+        binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
         }
     }
+//    iosSimulatorArm64()
 
     sourceSets {
         androidMain.dependencies {

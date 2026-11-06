@@ -1,5 +1,6 @@
 package com.bugsee.kmp
 
+import swiftPMImport.com.bugsee.library.BugseeLifecycleEventType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -79,24 +80,22 @@ class BugseeIOSUtilsTest {
         assertEquals(BugseeNetworkEventStage.Before, BugseeIOSUtils.convertNetworkEventStage("redirect"))
     }
 
-    // --- convertExceptionLoggingOptions ---
+    // --- convertLifecycleEvent ---
 
     @Test
-    fun `convertExceptionLoggingOptions - null returns null`() {
-        assertNull(BugseeIOSUtils.convertExceptionLoggingOptions(null))
+    fun `convertLifecycleEvent - maps the SDK 7 events by name`() {
+        assertEquals(BugseeLifecycleEvent.Launched, BugseeIOSUtils.convertLifecycleEvent(BugseeLifecycleEventType.BugseeLifecycleEventLaunched))
+        assertEquals(BugseeLifecycleEvent.Stopped, BugseeIOSUtils.convertLifecycleEvent(BugseeLifecycleEventType.BugseeLifecycleEventStopped))
+        assertEquals(BugseeLifecycleEvent.Paused, BugseeIOSUtils.convertLifecycleEvent(BugseeLifecycleEventType.BugseeLifecycleEventBlackoutStarted))
+        assertEquals(BugseeLifecycleEvent.Resumed, BugseeIOSUtils.convertLifecycleEvent(BugseeLifecycleEventType.BugseeLifecycleEventBlackoutEnded))
+        assertEquals(
+            BugseeLifecycleEvent.ReportUploadFailed,
+            BugseeIOSUtils.convertLifecycleEvent(BugseeLifecycleEventType.BugseeLifecycleEventReportUploadFailed)
+        )
     }
 
     @Test
-    fun `convertExceptionLoggingOptions - populated options`() {
-        val options = BugseeExceptionLoggingOptions()
-        options.exceptionDomain = "com.test.ios"
-        options.includeVideo = false
-        options.labels = arrayListOf("ios-label")
-        options.rules.skipFrames = 2
-
-        val nativeOptions = BugseeIOSUtils.convertExceptionLoggingOptions(options)
-        // Verify non-null (native type details depend on cocoapods.Bugsee availability)
-        assertEquals("com.test.ios", nativeOptions?.exceptionDomain)
-        assertEquals(false, nativeOptions?.includeVideo)
+    fun `convertLifecycleEvent - an event without a 0_1_x counterpart is dropped`() {
+        assertNull(BugseeIOSUtils.convertLifecycleEvent(BugseeLifecycleEventType.BugseeLifecycleEventReportAssemblyFailed))
     }
 }

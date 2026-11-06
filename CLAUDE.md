@@ -10,7 +10,7 @@ Kotlin Multiplatform (KMP) wrapper library around native Bugsee crash reporting 
 
 - **library/** — Core KMP library (`com.bugsee.kmp`). Targets: `androidTarget`, `iosArm64`. Uses explicit API mode and `-Xexpect-actual-classes` compiler flag.
 - **composeApp/** — Sample Compose Multiplatform app (`com.bugsee.kmp.sample`) demonstrating library usage.
-- **iosApp/** — Native iOS app wrapper using CocoaPods to consume composeApp framework.
+- **iosApp/** — Native iOS app wrapper. Builds the composeApp framework through direct integration (an Xcode build phase runs `:composeApp:embedAndSignAppleFrameworkForXcode`) and gets Bugsee from the SwiftPM linkage package `iosApp/KotlinMultiplatformLinkedPackage`.
 
 ## Build Commands
 
@@ -21,8 +21,11 @@ Kotlin Multiplatform (KMP) wrapper library around native Bugsee crash reporting 
 # Build sample app
 ./gradlew :composeApp:build
 
-# Generate iOS framework (used by Xcode via CocoaPods)
-./gradlew :library:syncFramework
+# Regenerate the iOS cinterop from the Bugsee SwiftPM package
+./gradlew :library:cinteropSwiftPMImportIosSimulatorArm64
+
+# Re-wire iosApp after changing the SwiftPM dependencies (rarely needed: the linkage package updates itself)
+XCODEPROJ_PATH="$PWD/iosApp/iosApp.xcodeproj" ./gradlew :composeApp:integrateEmbedAndSign :composeApp:integrateLinkagePackage
 
 # Run all library tests
 ./gradlew :library:test
@@ -37,7 +40,7 @@ Kotlin Multiplatform (KMP) wrapper library around native Bugsee crash reporting 
 ./scripts/test.sh
 ```
 
-iOS app is built via Xcode workspace (`iosApp/iosApp.xcworkspace`). CocoaPods triggers Gradle's `:library:syncFramework` during Xcode builds.
+iOS app is built via the Xcode project `iosApp/iosApp.xcodeproj` (no workspace, no CocoaPods). Its "Compile Kotlin Framework" build phase runs Gradle.
 
 ## Architecture
 
@@ -47,7 +50,7 @@ The library's core abstraction. Common code defines `expect` classes/declaration
 
 | Common (expect) | Android (actual) | iOS (actual) |
 |---|---|---|
-| `BugseeInternal` | Wraps `com.bugsee.library.Bugsee` | Wraps `cocoapods.Bugsee` via cinterop |
+| `BugseeInternal` | Wraps `com.bugsee.library.Bugsee` | Wraps `swiftPMImport.com.bugsee.library` via cinterop |
 | `PlatformInfo` | Returns `Platform.ANDROID` | Returns `Platform.IOS` |
 | `BugseeAppearance` | Maps to Android SDK appearance | Converts ARGB Int ↔ UIColor |
 | `BugseeLogEvent` | Wraps Android log event | Wraps iOS log event |
@@ -63,11 +66,11 @@ The library's core abstraction. Common code defines `expect` classes/declaration
 - `BugseeDelegateWrapper` implements `BugseeDelegateProtocol` for native callbacks (filters, listeners, providers). Uses weak references to prevent retain cycles.
 - `nsexception/` package handles `NSException` ↔ Kotlin exception bridging.
 - Color values are ARGB `Int` in common code, converted to/from `UIColor` on iOS.
-- CocoaPods: Bugsee pod sourced from a local path (`/Users/dsheikherev/WorkDir/Cocoapods/Local/Bugsee`), not a public spec repo. The cinterop is auto-generated from the pod — no `.def` files.
+- iOS SDK 7 comes from the SwiftPM package `github.com/bugsee/spm` (not on CocoaPods) through Kotlin SwiftPM import: `kotlin { swiftPMDependencies { ... } }` in `library/build.gradle.kts`, version `bugsee-ios` in the catalog. The cinterop package is `swiftPMImport.com.bugsee.library` (from the Gradle group and project name). The dependency is published with the library (`*-swiftpm-metadata.json`), so consumers' Kotlin Gradle plugin picks it up transitively. Resolved versions are locked in `.swiftpm-locks/default/swiftImport/Package.resolved` (Gradle) and `iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved` (Xcode); after bumping `bugsee-ios`, commit both together with `iosApp/KotlinMultiplatformLinkedPackage`.
 
 ### Launch Options
 
-`BugseeOptions` (keys), `BugseeLaunchOptions` (typed builder) and the internal `BugseeOptionsSpec` (per-platform defaults/known keys) are **generated** into `library/build/generated/bugseeOptions/` by `:library:generateBugseeOptions` (sources in `buildSrc/`). Inputs live in `library/options/`: the committed native SDK option manifests (`android-<version>.json`, `ios-<version>.json`, refreshed with `./gradlew :library:updateBugseeOptionsManifests` after bumping `bugsee-android` / `bugsee-options-ios` in the version catalog) and the hand-maintained `kmp-options.json` (key → name in Android `Options.*` style, native enum → KMP enum). The build fails on a manifest key without a name; a KMP enum missing a manifest value fails compilation of the generated `BugseeOptionsSpec`. Option enums (`BugseeFrameRate`, `BugseeVideoMode`, …) and the storage (`BugseeLaunchOptionsStore`) are hand-written. `toMap()` sends every option the current platform knows (enums as Android constant names / iOS Ints) plus custom options and `wrapper_info`.
+`BugseeOptions` (keys), `BugseeLaunchOptions` (typed builder) and the internal `BugseeOptionsSpec` (per-platform defaults/known keys) are **generated** into `library/build/generated/bugseeOptions/` by `:library:generateBugseeOptions` (sources in `buildSrc/`). Inputs live in `library/options/`: the committed native SDK option manifests (`android-<version>.json`, `ios-<version>.json`, refreshed with `./gradlew :library:updateBugseeOptionsManifests` after bumping `bugsee-android` / `bugsee-ios` in the version catalog) and the hand-maintained `kmp-options.json` (key → name in Android `Options.*` style, native enum → KMP enum, optional key → extra KDoc paragraph). The build fails on a manifest key without a name; a KMP enum missing a manifest value fails compilation of the generated `BugseeOptionsSpec`. Option enums (`BugseeFrameRate`, `BugseeVideoMode`, …) and the storage (`BugseeLaunchOptionsStore`) are hand-written. `toMap()` sends every option the current platform knows (enums as Android constant names / iOS Ints) plus custom options and `wrapper_info`.
 
 ### Callback Types (Types.kt)
 

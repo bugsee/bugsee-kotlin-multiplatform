@@ -7,7 +7,7 @@ import kotlin.concurrent.AtomicInt
 import kotlin.concurrent.AtomicReference
 import kotlin.experimental.ExperimentalNativeApi
 
-private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
+private typealias BugseeSDK = swiftPMImport.com.bugsee.library.Bugsee
 
 /**
  * Wraps the unhandled exception hook such that the provided hook is invoked

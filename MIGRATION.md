@@ -9,6 +9,21 @@
 - **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.20 and depends on
   `kotlin-stdlib` 2.4.20. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
   read; Android consumers on Kotlin 2.3 may work but are not supported.
+- **iOS: Bugsee SDK 7.0.1 from Swift Package Manager.** iOS SDK 7 is published only as the Swift
+  package `https://github.com/bugsee/spm`, not to CocoaPods, so remove `pod 'Bugsee'` from your
+  Podfile. The library declares the package as a SwiftPM dependency (Kotlin SwiftPM import), and
+  it is published with the library:
+  - If your shared module is built into the app by `embedAndSignAppleFrameworkForXcode` (direct
+    integration), the Kotlin Gradle plugin links Bugsee into your Kotlin tests and framework. The
+    first Xcode build fails with the command that adds the Kotlin linkage package to your Xcode
+    project (`integrateLinkagePackage`); run it and commit the generated package and the project.
+  - The Kotlin CocoaPods plugin does not accept SwiftPM dependencies: its `syncFramework` task, which
+    the Xcode build runs, fails with "You are using CocoaPods integration with SwiftPM
+    dependencies". Move the shared module to direct integration
+    ([migration guide](https://kotl.in/cocoapods-to-swiftpm-migration)). If you cannot yet, set
+    `kotlin.disableSwiftPMImport=true` in `gradle.properties` and add the `bugsee/spm` package,
+    exact version 7.0.1, to your app target in Xcode; Kotlin iOS tests that reach the SDK then fail
+    to link, because nothing links Bugsee into them.
 - **Android: Bugsee SDK 7.4.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
@@ -49,15 +64,61 @@
 - The internal `endpoint` / `debug` custom options are now `com.bugsee.option.$$ENDPOINT` /
   `com.bugsee.option.$$DEBUG` on Android.
 
+## iOS behavior changes
+
+- `pause()` / `resume()` map to the SDK 7 blackout API. The `Paused` / `Resumed` lifecycle events
+  are reported when a blackout starts / ends. Stopping the SDK ends a blackout (`Resumed` is
+  reported before `Stopped`); unlike on Android, a relaunch restores it.
+- `pause()` before `launch()` is now honored: the session starts paused, and `Paused` is reported
+  right away, before `Launched`. iOS SDK 6 ignored it.
+- The lifecycle events `Started`, `BeforeFeedbackShown` and `AfterFeedbackShown` are no longer
+  reported on iOS. The SDK 7 event `ReportAssemblyFailed` has no 0.1.x counterpart and is not
+  reported.
+- The report fields pre- and post-filters (`setReportFieldsPreFilter` / `setReportFieldsPostFilter`)
+  and the attachments provider run on the SDK 7 report handler, as on Android:
+  - the filters run for every report (`logException`, `upload`, crashes), not only for the report
+    dialog;
+  - the pre-filter receives the report's current fields (for `showReportDialog(summary, ...)`, the
+    ones you passed) instead of empty ones, and a field it leaves unchanged is kept;
+  - the report dialog opens with the severity you pass or `reportingDefaultBugPriority` (High by
+    default); 0.1.x always opened it at Medium.
+- `upload(..., includeVideo = false)` cannot be honored: iOS SDK 7 always includes video.
+- `logException(ex, options)` uses only `exceptionDomain` and `rules.skipFrames` on iOS, as on
+  Android. `labels`, `includeVideo = false` and custom merging rules are ignored.
+- The Kotlin bindings of the native SDK moved from the package `cocoapods.Bugsee` to
+  `swiftPMImport.com.bugsee.library`, and `com.bugsee.kmp.internal.ExceptionLoggingOptions` is
+  removed. This matters only for code that calls the native SDK directly.
+
+## Appearance
+
+`BugseeAppearance` keeps its properties; each property's KDoc names the platforms it applies to.
+
+- Setting a property of the other platform is still ignored, but now logged once per property;
+  reading it still returns `null`.
+- `feedbackEmailSkipTextColor` now also works on iOS (`BugseeTheme.feedbackEmailSkipColor`); reading
+  it there returns the SDK default until it is set, like the other iOS colors.
+- `reportSendButtonColor` and `reportCloseButtonColor` (iOS) are deprecated: iOS SDK 7 does not
+  apply them.
+- On iOS an unset placeholder (`reportSummaryPlaceholder`, …) reads as `null` instead of `""`.
+- On Android the feedback colors take effect only with the `bugsee-android-feedback` module.
+- The native SDKs do not apply every property they declare; the property KDoc says so:
+  - the iOS SDK 7.0 feedback screens use only `feedbackBackgroundColor` and the feedback e-mail
+    screen colors (`feedbackEmailBackgroundColor`, `feedbackEmailContinueActiveColor`,
+    `feedbackEmailContinueNotActiveColor`, `feedbackEmailSkipTextColor`);
+  - Android SDK 7.4 ignores `reportActionBarButtonBackgroundClickedColor`,
+    `feedbackActionBarButtonBackgroundClickedColor`, `feedbackEmailSkipBackgroundClickedColor`,
+    `feedbackEmailContinueClickedColor`, `feedbackLoadingBarBackgroundColor`,
+    `feedbackLoadingTextColor` and `feedbackErrorTextColor`.
+
 ## Launch options
 
 `BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,
-iOS 7.0.0-beta5) and follows the Android SDK 7 naming.
+iOS 7.0.1) and follows the Android SDK 7 naming.
 
 - **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
   `BugseeOptions` object. Use them with `setCustomOption` or the `Map` overload of `launch`.
-- **Defaults** are the native SDK defaults of the current platform; a few differ between platforms
-  (for example `maxDataSize`, `captureVideoAdaptive`).
+- **Defaults** are the native SDK defaults of the current platform; they can differ between
+  platforms (today only `captureVideoAdaptive`).
 - **Every option the platform knows is passed to the SDK on launch**, so on Android the launch
   options override options declared as `<meta-data>` in the app manifest.
 - Options of the other platform can be set but are not sent; each property's KDoc names its
@@ -70,11 +131,21 @@ iOS 7.0.0-beta5) and follows the Android SDK 7 naming.
 - The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
   so they also get the defaults and the type checks. Keys that are not options are passed through
   unchanged.
-- Some defaults change with SDK 7: on Android `maxDataSize` is 150 (was 50) and
-  `detectAndReportExit` is on (`detectAppExit` was off); on iOS `reportingTriggerByShake` will be on
-  once the library links iOS SDK 7.
+- Some defaults change with SDK 7.
+  - `maxDataSize` is 150 (was 50).
+  - `detectAndReportExit` is on (`detectAppExit` was off).
+  - iOS: `reportingTriggerByShake` is on and `reportingTriggerByScreenshot` is off (0.1.x had
+    `shakeToReport` off and `screenshotToReport` on). Set both to keep the 0.1.x gesture.
+  - iOS: `detectAndReportEarlyCrash` and `captureVideoAdaptive` are on; iOS SDK 6 had neither.
+  - iOS: `captureCrashHandlerType` is `MachAndBSD`. 0.1.x used BSD signal handlers only
+    (`enableMachExceptions` was off).
 - iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
   is sent, set `captureScreenshot = false` yourself when you turn video off.
+- `captureCrashSignals` (iOS) is a bit set of the signals the crash reporter handles; combine the
+  `BugseeCrashSignals` constants with `or` (`BugseeCrashSignals.ABRT or BugseeCrashSignals.TRAP`).
+  The default `BugseeCrashSignals.Default` lets the SDK choose (every signal); combined with other
+  bits it is ignored. Leaving out `ABRT` also stops uncaught Objective-C and C++ exceptions from
+  being reported.
 - `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos` are removed; all options live on
   `BugseeLaunchOptions`. The class is no longer `open`.
 
@@ -87,7 +158,6 @@ Renamed properties:
 | `notificationBarTrigger` (Android) | `reportingTriggerByNotification` |
 | `crashReport` | `detectAndReportCrash` |
 | `detectAppExit` | `detectAndReportExit` |
-| `killDetection` (iOS) | `detectAndReportKill` |
 | `ndkCrashReport` (Android) | `ndkDetectAndReport` (needs `bugsee-android-ndk`) |
 | `videoEnabled` / `screenshotEnabled` | `captureVideo` / `captureScreenshot` |
 | `videoMode` / `videoQuality` (Android) | `captureVideoMode` / `captureVideoQuality` |
@@ -97,7 +167,8 @@ Renamed properties:
 | `monitorNetwork` / `maxNetworkBodySize` | `captureNetwork` / `captureNetworkBodySizeLimit` |
 | `monitorWebSocket` (iOS) | `captureWebSocket` |
 | `monitorDiskSpace` / `monitorBluetoothStatus` (iOS) | `captureDiskSpace` / `captureBluetoothStatus` |
-| `enableMachExceptions` / `statusBarInfo` (iOS) | `captureMachExceptions` / `captureStatusBarInfo` |
+| `enableMachExceptions` (iOS, `Boolean`) | `captureCrashHandlerType` (`BugseeCrashHandlerType`): `true` → `Mach`, `false` → `BSD`; the new default is `MachAndBSD` |
+| `statusBarInfo` (iOS) | `captureStatusBarInfo` |
 | `defaultCrashPriority` / `defaultBugPriority` / `defaultErrorPriority` | `reportingDefaultCrashPriority` / `reportingDefaultBugPriority` / `reportingDefaultErrorPriority` |
 | `reportSummaryRequired` / `reportDescriptionRequired` / `reportEmailRequired` | `reportingUISummaryRequired` / `reportingUIDescriptionRequired` / `reportingUIEmailRequired` |
 | `reportLabelsEnabled` / `reportLabelsRequired` | `reportingUILabelsEnabled` / `reportingUILabelsRequired` |
@@ -108,10 +179,12 @@ Unchanged: `captureLogs`, `wifiOnlyUpload`, `maxDataSize`, `captureAVPlayer`, `c
 `captureDeviceAndNetworkNames` (now iOS only).
 
 Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (Android; use
-`captureVideoMode`), `handleAnr` (Android; see the `detectAndReportExitNotResponding` family).
+`captureVideoMode`), `handleAnr` (Android; see the `detectAndReportExitNotResponding` family),
+`killDetection` (iOS; out-of-memory kills are reported through `detectAndReportExit`).
 
 Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
-`Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`.
+`Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`,
+`BugseeCrashHandlerType`, and the `BugseeCrashSignals` constants.
 
 ## Temporarily unavailable (nextgen only)
 
@@ -119,4 +192,3 @@ These do not work yet; the API calls among them log an error:
 
 - Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.
 - `setEmail` / `getEmail` / `clearEmail` (replaced by the user identifier API).
-- iOS: launch options use the SDK 7 keys, which the iOS SDK 6.x the library still links ignores.

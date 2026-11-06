@@ -89,6 +89,7 @@ class BugseeOptionsGenerator(
                 "library/options/kmp-options.json (use the native Android Options.* name when there is one)."
         }
         (config.names.keys - keys.toSet()).forEach { warnings += "kmp-options.json names unknown key $it" }
+        (config.docs.keys - keys.toSet()).forEach { warnings += "kmp-options.json docs unknown key $it" }
         val duplicates = config.names.filterKeys { it in keys }.values.groupingBy { it }.eachCount().filterValues { it > 1 }
         check(duplicates.isEmpty()) { "Duplicate KMP option names: ${duplicates.keys.joinToString()}" }
 
@@ -220,6 +221,10 @@ class BugseeOptionsGenerator(
         return buildString {
             append("$indent/**\n")
             append("$indent * ${kdocSafe("Option `${option.key}`. $platforms")}\n")
+            config.docs[option.key]?.let { doc ->
+                append("$indent *\n")
+                doc.lines().forEach { line -> append("$indent * ${kdocSafe(line)}".trimEnd() + "\n") }
+            }
             append("$indent *\n")
             append("$indent * ${kdocSafe(defaults)}\n")
             if (deprecations.isNotEmpty() && !option.deprecated) {
