@@ -21,7 +21,8 @@ package com.bugsee.kmp
 public object BugseeCrashSignals {
     /**
      * No signals: native crashes and uncaught Objective-C and C++ exceptions are not reported, even
-     * with [BugseeLaunchOptions.detectAndReportCrash] on.
+     * with [BugseeLaunchOptions.detectAndReportCrash] on. Uncaught Kotlin exceptions are still
+     * reported; turn [BugseeLaunchOptions.detectAndReportCrash] off to stop those too.
      */
     public const val None: Int = 0
 
