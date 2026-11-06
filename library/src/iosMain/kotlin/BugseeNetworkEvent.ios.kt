@@ -6,10 +6,10 @@ import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 import platform.Foundation.dataUsingEncoding
 
-public actual class BugseeNetworkEvent (internal val impl: cocoapods.Bugsee.BugseeNetworkEvent) {
+public actual class BugseeNetworkEvent (internal val impl: swiftPMImport.com.bugsee.library.BugseeNetworkEvent) {
 
     public actual val method: String
-        get() = impl.method
+        get() = impl.method ?: ""
 
     public actual val stage: BugseeNetworkEventStage
         get() = BugseeIOSUtils.convertNetworkEventStage(impl.bugseeNetworkEventType)
