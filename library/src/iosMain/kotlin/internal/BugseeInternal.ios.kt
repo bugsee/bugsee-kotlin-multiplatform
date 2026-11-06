@@ -5,6 +5,7 @@ import swiftPMImport.com.bugsee.library.BugseeTheme
 import com.bugsee.kmp.BugseeAppearance
 import com.bugsee.kmp.BugseeAttachmentsProvider
 import com.bugsee.kmp.BugseeDelegateWrapper
+import com.bugsee.kmp.BugseeReportHandlerWrapper
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeExtendedReport
 import com.bugsee.kmp.BugseeExtendedReportProvider
@@ -31,10 +32,32 @@ private const val TAG = "BugseeInternal"
 public actual class BugseeInternal {
     public var logFilterHandler: BugseeLogFilter? = null
     public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
+
+    // The report fields filters and the attachments provider run on the SDK's report handler,
+    // which is installed while any of them is set.
     public var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
+        set(value) {
+            field = value
+            synchronizeReportHandler()
+        }
     public var reportFieldsFiller: BugseeReportFieldsFiller? = null
+        set(value) {
+            field = value
+            synchronizeReportHandler()
+        }
     public var reportFieldsFilter: BugseeReportFieldsFilter? = null
+        set(value) {
+            field = value
+            synchronizeReportHandler()
+        }
+
     private val bugseeDelegate = BugseeDelegateWrapper(this)
+    private val reportHandler = BugseeReportHandlerWrapper(this)
+
+    private fun synchronizeReportHandler() {
+        val needed = attachmentsProviderHandler != null || reportFieldsFiller != null || reportFieldsFilter != null
+        BugseeSDK.setReportHandler(if (needed) reportHandler else null)
+    }
 
     init {
         val bugsee = BugseeSDK.sharedInstance()

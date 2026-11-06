@@ -56,19 +56,11 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		77BFA5E7CECB2C6996155791 = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		BD4CB8FC2DCA33DB0066A432 = {
 			isa = PBXGroup;
 			children = (
 				BD4CB9072DCA33DB0066A432,
 				BD4CB9062DCA33DB0066A432,
-				77BFA5E7CECB2C6996155791,
 			);
 			sourceTree = "<group>";
 		};
