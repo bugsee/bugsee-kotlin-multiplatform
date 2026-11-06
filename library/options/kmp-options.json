@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-maintained input for :library:generateBugseeOptions. 'names': option key -> generated name (BugseeOptions constant; the BugseeLaunchOptions property is the same name with a lower-case first letter). Android options use the Android SDK Options.* names. 'enums': SDK manifest enum name -> KMP enum class in commonMain.",
+  "_comment": "Hand-maintained input for :library:generateBugseeOptions. 'names': option key -> generated name (BugseeOptions constant; the BugseeLaunchOptions property is the same name with a lower-case first letter). Android options use the Android SDK Options.* names. 'enums': SDK manifest enum name -> KMP enum class in commonMain. 'docs' (optional): option key -> extra KDoc paragraph for the BugseeOptions constant and the BugseeLaunchOptions property.",
   "names": {
     "com.bugsee.option.capture.avplayer": "CaptureAVPlayer",
     "com.bugsee.option.capture.bluetooth-status": "CaptureBluetoothStatus",
@@ -121,5 +121,8 @@
     "BugseeDataEncryptionMode": "BugseeDataEncryptionMode",
     "BugseeStyle": "BugseeStyle",
     "BugseeCrashHandlerType": "BugseeCrashHandlerType"
+  },
+  "docs": {
+    "com.bugsee.option.capture.crash-signals": "A bit set of [BugseeCrashSignals]: combine the constants with `or`. The default `128` is\n[BugseeCrashSignals.Default], which lets the SDK choose."
   }
 }

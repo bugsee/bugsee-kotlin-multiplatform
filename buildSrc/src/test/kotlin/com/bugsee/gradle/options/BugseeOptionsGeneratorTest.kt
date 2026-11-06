@@ -202,6 +202,32 @@ class BugseeOptionsGeneratorTest {
     }
 
     @Test
+    fun `docs add a KDoc paragraph to the key and the property`() {
+        val documented = config.copy(
+            docs = mapOf(
+                "k.duration" to "Seconds of video.\nSee [Bugsee.launch], not */ this.",
+                "k.unknown" to "Nobody reads this.",
+            ),
+        )
+        val generator = BugseeOptionsGenerator(
+            documented,
+            manifest("android", option("k.duration", "int", 60)),
+            manifest("ios", option("k.duration", "int", 60)),
+        )
+        val files = generator.generate()
+
+        val expected = "     * Option `k.duration`. Android and iOS.\n" +
+            "     *\n" +
+            "     * Seconds of video.\n" +
+            "     * See [Bugsee.launch], not *&#47; this.\n" +
+            "     *\n" +
+            "     * Default: `60`.\n"
+        assertContains(files.getValue("BugseeOptions.kt"), expected)
+        assertContains(files.getValue("BugseeLaunchOptions.kt"), expected)
+        assertContains(generator.warnings, "kmp-options.json docs unknown key k.unknown")
+    }
+
+    @Test
     fun `duplicate KMP names fail`() {
         val duplicated = config.copy(names = config.names + ("k.ios-only" to "Duration"))
         assertFailsWith<IllegalStateException> {
