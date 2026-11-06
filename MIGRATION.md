@@ -73,7 +73,9 @@ iOS 7.0.1) and follows the Android SDK 7 naming.
 - Some defaults change with SDK 7. On iOS they take effect once the library links iOS SDK 7.
   - `maxDataSize` is 150 (was 50).
   - `detectAndReportExit` is on (`detectAppExit` was off).
-  - iOS: `reportingTriggerByShake` is on.
+  - iOS: `reportingTriggerByShake` is on and `reportingTriggerByScreenshot` is off (0.1.x had
+    `shakeToReport` off and `screenshotToReport` on). Set both to keep the 0.1.x gesture.
+  - iOS: `detectAndReportEarlyCrash` and `captureVideoAdaptive` are on; iOS SDK 6 had neither.
   - iOS: `captureCrashHandlerType` is `MachAndBSD`. 0.1.x used BSD signal handlers only
     (`enableMachExceptions` was off).
 - iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
