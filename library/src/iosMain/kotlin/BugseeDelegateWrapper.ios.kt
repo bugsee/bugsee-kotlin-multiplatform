@@ -1,12 +1,15 @@
 package com.bugsee.kmp
 
 import swiftPMImport.com.bugsee.library.BugseeLogFilterDecisionBlock
-import swiftPMImport.com.bugsee.library.BugseeReport
 import com.bugsee.kmp.internal.BugseeInternal
 import com.bugsee.kmp.internal.Logger
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
+// Only the log filter and the lifecycle events go through the delegate. The report fields
+// filters and the attachments provider run on the report handler (BugseeReportHandlerWrapper):
+// the wrapper must not implement bugseeAddFieldsBeforeReportCreated, whose fields iOS SDK 7
+// puts in place of the ones passed to showReportDialog.
 internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(), swiftPMImport.com.bugsee.library.BugseeDelegateProtocol {
     private val weakBugseeInternal: WeakReference<BugseeInternal> = WeakReference(bugseeInternal)
 
@@ -39,34 +42,6 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         }
     }
 
-    override fun bugseeAttachmentsForReport(report: BugseeReport): List<*> {
-        var attachments: List<BugseeAttachment>? = null
-        try {
-            val bugseeInternal = weakBugseeInternal.get()
-            if (bugseeInternal != null) {
-                // Capture the provider to avoid race conditions
-                val attachmentsProviderHandler = bugseeInternal.attachmentsProviderHandler
-                if (attachmentsProviderHandler != null) {
-                    try {
-                        attachments = attachmentsProviderHandler.invoke(BugseeIOSUtils.convertReport(report))
-                    } catch (e: Exception) {
-                        // Log the error but don't crash the app
-                        Bugsee.log("BugseeDelegateWrapper: exception during attachmentsProviderHandler invoke: ${e.message}", BugseeLogLevel.Warning)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            // Ensure we don't crash the native SDK
-            Bugsee.log("BugseeDelegateWrapper: bugseeAttachmentsForReport: caught exception: ${e.message}", BugseeLogLevel.Warning)
-        }
-
-        if (attachments == null) {
-            return listOf<swiftPMImport.com.bugsee.library.BugseeAttachment>()
-        }
-
-        return ArrayList(attachments.map(BugseeIOSUtils.Companion::convertAttachment))
-    }
-
     override fun bugseeLifecycleEvent(eventType: swiftPMImport.com.bugsee.library.BugseeLifecycleEventType) {
         try {
             val bugseeInternal = weakBugseeInternal.get()
@@ -87,55 +62,5 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
             // Ensure we don't crash the native SDK
             Bugsee.log("BugseeDelegateWrapper: bugseeLifecycleEvent: caught exception: ${e.message}", BugseeLogLevel.Warning)
         }
-    }
-
-    override fun bugseeAddFieldsBeforeReportCreated(): swiftPMImport.com.bugsee.library.BugseeReportFields {
-        try {
-            val bugseeInternal = weakBugseeInternal.get()
-            if (bugseeInternal != null) {
-                val filler = bugseeInternal.reportFieldsFiller
-                if (filler != null) {
-                    try {
-                        val kmpFields = BugseeReportFields("", "", BugseeSeverity.Medium, emptyList())
-                        filler.invoke(kmpFields)
-                        return BugseeIOSUtils.convertReportFieldsToNative(kmpFields)
-                    } catch (e: Exception) {
-                        Bugsee.log("BugseeDelegateWrapper: exception during reportFieldsFiller invoke: ${e.message}", BugseeLogLevel.Warning)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Bugsee.log("BugseeDelegateWrapper: bugseeAddFieldsBeforeReportCreated: caught exception: ${e.message}", BugseeLogLevel.Warning)
-        }
-
-        return swiftPMImport.com.bugsee.library.BugseeReportFields.reportFieldsWith(
-            "",
-            description = "",
-            severity = BugseeSeverity.Medium.getLevelLong(),
-            labels = emptyList<String>()
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun bugseeCheckFieldsAfterReportCreated(report: swiftPMImport.com.bugsee.library.BugseeReportFields): swiftPMImport.com.bugsee.library.BugseeReportFields {
-        try {
-            val bugseeInternal = weakBugseeInternal.get()
-            if (bugseeInternal != null) {
-                val filter = bugseeInternal.reportFieldsFilter
-                if (filter != null) {
-                    try {
-                        val kmpFields = BugseeIOSUtils.convertReportFieldsFromNative(report)
-                        val filteredFields = filter.invoke(kmpFields)
-                        return BugseeIOSUtils.convertReportFieldsToNative(filteredFields)
-                    } catch (e: Exception) {
-                        Bugsee.log("BugseeDelegateWrapper: exception during reportFieldsFilter invoke: ${e.message}", BugseeLogLevel.Warning)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Bugsee.log("BugseeDelegateWrapper: bugseeCheckFieldsAfterReportCreated: caught exception: ${e.message}", BugseeLogLevel.Warning)
-        }
-
-        return report
     }
 }

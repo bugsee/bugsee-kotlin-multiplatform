@@ -17,8 +17,13 @@
     integration), the Kotlin Gradle plugin links Bugsee into your Kotlin tests and framework. The
     first Xcode build fails with the command that adds the Kotlin linkage package to your Xcode
     project (`integrateLinkagePackage`); run it and commit the generated package and the project.
-  - If your shared module uses the Kotlin CocoaPods plugin, add the `bugsee/spm` package, exact
-    version 7.0.1, to your app target in Xcode yourself.
+  - The Kotlin CocoaPods plugin does not accept SwiftPM dependencies: its `syncFramework` task, which
+    the Xcode build runs, fails with "You are using CocoaPods integration with SwiftPM
+    dependencies". Move the shared module to direct integration
+    ([migration guide](https://kotl.in/cocoapods-to-swiftpm-migration)). If you cannot yet, set
+    `kotlin.disableSwiftPMImport=true` in `gradle.properties` and add the `bugsee/spm` package,
+    exact version 7.0.1, to your app target in Xcode; Kotlin iOS tests that reach the SDK then fail
+    to link, because nothing links Bugsee into them.
 - **Android: Bugsee SDK 7.4.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
@@ -64,8 +69,19 @@
 - `pause()` / `resume()` map to the SDK 7 blackout API. The `Paused` / `Resumed` lifecycle events
   are reported when a blackout starts / ends. Stopping the SDK ends a blackout (`Resumed` is
   reported before `Stopped`); unlike on Android, a relaunch restores it.
-- The lifecycle event `Started` is no longer reported on iOS. The SDK 7 event
-  `ReportAssemblyFailed` has no 0.1.x counterpart and is not reported.
+- `pause()` before `launch()` is now honored: the session starts paused, and `Paused` is reported
+  right away, before `Launched`. iOS SDK 6 ignored it.
+- The lifecycle events `Started`, `BeforeFeedbackShown` and `AfterFeedbackShown` are no longer
+  reported on iOS. The SDK 7 event `ReportAssemblyFailed` has no 0.1.x counterpart and is not
+  reported.
+- The report fields pre- and post-filters (`setReportFieldsPreFilter` / `setReportFieldsPostFilter`)
+  and the attachments provider run on the SDK 7 report handler, as on Android:
+  - the filters run for every report (`logException`, `upload`, crashes), not only for the report
+    dialog;
+  - the pre-filter receives the report's current fields (for `showReportDialog(summary, ...)`, the
+    ones you passed) instead of empty ones, and a field it leaves unchanged is kept;
+  - the report dialog opens with the severity you pass or `reportingDefaultBugPriority` (High by
+    default); 0.1.x always opened it at Medium.
 - `upload(..., includeVideo = false)` cannot be honored: iOS SDK 7 always includes video.
 - `logException(ex, options)` uses only `exceptionDomain` and `rules.skipFrames` on iOS, as on
   Android. `labels`, `includeVideo = false` and custom merging rules are ignored.

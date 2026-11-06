@@ -129,22 +129,47 @@ internal class BugseeIOSUtils {
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun convertReportFieldsFromNative(nativeFields: swiftPMImport.com.bugsee.library.BugseeReportFields): BugseeReportFields {
+        fun convertReportFieldsFromNative(report: swiftPMImport.com.bugsee.library.BugseeReport): BugseeReportFields {
             return BugseeReportFields(
-                nativeFields.summary ?: "",
-                nativeFields.reportDescription ?: "",
-                BugseeSeverity.fromLevel(nativeFields.severity.toInt()),
-                (nativeFields.labels as? List<String>) ?: emptyList()
+                report.summary ?: "",
+                report.reportDescription ?: "",
+                BugseeSeverity.fromLevel(report.severity.toInt()),
+                (report.labels as? List<String>) ?: emptyList()
             )
         }
 
-        fun convertReportFieldsToNative(kmpFields: BugseeReportFields): swiftPMImport.com.bugsee.library.BugseeReportFields {
-            return swiftPMImport.com.bugsee.library.BugseeReportFields.reportFieldsWith(
-                kmpFields.summary,
-                kmpFields.description,
-                kmpFields.severity.getLevelLong(),
-                kmpFields.labels
-            )
+        /**
+         * Writes back only the fields that differ from [original], so an untouched `nil`
+         * summary or description is not turned into `""`.
+         */
+        fun applyReportFieldsToNative(
+            fields: BugseeReportFields,
+            original: BugseeReportFields,
+            report: swiftPMImport.com.bugsee.library.BugseeReport
+        ) {
+            if (fields.summary != original.summary) report.summary = fields.summary
+            if (fields.description != original.description) report.reportDescription = fields.description
+            if (fields.severity != original.severity) report.severity = fields.severity.getLevelLong()
+            if (fields.labels != original.labels) report.labels = fields.labels
+        }
+
+        /**
+         * Adds the provider's attachments to [report], skipping names already attached: the
+         * report handler is not guaranteed to run once per report.
+         */
+        fun addProviderAttachments(
+            attachments: List<BugseeAttachment>,
+            report: swiftPMImport.com.bugsee.library.BugseeReport
+        ) {
+            val existingNames = report.attachments
+                .mapNotNullTo(HashSet()) { (it as? swiftPMImport.com.bugsee.library.BugseeAttachment)?.name }
+            for (attachment in attachments) {
+                if (attachment.name in existingNames) {
+                    Logger.d("Utils", "attachments provider: '${attachment.name}' is already attached — skipping")
+                    continue
+                }
+                report.addAttachment(convertAttachment(attachment))
+            }
         }
     }
 }
