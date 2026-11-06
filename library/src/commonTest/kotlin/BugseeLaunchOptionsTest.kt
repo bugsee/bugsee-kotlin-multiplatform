@@ -25,13 +25,13 @@ class BugseeLaunchOptionsTest {
         assertEquals(BugseeLogLevel.Verbose, options.captureLogsLevel)
         assertEquals(BugseeSeverity.Blocker, options.reportingDefaultCrashPriority)
         assertEquals(0.01f, options.performanceSampleRate)
+        assertEquals(150, options.maxDataSize)
     }
 
     @Test
     fun `defaults differ per platform where the SDKs differ`() {
         val options = BugseeLaunchOptions()
 
-        assertEquals(if (isAndroid) 150 else 50, options.maxDataSize)
         assertEquals(!isAndroid, options.captureVideoAdaptive)
     }
 
@@ -45,6 +45,8 @@ class BugseeLaunchOptionsTest {
         // iOS only
         assertFalse(options.captureAVPlayer)
         assertNull(options.buildTarget)
+        assertEquals(BugseeCrashHandlerType.MachAndBSD, options.captureCrashHandlerType)
+        assertEquals(128, options.captureCrashSignals)
     }
 
     // --- toMap ---
@@ -57,7 +59,7 @@ class BugseeLaunchOptionsTest {
             assertTrue(key in map, "missing default for $key")
         }
         assertEquals(60, map[BugseeOptions.Duration])
-        assertEquals(if (isAndroid) 150 else 50, map[BugseeOptions.MaxDataSize])
+        assertEquals(150, map[BugseeOptions.MaxDataSize])
     }
 
     @Test
@@ -299,6 +301,57 @@ class BugseeLaunchOptionsTest {
 
         assertEquals(BugseeSeverity.VeryLow, options.reportingDefaultBugPriority)
         assertEquals(BugseeMemoryLeakMode.DeepDebugOnly, options.detectMemoryLeaksMode)
+    }
+
+    @Test
+    fun `crash handler type is sent to iOS only as the native Int value`() {
+        val options = BugseeLaunchOptions()
+        options.captureCrashHandlerType = BugseeCrashHandlerType.BSD
+
+        val map = options.toMap()
+
+        assertEquals(BugseeCrashHandlerType.BSD, options.captureCrashHandlerType)
+        if (isAndroid) {
+            assertFalse(BugseeOptions.CaptureCrashHandlerType in map)
+            assertFalse(BugseeOptions.CaptureCrashSignals in map)
+        } else {
+            assertEquals(1, map[BugseeOptions.CaptureCrashHandlerType])
+            assertEquals(128, map[BugseeOptions.CaptureCrashSignals])
+        }
+    }
+
+    @Test
+    fun `crash handler type accepts the native Int values and constant names`() {
+        assertEquals(
+            BugseeCrashHandlerType.Mach,
+            BugseeLaunchOptions(mapOf(BugseeOptions.CaptureCrashHandlerType to 2)).captureCrashHandlerType,
+        )
+        assertEquals(
+            BugseeCrashHandlerType.BSD,
+            BugseeLaunchOptions(mapOf(BugseeOptions.CaptureCrashHandlerType to "BSD")).captureCrashHandlerType,
+        )
+        // 0 is not a value of the iOS enum: rejected, the previous value stays
+        val options = BugseeLaunchOptions()
+        options.captureCrashHandlerType = BugseeCrashHandlerType.BSD
+        options.setCustomOption(BugseeOptions.CaptureCrashHandlerType, 0)
+        assertEquals(BugseeCrashHandlerType.BSD, options.captureCrashHandlerType)
+    }
+
+    @Test
+    fun `removed iOS options are passed through as custom options`() {
+        val options = BugseeLaunchOptions(
+            mapOf(
+                "com.bugsee.option.capture.mach-exceptions" to false,
+                "com.bugsee.option.detect.kill" to true,
+            )
+        )
+
+        val map = options.toMap()
+
+        // Not translated: they reach the native SDK as unknown keys, which iOS SDK 7 ignores
+        assertEquals(false, map["com.bugsee.option.capture.mach-exceptions"])
+        assertEquals(true, map["com.bugsee.option.detect.kill"])
+        assertEquals(BugseeCrashHandlerType.MachAndBSD, options.captureCrashHandlerType)
     }
 
     @Test
