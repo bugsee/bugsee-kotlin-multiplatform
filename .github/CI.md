@@ -48,8 +48,9 @@ The shared `.github/actions/setup` action:
   cache is written only by pushes to `main` and `nextgen` (via `main.yml`);
   a PR reads its base branch's cache, falling back to `main`'s.
 
-The Android SDK and CocoaPods (needed for the `Bugsee` pod cinterop) come with the
-image.
+The Android SDK comes with the image. The iOS SDK is resolved by the Kotlin Gradle
+plugin from its SwiftPM package (`github.com/bugsee/spm`), so the build needs network
+access to GitHub and `download.bugsee.com`.
 
 Test reports are uploaded as an artifact **only on failure**, kept 7 days.
 Unlike `bugsee-android` / `bugsee-cocoa` (private, hence their "no uploads from

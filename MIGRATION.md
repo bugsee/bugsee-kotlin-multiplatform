@@ -9,6 +9,16 @@
 - **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.20 and depends on
   `kotlin-stdlib` 2.4.20. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
   read; Android consumers on Kotlin 2.3 may work but are not supported.
+- **iOS: Bugsee SDK 7.0.1 from Swift Package Manager.** iOS SDK 7 is published only as the Swift
+  package `https://github.com/bugsee/spm`, not to CocoaPods, so remove `pod 'Bugsee'` from your
+  Podfile. The library declares the package as a SwiftPM dependency (Kotlin SwiftPM import), and
+  it is published with the library:
+  - If your shared module is built into the app by `embedAndSignAppleFrameworkForXcode` (direct
+    integration), the Kotlin Gradle plugin links Bugsee into your Kotlin tests and framework. The
+    first Xcode build fails with the command that adds the Kotlin linkage package to your Xcode
+    project (`integrateLinkagePackage`); run it and commit the generated package and the project.
+  - If your shared module uses the Kotlin CocoaPods plugin, add the `bugsee/spm` package, exact
+    version 7.0.1, to your app target in Xcode yourself.
 - **Android: Bugsee SDK 7.4.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
@@ -48,6 +58,20 @@
 - A report fields post-filter now uses the `BugseeReportFields` it returns.
 - The internal `endpoint` / `debug` custom options are now `com.bugsee.option.$$ENDPOINT` /
   `com.bugsee.option.$$DEBUG` on Android.
+
+## iOS behavior changes
+
+- `pause()` / `resume()` map to the SDK 7 blackout API. The `Paused` / `Resumed` lifecycle events
+  are reported when a blackout starts / ends. Stopping the SDK ends a blackout (`Resumed` is
+  reported before `Stopped`); unlike on Android, a relaunch restores it.
+- The lifecycle event `Started` is no longer reported on iOS. The SDK 7 event
+  `ReportAssemblyFailed` has no 0.1.x counterpart and is not reported.
+- `upload(..., includeVideo = false)` cannot be honored: iOS SDK 7 always includes video.
+- `logException(ex, options)` uses only `exceptionDomain` and `rules.skipFrames` on iOS, as on
+  Android. `labels`, `includeVideo = false` and custom merging rules are ignored.
+- The Kotlin bindings of the native SDK moved from the package `cocoapods.Bugsee` to
+  `swiftPMImport.com.bugsee.library`, and `com.bugsee.kmp.internal.ExceptionLoggingOptions` is
+  removed. This matters only for code that calls the native SDK directly.
 
 ## Appearance
 
@@ -91,7 +115,7 @@ iOS 7.0.1) and follows the Android SDK 7 naming.
 - The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
   so they also get the defaults and the type checks. Keys that are not options are passed through
   unchanged.
-- Some defaults change with SDK 7. On iOS they take effect once the library links iOS SDK 7.
+- Some defaults change with SDK 7.
   - `maxDataSize` is 150 (was 50).
   - `detectAndReportExit` is on (`detectAppExit` was off).
   - iOS: `reportingTriggerByShake` is on and `reportingTriggerByScreenshot` is off (0.1.x had
@@ -152,4 +176,3 @@ These do not work yet; the API calls among them log an error:
 
 - Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.
 - `setEmail` / `getEmail` / `clearEmail` (replaced by the user identifier API).
-- iOS: launch options use the SDK 7 keys, which the iOS SDK 6.x the library still links ignores.

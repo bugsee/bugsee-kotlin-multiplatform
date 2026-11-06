@@ -2,6 +2,7 @@ package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.Logger
 import kotlinx.cinterop.*
+import swiftPMImport.com.bugsee.library.BugseeLifecycleEventType
 import platform.Foundation.NSBundle
 import platform.Foundation.NSData
 import platform.Foundation.NSURL
@@ -44,23 +45,31 @@ internal class BugseeIOSUtils {
             }
         }
 
-        fun convertExceptionLoggingOptions(options: com.bugsee.kmp.BugseeExceptionLoggingOptions?): cocoapods.Bugsee.BugseeExceptionLoggingOptions? {
-            if (options == null) {
-                return null
+        // iOS SDK 7 renumbered the event type: Started, Resumed and Paused are gone and the
+        // blackout events are new. Mapped by name, as on Android: a blackout is the 0.1.x pause.
+        fun convertLifecycleEvent(eventType: BugseeLifecycleEventType): BugseeLifecycleEvent? {
+            return when (eventType) {
+                BugseeLifecycleEventType.BugseeLifecycleEventLaunched -> BugseeLifecycleEvent.Launched
+                BugseeLifecycleEventType.BugseeLifecycleEventStopped -> BugseeLifecycleEvent.Stopped
+                BugseeLifecycleEventType.BugseeLifecycleEventBlackoutEnded -> BugseeLifecycleEvent.Resumed
+                BugseeLifecycleEventType.BugseeLifecycleEventBlackoutStarted -> BugseeLifecycleEvent.Paused
+                BugseeLifecycleEventType.BugseeLifecycleEventRelaunchedAfterCrash -> BugseeLifecycleEvent.RelaunchedAfterCrash
+                BugseeLifecycleEventType.BugseeLifecycleEventBeforeReportShown -> BugseeLifecycleEvent.BeforeReportShown
+                BugseeLifecycleEventType.BugseeLifecycleEventAfterReportShown -> BugseeLifecycleEvent.AfterReportShown
+                BugseeLifecycleEventType.BugseeLifecycleEventBeforeReportUploaded -> BugseeLifecycleEvent.BeforeReportUploaded
+                BugseeLifecycleEventType.BugseeLifecycleEventAfterReportUploaded -> BugseeLifecycleEvent.AfterReportUploaded
+                BugseeLifecycleEventType.BugseeLifecycleEventBeforeFeedbackShown -> BugseeLifecycleEvent.BeforeFeedbackShown
+                BugseeLifecycleEventType.BugseeLifecycleEventAfterFeedbackShown -> BugseeLifecycleEvent.AfterFeedbackShown
+                BugseeLifecycleEventType.BugseeLifecycleEventBeforeReportAssembled -> BugseeLifecycleEvent.BeforeReportAssembled
+                BugseeLifecycleEventType.BugseeLifecycleEventAfterReportAssembled -> BugseeLifecycleEvent.AfterReportAssembled
+                BugseeLifecycleEventType.BugseeLifecycleEventReportUploadFailedWithFutureRetry -> BugseeLifecycleEvent.ReportUploadFailedWithFutureRetry
+                BugseeLifecycleEventType.BugseeLifecycleEventReportUploadFailed -> BugseeLifecycleEvent.ReportUploadFailed
+                else -> null
             }
-
-            val result = cocoapods.Bugsee.BugseeExceptionLoggingOptions()
-            result.exceptionDomain = options.exceptionDomain
-            result.labels = options.labels?.toList()
-            result.includeVideo = options.includeVideo
-            @Suppress("UNCHECKED_CAST")
-            result.setMergingRules(options.rules.toMap() as Map<Any?, *>?)
-
-            return result
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun convertReport(report: cocoapods.Bugsee.BugseeReport): BugseeReport {
+        fun convertReport(report: swiftPMImport.com.bugsee.library.BugseeReport): BugseeReport {
             return BugseeReport(
                 BugseeReportType.fromString(report.type),
                 BugseeSeverity.fromLevel(report.severity.toInt()),
@@ -68,17 +77,9 @@ internal class BugseeIOSUtils {
             )
         }
 
-        fun convertReport(report: BugseeReport): cocoapods.Bugsee.BugseeReport {
-            val nativeReport = cocoapods.Bugsee.BugseeReport()
-            nativeReport.setType(report.type.toStringValue())
-            nativeReport.setSeverity(report.severity.getLevelLong())
-            nativeReport.labels = report.labels
-            return nativeReport
-        }
-
         @OptIn(BetaInteropApi::class)
-        fun convertAttachment(attachment: BugseeAttachment): cocoapods.Bugsee.BugseeAttachment {
-            val result = cocoapods.Bugsee.BugseeAttachment()
+        fun convertAttachment(attachment: BugseeAttachment): swiftPMImport.com.bugsee.library.BugseeAttachment {
+            val result = swiftPMImport.com.bugsee.library.BugseeAttachment()
             try {
                 if (attachment.data != null) {
                     val size = attachment.data.size
@@ -128,7 +129,7 @@ internal class BugseeIOSUtils {
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun convertReportFieldsFromNative(nativeFields: cocoapods.Bugsee.BugseeReportFields): BugseeReportFields {
+        fun convertReportFieldsFromNative(nativeFields: swiftPMImport.com.bugsee.library.BugseeReportFields): BugseeReportFields {
             return BugseeReportFields(
                 nativeFields.summary ?: "",
                 nativeFields.reportDescription ?: "",
@@ -137,8 +138,8 @@ internal class BugseeIOSUtils {
             )
         }
 
-        fun convertReportFieldsToNative(kmpFields: BugseeReportFields): cocoapods.Bugsee.BugseeReportFields {
-            return cocoapods.Bugsee.BugseeReportFields.reportFieldsWith(
+        fun convertReportFieldsToNative(kmpFields: BugseeReportFields): swiftPMImport.com.bugsee.library.BugseeReportFields {
+            return swiftPMImport.com.bugsee.library.BugseeReportFields.reportFieldsWith(
                 kmpFields.summary,
                 kmpFields.description,
                 kmpFields.severity.getLevelLong(),

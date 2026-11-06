@@ -10,7 +10,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
-    alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.buildKonfig)
 }
 
@@ -19,8 +18,8 @@ plugins {
 //   version:  read from repo-root version.txt (e.g. 0.1.0) — a SNAPSHOT suffix is appended
 //             automatically unless RELEASE=true is set in the environment
 //             (or -PRELEASE=true on the Gradle CLI). Convention matches the legacy
-//             bugsee-android SDK's release script. The cocoapods{} block and BuildKonfig
-//             libraryVersion field below both reuse the resolved value.
+//             bugsee-android SDK's release script. The BuildKonfig libraryVersion field below
+//             reuses the resolved value.
 val isReleaseBuild: Boolean =
     (System.getenv("RELEASE") ?: project.findProperty("RELEASE")?.toString() ?: "false").toBoolean()
 val libraryVersionName: String = rootProject.file("version.txt").readLines().first().trim() +
@@ -49,7 +48,7 @@ tasks.withType<KotlinCompile> {
 // `./gradlew :library:updateBugseeOptionsManifests` after bumping an SDK version.
 val bugseeOptionsDir = layout.projectDirectory.dir("options")
 val bugseeAndroidVersion = libs.versions.bugsee.android.get()
-val bugseeIosOptionsVersion = libs.versions.bugsee.options.ios.get()
+val bugseeIosOptionsVersion = libs.versions.bugsee.ios.get()
 
 tasks.register<UpdateBugseeOptionsManifestsTask>("updateBugseeOptionsManifests") {
     group = "bugsee"
@@ -137,36 +136,19 @@ kotlin {
         }
     }
 
-    // Kotlin/Native cinterop is generated from the Bugsee CocoaPod at build time.
-    // The published .klib only contains Objective-C bindings — consumers must
-    // supply the actual Bugsee framework themselves (e.g. by adding
-    // `pod 'Bugsee'` to their own Podfile, or via the Kotlin
-    // cocoapods plugin in their KMP project).
-    cocoapods {
-        summary = "Bugsee Kotlin Multiplatform Library"
-        homepage = "https://bugsee.com"
-        // Reuse the Maven version so the auto-generated library.podspec stays in sync.
-        version = project.version.toString()
-
-        pod("Bugsee") {
-            version = libs.versions.bugsee.ios.get()
-            // -fmodules is required so clang can resolve Bugsee's @import statements
-            // when generating the cinterop klib.
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
-
-        /*
-         * If you want to debug Bugsee XCF,
-         * then create local Bugsee pod,
-         * and use below pod module description
-         */
-//        pod("Bugsee") {
-//            version = "26.0.0"
-//            source = path(project.file("/Users/dsheikherev/WorkDir/Cocoapods/Local/Bugsee"))
-//            extraOpts += listOf("-compiler-option", "-fmodules")
-//        }
-
-        ios.deploymentTarget = "15.0"
+    // Kotlin/Native cinterop is generated from the iOS SDK's SwiftPM package
+    // (package swiftPMImport.com.bugsee.library). iOS SDK 7 is not published to CocoaPods.
+    // The dependency is published with the library (the swiftpm-metadata variant), so a
+    // consumer's Kotlin Gradle plugin links Bugsee into its tests and framework and adds the
+    // package to the app through its linkage package (integrateLinkagePackage).
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    swiftPMDependencies {
+        iosMinimumDeploymentTarget.set("15.0")
+        swiftPackage(
+            url = url("https://github.com/bugsee/spm.git"),
+            version = exact(libs.versions.bugsee.ios.get()),
+            products = listOf(product("Bugsee")),
+        )
     }
 }
 

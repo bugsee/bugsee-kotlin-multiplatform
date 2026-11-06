@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
+private typealias BugseeSDK = swiftPMImport.com.bugsee.library.Bugsee
 
 class BugseeAppearanceIosTest {
 
@@ -25,7 +25,7 @@ class BugseeAppearanceIosTest {
         appearance.reportTextColor = 0x80FF0000.toInt()
 
         assertEquals(0x80FF0000.toInt(), appearance.reportTextColor)
-        assertEquals(UIColor(red = 1.0, green = 0.0, blue = 0.0, alpha = 128 / 255.0), BugseeSDK.appearance().reportTextColor)
+        assertEquals(UIColor(red = 1.0, green = 0.0, blue = 0.0, alpha = 128 / 255.0), BugseeSDK.getAppearance().reportTextColor)
     }
 
     @Test
@@ -33,7 +33,7 @@ class BugseeAppearanceIosTest {
         appearance.feedbackEmailSkipTextColor = 0xFF00FF00.toInt()
 
         assertEquals(0xFF00FF00.toInt(), appearance.feedbackEmailSkipTextColor)
-        assertEquals(UIColor(red = 0.0, green = 1.0, blue = 0.0, alpha = 1.0), BugseeSDK.appearance().feedbackEmailSkipColor)
+        assertEquals(UIColor(red = 0.0, green = 1.0, blue = 0.0, alpha = 1.0), BugseeSDK.getAppearance().feedbackEmailSkipColor)
     }
 
     @Test

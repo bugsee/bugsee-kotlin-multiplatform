@@ -28,8 +28,8 @@ class BugseeDelegateWrapperLogFilterTest {
         return internal to wrapper
     }
 
-    private fun makeNativeLog(text: String = "hello"): cocoapods.Bugsee.BugseeLogEvent {
-        val event = cocoapods.Bugsee.BugseeLogEvent()
+    private fun makeNativeLog(text: String = "hello"): swiftPMImport.com.bugsee.library.BugseeLogEvent {
+        val event = swiftPMImport.com.bugsee.library.BugseeLogEvent()
         event.text = text
         return event
     }
@@ -38,7 +38,7 @@ class BugseeDelegateWrapperLogFilterTest {
     fun `no filter registered - completion receives original log unchanged`() {
         val (_, wrapper) = newWrapper()
         val native = makeNativeLog("abc")
-        var captured: cocoapods.Bugsee.BugseeLogEvent? = null
+        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
         var called = false
 
         wrapper.bugseeFilterLog(native) { event ->
@@ -59,7 +59,7 @@ class BugseeDelegateWrapperLogFilterTest {
         }
 
         val native = makeNativeLog("original")
-        var captured: cocoapods.Bugsee.BugseeLogEvent? = null
+        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
         wrapper.bugseeFilterLog(native) { event -> captured = event }
 
         assertNotNull(captured)
@@ -72,7 +72,7 @@ class BugseeDelegateWrapperLogFilterTest {
         internal.logFilterHandler = { _ -> null }
 
         val native = makeNativeLog("drop me")
-        var captured: cocoapods.Bugsee.BugseeLogEvent? = native // sentinel != null
+        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = native // sentinel != null
         var called = false
         wrapper.bugseeFilterLog(native) { event ->
             captured = event
@@ -91,7 +91,7 @@ class BugseeDelegateWrapperLogFilterTest {
         internal.logFilterHandler = { _ -> replacement }
 
         val native = makeNativeLog("original")
-        var captured: cocoapods.Bugsee.BugseeLogEvent? = null
+        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
         wrapper.bugseeFilterLog(native) { event -> captured = event }
 
         assertSame(replacementNative, captured, "Completion should receive the replacement's native impl")
@@ -104,7 +104,7 @@ class BugseeDelegateWrapperLogFilterTest {
         internal.logFilterHandler = { _ -> throw RuntimeException("boom") }
 
         val native = makeNativeLog("keep")
-        var captured: cocoapods.Bugsee.BugseeLogEvent? = null
+        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
         wrapper.bugseeFilterLog(native) { event -> captured = event }
 
         assertSame(native, captured, "On exception, completion must receive the original log")

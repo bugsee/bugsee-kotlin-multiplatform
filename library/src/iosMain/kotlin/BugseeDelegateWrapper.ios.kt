@@ -1,22 +1,22 @@
 package com.bugsee.kmp
 
-import cocoapods.Bugsee.BugseeLogFilterDecisionBlock
-import cocoapods.Bugsee.BugseeReport
+import swiftPMImport.com.bugsee.library.BugseeLogFilterDecisionBlock
+import swiftPMImport.com.bugsee.library.BugseeReport
 import com.bugsee.kmp.internal.BugseeInternal
 import com.bugsee.kmp.internal.Logger
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
-internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(), cocoapods.Bugsee.BugseeDelegateProtocol {
+internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(), swiftPMImport.com.bugsee.library.BugseeDelegateProtocol {
     private val weakBugseeInternal: WeakReference<BugseeInternal> = WeakReference(bugseeInternal)
 
     override fun bugseeFilterLog(
-        log: cocoapods.Bugsee.BugseeLogEvent,
-        completionHandler: BugseeLogFilterDecisionBlock?
+        log: swiftPMImport.com.bugsee.library.BugseeLogEvent,
+        completionHandler: BugseeLogFilterDecisionBlock
     ) {
         // Default to keeping the original log; flipped to filtered.impl (or null
         // to drop) if a filter is registered and runs successfully.
-        var decision: cocoapods.Bugsee.BugseeLogEvent? = log
+        var decision: swiftPMImport.com.bugsee.library.BugseeLogEvent? = log
         try {
             // Capture the filter handler to avoid race conditions
             val filterHandler = weakBugseeInternal.get()?.logFilterHandler
@@ -61,41 +61,21 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         }
 
         if (attachments == null) {
-            return listOf<cocoapods.Bugsee.BugseeAttachment>()
+            return listOf<swiftPMImport.com.bugsee.library.BugseeAttachment>()
         }
 
         return ArrayList(attachments.map(BugseeIOSUtils.Companion::convertAttachment))
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun bugsee(bugsee: cocoapods.Bugsee.Bugsee, didReceiveNewFeedback: List<*>) {
-        try {
-            val bugseeInternal = weakBugseeInternal.get()
-            if (bugseeInternal != null) {
-                val feedbackHandler = bugseeInternal.feedbackHandler
-                if (feedbackHandler != null) {
-                    try {
-                        val feedbackMessages = (didReceiveNewFeedback as? List<String>) ?: emptyList()
-                        feedbackHandler.invoke(feedbackMessages)
-                    } catch (e: Exception) {
-                        Bugsee.log("BugseeDelegateWrapper: exception during feedbackHandler invoke: ${e.message}", BugseeLogLevel.Warning)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Bugsee.log("BugseeDelegateWrapper: bugsee:didReceiveNewFeedback: caught exception: ${e.message}", BugseeLogLevel.Warning)
-        }
-    }
-
-    override fun bugseeLifecycleEvent(eventType: cocoapods.Bugsee.BugseeLifecycleEventType) {
+    override fun bugseeLifecycleEvent(eventType: swiftPMImport.com.bugsee.library.BugseeLifecycleEventType) {
         try {
             val bugseeInternal = weakBugseeInternal.get()
             if (bugseeInternal != null) {
                 // Capture the lifecycle event handler to avoid race conditions
                 val lifecycleEventHandler = bugseeInternal.lifecycleEventHandler
-                if (lifecycleEventHandler != null) {
+                val kmpEventType = BugseeIOSUtils.convertLifecycleEvent(eventType)
+                if (lifecycleEventHandler != null && kmpEventType != null) {
                     try {
-                        val kmpEventType = BugseeLifecycleEvent.fromEventType(eventType.value.toInt())
                         lifecycleEventHandler.invoke(kmpEventType)
                     } catch (e: Exception) {
                         // Log the error but don't crash the app
@@ -109,7 +89,7 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         }
     }
 
-    override fun bugseeAddFieldsBeforeReportCreated(): cocoapods.Bugsee.BugseeReportFields {
+    override fun bugseeAddFieldsBeforeReportCreated(): swiftPMImport.com.bugsee.library.BugseeReportFields {
         try {
             val bugseeInternal = weakBugseeInternal.get()
             if (bugseeInternal != null) {
@@ -128,7 +108,7 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
             Bugsee.log("BugseeDelegateWrapper: bugseeAddFieldsBeforeReportCreated: caught exception: ${e.message}", BugseeLogLevel.Warning)
         }
 
-        return cocoapods.Bugsee.BugseeReportFields.reportFieldsWith(
+        return swiftPMImport.com.bugsee.library.BugseeReportFields.reportFieldsWith(
             "",
             description = "",
             severity = BugseeSeverity.Medium.getLevelLong(),
@@ -137,7 +117,7 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun bugseeCheckFieldsAfterReportCreated(report: cocoapods.Bugsee.BugseeReportFields): cocoapods.Bugsee.BugseeReportFields {
+    override fun bugseeCheckFieldsAfterReportCreated(report: swiftPMImport.com.bugsee.library.BugseeReportFields): swiftPMImport.com.bugsee.library.BugseeReportFields {
         try {
             val bugseeInternal = weakBugseeInternal.get()
             if (bugseeInternal != null) {

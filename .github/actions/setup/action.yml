@@ -1,7 +1,7 @@
 name: Setup toolchains
 description: >-
   Pin Xcode and the JDK on a GitHub-hosted macOS runner and restore the Gradle
-  and Kotlin/Native caches. Android SDK and CocoaPods come preinstalled.
+  and Kotlin/Native caches. The Android SDK comes preinstalled.
 
 inputs:
   xcode-version:
@@ -30,7 +30,6 @@ runs:
         fi
         sudo xcode-select -s "$app/Contents/Developer"
         xcodebuild -version
-        echo "CocoaPods $(pod --version)"
 
     # AGP 8.x needs 17+. The scripts only probe java_home when JAVA_HOME is
     # unset, so this pins what Gradle runs on.
