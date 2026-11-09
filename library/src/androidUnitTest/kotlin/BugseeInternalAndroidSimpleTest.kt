@@ -225,15 +225,21 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
-    fun `test user management methods`() {
-        val email = "test@example.com"
-        
-        // Test user management methods - these should not throw exceptions
-        bugseeInternal.setEmail(email)
-        val retrievedEmail = bugseeInternal.getEmail()
-        bugseeInternal.clearEmail()
-        
-        assertTrue(true, "All user management methods should complete successfully")
+    fun `user identifier round trip`() {
+        bugseeInternal.setUserIdentifier("user@example.com")
+        assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
+
+        // Android SDK 7 would store the empty string; it clears, as on iOS.
+        bugseeInternal.setUserIdentifier("")
+        assertNull(bugseeInternal.getUserIdentifier())
+
+        bugseeInternal.setUserIdentifier("user-42")
+        bugseeInternal.clearUserIdentifier()
+        assertNull(bugseeInternal.getUserIdentifier())
+
+        bugseeInternal.setUserIdentifier("user-42")
+        bugseeInternal.setUserIdentifier(null)
+        assertNull(bugseeInternal.getUserIdentifier())
     }
 
     @Test

@@ -92,12 +92,12 @@ public expect class BugseeInternal() {
 
     public fun setLifecycleEventsListener(listener: BugseeLifecycleEventListener?)
 
-    // User management methods
-    public fun setEmail(email: String)
+    // User identification
+    public fun setUserIdentifier(userIdentifier: String?)
 
-    public fun getEmail(): String?
+    public fun getUserIdentifier(): String?
 
-    public fun clearEmail()
+    public fun clearUserIdentifier()
 
     // Attribute methods
     public fun setAttribute(name: String, value: Any)

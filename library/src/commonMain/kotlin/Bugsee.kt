@@ -143,17 +143,25 @@ public object Bugsee {
         bugseeInternal.setLifecycleEventsListener(listener)
     }
 
-    // User management methods
-    public fun setEmail(email: String) {
-        bugseeInternal.setEmail(email)
+    // User identification
+
+    /**
+     * Sets the user identifier attached to every report from now on. The native SDK keeps it
+     * across app restarts. If it is an email address, the server may link the reports to that
+     * user's account. `null` or an empty string clears it, as [clearUserIdentifier] does.
+     */
+    public fun setUserIdentifier(userIdentifier: String?) {
+        bugseeInternal.setUserIdentifier(userIdentifier)
     }
 
-    public fun getEmail(): String? {
-        return bugseeInternal.getEmail()
+    /** Returns the user identifier set with [setUserIdentifier], or `null` if none is set. */
+    public fun getUserIdentifier(): String? {
+        return bugseeInternal.getUserIdentifier()
     }
 
-    public fun clearEmail() {
-        bugseeInternal.clearEmail()
+    /** Clears the user identifier, so later reports are not associated with any user. */
+    public fun clearUserIdentifier() {
+        bugseeInternal.clearUserIdentifier()
     }
 
     // Attribute methods

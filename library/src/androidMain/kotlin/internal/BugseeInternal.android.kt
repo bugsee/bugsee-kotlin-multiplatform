@@ -319,20 +319,22 @@ public actual class BugseeInternal {
         })
     }
 
-    // User management methods
-    // 7.x removed the global email; it is replaced by the user identifier, which the
-    // user-identity API will expose.
-    public actual fun setEmail(email: String) {
-        Logger.e(TAG, "setEmail: not supported by Android SDK 7.x — ignoring")
+    // User identification
+    public actual fun setUserIdentifier(userIdentifier: String?) {
+        val value = UserIdentifierPolicy.forSet(userIdentifier)
+        if (value == null) {
+            BugseeSDK.clearUserIdentifier()
+        } else {
+            BugseeSDK.setUserIdentifier(value)
+        }
     }
 
-    public actual fun getEmail(): String? {
-        Logger.e(TAG, "getEmail: not supported by Android SDK 7.x — returning null")
-        return null
+    public actual fun getUserIdentifier(): String? {
+        return UserIdentifierPolicy.forGet(BugseeSDK.getUserIdentifier())
     }
 
-    public actual fun clearEmail() {
-        Logger.e(TAG, "clearEmail: not supported by Android SDK 7.x — ignoring")
+    public actual fun clearUserIdentifier() {
+        BugseeSDK.clearUserIdentifier()
     }
 
 

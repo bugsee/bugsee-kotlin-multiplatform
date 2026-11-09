@@ -10,7 +10,9 @@ import com.bugsee.kmp.BugseeReportFieldsFiller
 import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.EventHandler
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -130,5 +132,24 @@ class BugseeInternalIosSimpleTest {
         // Sanity check the test fixture: construction does not implicitly launch.
         val launched = bugseeInternal.isLaunched()
         assertTrue(!launched, "isLaunched should be false before launch()")
+    }
+
+    @Test
+    fun `user identifier round trip`() {
+        setup()
+        bugseeInternal.setUserIdentifier("user@example.com")
+        assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
+
+        // Android SDK 7 would store the empty string; it clears, as on iOS.
+        bugseeInternal.setUserIdentifier("")
+        assertNull(bugseeInternal.getUserIdentifier())
+
+        bugseeInternal.setUserIdentifier("user-42")
+        bugseeInternal.clearUserIdentifier()
+        assertNull(bugseeInternal.getUserIdentifier())
+
+        bugseeInternal.setUserIdentifier("user-42")
+        bugseeInternal.setUserIdentifier(null)
+        assertNull(bugseeInternal.getUserIdentifier())
     }
 }

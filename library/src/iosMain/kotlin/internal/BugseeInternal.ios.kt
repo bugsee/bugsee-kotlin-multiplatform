@@ -276,20 +276,22 @@ public actual class BugseeInternal {
         lifecycleEventHandler = listener
     }
 
-    // User management methods
-    // iOS SDK 7 removed the global email; it is replaced by the user identifier, which the
-    // user-identity API will expose.
-    public actual fun setEmail(email: String) {
-        Logger.e(TAG, "setEmail: not supported by iOS SDK 7 — ignoring")
+    // User identification
+    public actual fun setUserIdentifier(userIdentifier: String?) {
+        val value = UserIdentifierPolicy.forSet(userIdentifier)
+        if (value == null) {
+            BugseeSDK.clearUserIdentifier()
+        } else {
+            BugseeSDK.setUserIdentifier(value)
+        }
     }
 
-    public actual fun getEmail(): String? {
-        Logger.e(TAG, "getEmail: not supported by iOS SDK 7 — returning null")
-        return null
+    public actual fun getUserIdentifier(): String? {
+        return UserIdentifierPolicy.forGet(BugseeSDK.getUserIdentifier())
     }
 
-    public actual fun clearEmail() {
-        Logger.e(TAG, "clearEmail: not supported by iOS SDK 7 — ignoring")
+    public actual fun clearUserIdentifier() {
+        BugseeSDK.clearUserIdentifier()
     }
 
     // Attribute methods

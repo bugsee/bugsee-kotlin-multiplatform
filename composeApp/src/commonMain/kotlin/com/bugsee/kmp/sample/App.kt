@@ -45,7 +45,7 @@ sealed class Screen {
     data object LoggingTests : Screen()
     data object CrashProbe : Screen()
     data object AdvancedNetwork : Screen()
-    data object EmailTests : Screen()
+    data object UserIdentifierTests : Screen()
     data object WebSocket : Screen()
     data object Attributes : Screen()
     data object ReportFilters : Screen()
@@ -99,7 +99,7 @@ fun App() {
                 Screen.LoggingTests -> LoggingTestsScreen(onBackClick = { currentScreen = Screen.Main })
                 Screen.CrashProbe -> CrashProbeScreen(onBackClick = { currentScreen = Screen.Main })
                 Screen.AdvancedNetwork -> AdvancedNetworkScreen(onBackClick = { currentScreen = Screen.Main })
-                Screen.EmailTests -> EmailTestsScreen(onBackClick = { currentScreen = Screen.Main })
+                Screen.UserIdentifierTests -> UserIdentifierTestsScreen(onBackClick = { currentScreen = Screen.Main })
                 Screen.WebSocket -> WebSocketScreen(onBackClick = { currentScreen = Screen.Main })
                 Screen.Attributes -> AttributesScreen(onBackClick = { currentScreen = Screen.Main })
                 Screen.ReportFilters -> ReportFiltersScreen(
@@ -221,7 +221,7 @@ fun MainScreen(
                 CategoryButton("CrashProbe Tests") { onNavigate(Screen.CrashProbe) }
                 CategoryButton("Modern Network Tests") { onNavigate(Screen.NetworkTests) }
                 CategoryButton("Advanced Network Tests") { onNavigate(Screen.AdvancedNetwork) }
-                CategoryButton("Email Tests") { onNavigate(Screen.EmailTests) }
+                CategoryButton("User Identifier Tests") { onNavigate(Screen.UserIdentifierTests) }
                 CategoryButton("WebSocket") { onNavigate(Screen.WebSocket) }
             }
         }
