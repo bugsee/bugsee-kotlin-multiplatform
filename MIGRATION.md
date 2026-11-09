@@ -75,6 +75,13 @@
 - `pause()` / `resume()` map to the SDK 7 blackout API. The `Paused` / `Resumed` lifecycle events
   are reported when a blackout starts / ends. Stopping the SDK ends a blackout (`Resumed` is
   reported before `Stopped`); unlike on Android, a relaunch restores it.
+- `pause()` no longer stops logs and network capture. iOS SDK 6 paused the video and the loggers;
+  a blackout hides only what shows the screen (video, report screenshot, touches, keyboard and
+  focus breadcrumbs, view hierarchy), while logs, network events and traces keep being recorded.
+  Redact sensitive data with the log and network filters, or call `stop()` to halt all capture.
+- Messages sent with `Bugsee.log(...)` are not passed through the log filter set with
+  `setLogFilter`, as on Android; iOS SDK 6 filtered them. Only captured console logs are
+  filtered.
 - `pause()` before `launch()` is now honored: the session starts paused, and `Paused` is reported
   right away, before `Launched`. iOS SDK 6 ignored it.
 - The lifecycle events `Started`, `BeforeFeedbackShown` and `AfterFeedbackShown` are no longer

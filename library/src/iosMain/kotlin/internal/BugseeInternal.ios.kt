@@ -51,7 +51,7 @@ public actual class BugseeInternal {
             synchronizeReportHandler()
         }
 
-    private val bugseeDelegate = BugseeDelegateWrapper(this)
+    internal val bugseeDelegate = BugseeDelegateWrapper(this)
     private val reportHandler = BugseeReportHandlerWrapper(this)
 
     private fun synchronizeReportHandler() {
@@ -59,6 +59,8 @@ public actual class BugseeInternal {
         BugseeSDK.setReportHandler(if (needed) reportHandler else null)
     }
 
+    // +sharedInstance is declared nullable but is a dispatch_once singleton that exists before
+    // launch, and launchWithToken / relaunch reuse it, so the delegate set here stays attached.
     init {
         val bugsee = BugseeSDK.sharedInstance()
         bugsee?.setDelegate(bugseeDelegate)

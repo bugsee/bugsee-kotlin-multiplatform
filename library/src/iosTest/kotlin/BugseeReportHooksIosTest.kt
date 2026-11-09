@@ -2,8 +2,11 @@ package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.BugseeInternal
 import platform.Foundation.NSSelectorFromString
+import swiftPMImport.com.bugsee.library.Bugsee as BugseeSDK
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -23,6 +26,14 @@ class BugseeReportHooksIosTest {
         assertFalse(delegate.respondsToSelector(NSSelectorFromString("bugseeAttachmentsForReport:")))
         assertTrue(delegate.respondsToSelector(NSSelectorFromString("bugseeFilterLog:completionHandler:")))
         assertTrue(delegate.respondsToSelector(NSSelectorFromString("bugseeLifecycleEvent:")))
+    }
+
+    @Test
+    fun `the delegate is attached to the SDK instance before launch`() {
+        val bugseeInternal = BugseeInternal()
+
+        val instance = assertNotNull(BugseeSDK.sharedInstance())
+        assertSame<Any?>(bugseeInternal.bugseeDelegate, instance.delegate)
     }
 
     @Test
