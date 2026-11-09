@@ -9,6 +9,27 @@
 - **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.20 and depends on
   `kotlin-stdlib` 2.4.20. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
   read; Android consumers on Kotlin 2.3 may work but are not supported.
+- **iOS: Bugsee SDK 7.0.1 through Swift Package Manager; CocoaPods is not supported.** iOS SDK 7
+  is published only as the Swift package `https://github.com/bugsee/spm`, not to CocoaPods, so
+  remove `pod 'Bugsee'` from your Podfile. The library declares the package as a SwiftPM
+  dependency (Kotlin SwiftPM import) and publishes it with the library, so you do not add Bugsee
+  to your app yourself:
+  - Build your shared module into the app with `embedAndSignAppleFrameworkForXcode` (direct
+    integration). The Kotlin Gradle plugin links Bugsee into your Kotlin tests and framework. The
+    first Xcode build fails with the command that adds the Kotlin linkage package, which brings
+    Bugsee into the app, to your Xcode project (`integrateLinkagePackage`); run it, build again,
+    and commit `KotlinMultiplatformLinkedPackage`, the project and the `Package.resolved` that
+    Xcode writes.
+  - The linkage package names its subpackage after the library version. After you update the
+    library, the first Xcode build regenerates the package and fails with "Synthetic project
+    regenerated"; resolve the packages in Xcode (File > Packages > Resolve Package Versions) and
+    build again. Delete the previous version's folder under
+    `KotlinMultiplatformLinkedPackage/subpackages`, which is left behind.
+  - The Kotlin CocoaPods plugin (`kotlin("native.cocoapods")`) does not work with the library: it
+    does not accept SwiftPM dependencies, and its `syncFramework` task, which the Xcode build
+    runs, fails with "You are using CocoaPods integration with SwiftPM dependencies". Move the
+    shared module to direct integration before upgrading
+    ([migration guide](https://kotl.in/cocoapods-to-swiftpm-migration)).
 - **Android: Bugsee SDK 7.4.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
@@ -48,6 +69,38 @@
 - A report fields post-filter now uses the `BugseeReportFields` it returns.
 - The internal `endpoint` / `debug` custom options are now `com.bugsee.option.$$ENDPOINT` /
   `com.bugsee.option.$$DEBUG` on Android.
+
+## iOS behavior changes
+
+- `pause()` / `resume()` map to the SDK 7 blackout API. The `Paused` / `Resumed` lifecycle events
+  are reported when a blackout starts / ends. Stopping the SDK ends a blackout (`Resumed` is
+  reported before `Stopped`); unlike on Android, a relaunch restores it.
+- `pause()` no longer stops logs and network capture. iOS SDK 6 paused the video and the loggers;
+  a blackout hides only what shows the screen (video, report screenshot, touches, keyboard and
+  focus breadcrumbs, view hierarchy), while logs, network events and traces keep being recorded.
+  Redact sensitive data with the log and network filters, or call `stop()` to halt all capture.
+- Messages sent with `Bugsee.log(...)` are not passed through the log filter set with
+  `setLogFilter`, as on Android; iOS SDK 6 filtered them. Only captured console logs are
+  filtered.
+- `pause()` before `launch()` is now honored: the session starts paused, and `Paused` is reported
+  right away, before `Launched`. iOS SDK 6 ignored it.
+- The lifecycle events `Started`, `BeforeFeedbackShown` and `AfterFeedbackShown` are no longer
+  reported on iOS. The SDK 7 event `ReportAssemblyFailed` has no 0.1.x counterpart and is not
+  reported.
+- The report fields pre- and post-filters (`setReportFieldsPreFilter` / `setReportFieldsPostFilter`)
+  and the attachments provider run on the SDK 7 report handler, as on Android:
+  - the filters run for every report (`logException`, `upload`, crashes), not only for the report
+    dialog;
+  - the pre-filter receives the report's current fields (for `showReportDialog(summary, ...)`, the
+    ones you passed) instead of empty ones, and a field it leaves unchanged is kept;
+  - the report dialog opens with the severity you pass or `reportingDefaultBugPriority` (High by
+    default); 0.1.x always opened it at Medium.
+- `upload(..., includeVideo = false)` cannot be honored: iOS SDK 7 always includes video.
+- `logException(ex, options)` uses only `exceptionDomain` and `rules.skipFrames` on iOS, as on
+  Android. `labels`, `includeVideo = false` and custom merging rules are ignored.
+- The Kotlin bindings of the native SDK moved from the package `cocoapods.Bugsee` to
+  `swiftPMImport.com.bugsee.library`, and `com.bugsee.kmp.internal.ExceptionLoggingOptions` is
+  removed. This matters only for code that calls the native SDK directly.
 
 ## Appearance
 
@@ -91,7 +144,7 @@ iOS 7.0.1) and follows the Android SDK 7 naming.
 - The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
   so they also get the defaults and the type checks. Keys that are not options are passed through
   unchanged.
-- Some defaults change with SDK 7. On iOS they take effect once the library links iOS SDK 7.
+- Some defaults change with SDK 7.
   - `maxDataSize` is 150 (was 50).
   - `detectAndReportExit` is on (`detectAppExit` was off).
   - iOS: `reportingTriggerByShake` is on and `reportingTriggerByScreenshot` is off (0.1.x had
@@ -152,4 +205,3 @@ These do not work yet; the API calls among them log an error:
 
 - Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.
 - `setEmail` / `getEmail` / `clearEmail` (replaced by the user identifier API).
-- iOS: launch options use the SDK 7 keys, which the iOS SDK 6.x the library still links ignores.

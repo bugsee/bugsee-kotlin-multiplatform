@@ -1,6 +1,6 @@
 package com.bugsee.kmp
 
-import cocoapods.Bugsee.BugseeTheme
+import swiftPMImport.com.bugsee.library.BugseeTheme
 import com.bugsee.kmp.internal.Logger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
@@ -13,7 +13,7 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
 
-private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
+private typealias BugseeSDK = swiftPMImport.com.bugsee.library.Bugsee
 
 private const val TAG = "BugseeAppearance"
 
@@ -43,7 +43,7 @@ private fun argbIntToUIColor(value: Int): UIColor {
     return UIColor(red = r, green = g, blue = b, alpha = a)
 }
 
-private fun theme(): BugseeTheme = BugseeSDK.appearance()
+private fun theme(): BugseeTheme = BugseeSDK.getAppearance()
 
 private fun color(ref: KMutableProperty1<BugseeTheme, UIColor?>) = object : ReadWriteProperty<Any?, Int?> {
     override fun getValue(thisRef: Any?, property: KProperty<*>): Int? = colorToArgbInt(ref.get(theme()))

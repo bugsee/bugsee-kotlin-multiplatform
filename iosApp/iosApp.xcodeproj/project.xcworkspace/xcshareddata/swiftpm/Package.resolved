@@ -1,0 +1,15 @@
+{
+  "originHash" : "c2570576f11cea76ebd4f9def2594fa53444b72d9000424cebd8dc7e88b9974d",
+  "pins" : [
+    {
+      "identity" : "spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/bugsee/spm.git",
+      "state" : {
+        "revision" : "15553bdd9c7980715515e54ff6160b8cae25e158",
+        "version" : "7.0.1"
+      }
+    }
+  ],
+  "version" : 3
+}

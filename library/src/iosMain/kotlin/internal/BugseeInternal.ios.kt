@@ -1,15 +1,15 @@
 package com.bugsee.kmp.internal
 
-import cocoapods.Bugsee.BugseeOptions
-import cocoapods.Bugsee.BugseeTheme
+import swiftPMImport.com.bugsee.library.BugseeOptions
+import swiftPMImport.com.bugsee.library.BugseeTheme
 import com.bugsee.kmp.BugseeAppearance
 import com.bugsee.kmp.BugseeAttachmentsProvider
 import com.bugsee.kmp.BugseeDelegateWrapper
+import com.bugsee.kmp.BugseeReportHandlerWrapper
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeExtendedReport
 import com.bugsee.kmp.BugseeExtendedReportProvider
 import com.bugsee.kmp.BugseeFeedbackEventListener
-import com.bugsee.kmp.BugseeIOSUtils
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
@@ -22,21 +22,45 @@ import com.bugsee.kmp.EventHandler
 import com.bugsee.kmp.nsexception.*
 import platform.UIKit.UIView
 
-private typealias BugseeSDK = cocoapods.Bugsee.Bugsee
+private typealias BugseeSDK = swiftPMImport.com.bugsee.library.Bugsee
 
-public typealias ExtendedReport = cocoapods.Bugsee.BugseeExtendedReport
-public typealias LogLevel = cocoapods.Bugsee.BugseeLogLevel
-public typealias ExceptionLoggingOptions = cocoapods.Bugsee.BugseeExceptionLoggingOptions
+public typealias ExtendedReport = swiftPMImport.com.bugsee.library.BugseeExtendedReport
+public typealias LogLevel = swiftPMImport.com.bugsee.library.BugseeLogLevel
+
+private const val TAG = "BugseeInternal"
 
 public actual class BugseeInternal {
     public var logFilterHandler: BugseeLogFilter? = null
     public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
-    public var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
-    public var reportFieldsFiller: BugseeReportFieldsFiller? = null
-    public var reportFieldsFilter: BugseeReportFieldsFilter? = null
-    public var feedbackHandler: BugseeFeedbackEventListener? = null
-    private val bugseeDelegate = BugseeDelegateWrapper(this)
 
+    // The report fields filters and the attachments provider run on the SDK's report handler,
+    // which is installed while any of them is set.
+    public var attachmentsProviderHandler: BugseeAttachmentsProvider? = null
+        set(value) {
+            field = value
+            synchronizeReportHandler()
+        }
+    public var reportFieldsFiller: BugseeReportFieldsFiller? = null
+        set(value) {
+            field = value
+            synchronizeReportHandler()
+        }
+    public var reportFieldsFilter: BugseeReportFieldsFilter? = null
+        set(value) {
+            field = value
+            synchronizeReportHandler()
+        }
+
+    internal val bugseeDelegate = BugseeDelegateWrapper(this)
+    private val reportHandler = BugseeReportHandlerWrapper(this)
+
+    private fun synchronizeReportHandler() {
+        val needed = attachmentsProviderHandler != null || reportFieldsFiller != null || reportFieldsFilter != null
+        BugseeSDK.setReportHandler(if (needed) reportHandler else null)
+    }
+
+    // +sharedInstance is declared nullable but is a dispatch_once singleton that exists before
+    // launch, and launchWithToken / relaunch reuse it, so the delegate set here stays attached.
     init {
         val bugsee = BugseeSDK.sharedInstance()
         bugsee?.setDelegate(bugseeDelegate)
@@ -64,8 +88,7 @@ public actual class BugseeInternal {
             @Suppress("UNCHECKED_CAST")
             nativeOptions = BugseeOptions.optionsFrom(options.toMap() as? Map<Any?, *>)
         }
-        // Decided from the KMP option: the linked iOS SDK 6 does not read the SDK 7 keys, so
-        // nativeOptions.crashReport would always be its default.
+        // Decided from the KMP option, which also covers launch(apiKey, null).
         val installExceptionHook = shouldInstallUnhandledExceptionHook(options)
         BugseeSDK.launchWithToken(apiKey, nativeOptions) { started ->
             // set Bugsee exception hook only after successful launch
@@ -94,20 +117,22 @@ public actual class BugseeInternal {
     }
 
     // Feedback methods
+    // In iOS SDK 7 feedback lives in the separate BugseeFeedback package; these become
+    // available again through the KMP feedback step.
     public actual fun showFeedback() {
-        BugseeSDK.showFeedbackController()
+        Logger.e(TAG, "showFeedback: feedback is not available in this build")
     }
 
     public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
-        feedbackHandler = listener
+        Logger.e(TAG, "setOnNewFeedbackListener: feedback is not available in this build")
     }
 
     public actual fun setDefaultFeedbackGreeting(greeting: String) {
-        BugseeSDK.setDefaultFeedbackGreeting(greeting)
+        Logger.e(TAG, "setDefaultFeedbackGreeting: feedback is not available in this build")
     }
 
     public fun getAppearance(): BugseeTheme {
-        return BugseeSDK.appearance()
+        return BugseeSDK.getAppearance()
     }
 
     // Logging methods
@@ -120,26 +145,26 @@ public actual class BugseeInternal {
     }
 
     public actual fun trace(traceName: String, value: Any) {
-        BugseeSDK.traceKey(traceName, value)
+        BugseeSDK.trace(traceName, value)
     }
 
     // Event methods
     public actual fun event(eventName: String) {
-        BugseeSDK.registerEvent(eventName)
+        BugseeSDK.event(eventName)
     }
 
     public actual fun event(eventName: String, params: Map<String, Any>?) {
         @Suppress("UNCHECKED_CAST")
-        BugseeSDK.registerEvent(eventName, params as Map<Any?, *>)
+        BugseeSDK.event(eventName, params as Map<Any?, *>?)
     }
 
     // Report dialog methods
     public actual fun showReportDialog() {
-        BugseeSDK.showReportController()
+        BugseeSDK.showReportDialog()
     }
 
     public actual fun showReportDialog(summary: String, description: String, severity: BugseeSeverity) {
-        BugseeSDK.showReportControllerWithSummary(summary, description, severity.getLevelLong())
+        BugseeSDK.showReportDialogWithSummary(summary, description, severity.getLevelLong())
     }
 
     public actual fun showReportDialog(
@@ -148,7 +173,7 @@ public actual class BugseeInternal {
         severity: BugseeSeverity,
         labels: List<String>?
     ) {
-        BugseeSDK.showReportControllerWithSummary(
+        BugseeSDK.showReportDialogWithSummary(
             summary,
             description,
             severity.getLevelLong(),
@@ -169,6 +194,7 @@ public actual class BugseeInternal {
         BugseeSDK.uploadWithSummary(summary, description, severity.getLevelLong(), labels)
     }
 
+    // iOS SDK 7 reports always include video; includeVideo = false cannot be honored.
     public actual fun upload(
         summary: String,
         description: String,
@@ -176,33 +202,39 @@ public actual class BugseeInternal {
         labels: List<String>?,
         includeVideo: Boolean
     ) {
-        BugseeSDK.uploadWithSummary(
-            summary,
-            description,
-            severity.getLevelLong(),
-            labels,
-            includeVideo
-        )
+        if (!includeVideo) {
+            Logger.d(TAG, "upload: includeVideo = false is not supported by the iOS SDK — video is included")
+        }
+
+        upload(summary, description, severity, labels)
     }
 
     // Exception logging methods
     public actual fun logException(ex: Throwable) {
-        logException(ex, null)
+        BugseeSDK.logException(BugseeNSException(ex), null)
     }
 
+    // iOS SDK 7 reads only the domain and skipFrames, as on Android; labels, includeVideo and
+    // custom merging rules have no equivalent (labels can be added to the report in a report handler).
     public actual fun logException(ex: Throwable, options: BugseeExceptionLoggingOptions?) {
-        val exception = BugseeNSException(ex)
-        val sdkExceptionLoggingOptions = BugseeIOSUtils.convertExceptionLoggingOptions(options)
-        BugseeSDK.logException(exception, sdkExceptionLoggingOptions, null)
+        if (options == null) {
+            logException(ex)
+            return
+        }
+
+        if (options.labels != null || !options.includeVideo) {
+            Logger.d(TAG, "logException: labels and includeVideo are not supported by the iOS SDK — ignored")
+        }
+        BugseeSDK.logException(BugseeNSException(ex), options.exceptionDomain, options.rules.skipFrames.toLong(), null)
     }
 
-    // Lifecycle methods
+    // Privacy control methods
     public actual fun pause() {
-        BugseeSDK.pause()
+        BugseeSDK.startBlackout()
     }
 
     public actual fun resume() {
-        BugseeSDK.resume()
+        BugseeSDK.endBlackout()
     }
 
     // Filter and listener methods
@@ -214,7 +246,7 @@ public actual class BugseeInternal {
         BugseeSDK.setNetworkEventFilter { nativeEvent, completionHandler ->
             // Default to keeping the original event; flipped to filtered.impl
             // (or null to drop) if the filter runs successfully.
-            var decision: cocoapods.Bugsee.BugseeNetworkEvent? = nativeEvent
+            var decision: swiftPMImport.com.bugsee.library.BugseeNetworkEvent? = nativeEvent
             try {
                 if (nativeEvent != null) {
                     val filtered = filter.invoke(com.bugsee.kmp.BugseeNetworkEvent(impl = nativeEvent))
@@ -245,16 +277,19 @@ public actual class BugseeInternal {
     }
 
     // User management methods
+    // iOS SDK 7 removed the global email; it is replaced by the user identifier, which the
+    // user-identity API will expose.
     public actual fun setEmail(email: String) {
-        BugseeSDK.setEmail(email)
+        Logger.e(TAG, "setEmail: not supported by iOS SDK 7 — ignoring")
     }
 
     public actual fun getEmail(): String? {
-        return BugseeSDK.getEmail()
+        Logger.e(TAG, "getEmail: not supported by iOS SDK 7 — returning null")
+        return null
     }
 
     public actual fun clearEmail() {
-        BugseeSDK.clearEmail()
+        Logger.e(TAG, "clearEmail: not supported by iOS SDK 7 — ignoring")
     }
 
     // Attribute methods
@@ -328,7 +363,7 @@ public actual class BugseeInternal {
     // Secure view methods
     public actual fun addSecureView(view: Any?) {
         if (view is UIView) {
-            BugseeSDK.setView(view, asHidden = true)
+            BugseeSDK.addSecureView(view)
         } else {
             Logger.e(
                 "BugseeInternal",
@@ -339,7 +374,7 @@ public actual class BugseeInternal {
 
     public actual fun removeSecureView(view: Any?) {
         if (view is UIView) {
-            BugseeSDK.setView(view, asHidden = false)
+            BugseeSDK.removeSecureView(view)
         } else {
             Logger.e(
                 "BugseeInternal",
