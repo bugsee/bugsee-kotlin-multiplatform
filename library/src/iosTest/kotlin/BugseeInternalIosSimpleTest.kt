@@ -10,7 +10,9 @@ import com.bugsee.kmp.BugseeReportFieldsFiller
 import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.EventHandler
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -130,5 +132,31 @@ class BugseeInternalIosSimpleTest {
         // Sanity check the test fixture: construction does not implicitly launch.
         val launched = bugseeInternal.isLaunched()
         assertTrue(!launched, "isLaunched should be false before launch()")
+    }
+
+    @Test
+    fun `user identifier round trip`() {
+        setup()
+        // The native SDK persists the identifier: leave none behind, whatever fails.
+        try {
+            bugseeInternal.setUserIdentifier("user@example.com")
+            assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
+
+            // iOS SDK 7 itself clears on ""; the wrapper clears before calling it.
+            // Checked on the native value: getUserIdentifier() maps "" to null anyway.
+            bugseeInternal.setUserIdentifier("")
+            assertNull(swiftPMImport.com.bugsee.library.Bugsee.getUserIdentifier())
+            assertNull(bugseeInternal.getUserIdentifier())
+
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.clearUserIdentifier()
+            assertNull(swiftPMImport.com.bugsee.library.Bugsee.getUserIdentifier())
+
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.setUserIdentifier(null)
+            assertNull(swiftPMImport.com.bugsee.library.Bugsee.getUserIdentifier())
+        } finally {
+            bugseeInternal.clearUserIdentifier()
+        }
     }
 }

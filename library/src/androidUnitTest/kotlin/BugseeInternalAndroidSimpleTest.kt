@@ -225,15 +225,28 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
-    fun `test user management methods`() {
-        val email = "test@example.com"
-        
-        // Test user management methods - these should not throw exceptions
-        bugseeInternal.setEmail(email)
-        val retrievedEmail = bugseeInternal.getEmail()
-        bugseeInternal.clearEmail()
-        
-        assertTrue(true, "All user management methods should complete successfully")
+    fun `user identifier round trip`() {
+        // The native SDK persists the identifier: leave none behind, whatever fails.
+        try {
+            bugseeInternal.setUserIdentifier("user@example.com")
+            assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
+
+            // Android SDK 7 stores "" as given; the wrapper clears instead.
+            // Checked on the native value: getUserIdentifier() maps "" to null anyway.
+            bugseeInternal.setUserIdentifier("")
+            assertNull(com.bugsee.library.Bugsee.getUserIdentifier())
+            assertNull(bugseeInternal.getUserIdentifier())
+
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.clearUserIdentifier()
+            assertNull(com.bugsee.library.Bugsee.getUserIdentifier())
+
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.setUserIdentifier(null)
+            assertNull(com.bugsee.library.Bugsee.getUserIdentifier())
+        } finally {
+            bugseeInternal.clearUserIdentifier()
+        }
     }
 
     @Test

@@ -102,6 +102,20 @@
   `swiftPMImport.com.bugsee.library`, and `com.bugsee.kmp.internal.ExceptionLoggingOptions` is
   removed. This matters only for code that calls the native SDK directly.
 
+## User identifier
+
+`setEmail` / `getEmail` / `clearEmail` are removed: the native SDKs 7 replaced the email with a
+user identifier. Use `setUserIdentifier` / `getUserIdentifier` / `clearUserIdentifier` instead.
+The identifier is attached to every report and kept across app restarts; if it is an email
+address, the server may link the reports to that user's account. `setUserIdentifier(null)` and
+`setUserIdentifier("")` clear it on both platforms, and `getUserIdentifier()` returns `null` when
+none is set. The email field of the report dialog edits the same value.
+
+An email set with 0.1.x is carried over on iOS only: iOS SDK 7 reads the identifier from the
+Keychain item iOS SDK 6 stored the email in, while Android SDK 7 does not read the email Android
+SDK 6 stored. Call `setUserIdentifier` again after the upgrade, for example at app start, rather
+than only when the user logs in.
+
 ## Appearance
 
 `BugseeAppearance` keeps its properties; each property's KDoc names the platforms it applies to.
@@ -204,4 +218,3 @@ Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are 
 These do not work yet; the API calls among them log an error:
 
 - Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.
-- `setEmail` / `getEmail` / `clearEmail` (replaced by the user identifier API).
