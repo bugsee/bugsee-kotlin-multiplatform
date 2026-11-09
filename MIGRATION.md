@@ -101,10 +101,11 @@ iOS 7.0.1) and follows the Android SDK 7 naming.
     (`enableMachExceptions` was off).
 - iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
   is sent, set `captureScreenshot = false` yourself when you turn video off.
-- `captureCrashSignals` (iOS) is a bit set of the signals the crash reporter handles: `1` SIGABRT,
-  `2` SIGSEGV, `4` SIGBUS, `8` SIGILL, `16` SIGFPE, `32` SIGTRAP. The default `128` lets the SDK
-  choose (every signal); combined with other bits it is ignored. Leaving out SIGABRT also stops
-  uncaught Objective-C and C++ exceptions from being reported.
+- `captureCrashSignals` (iOS) is a bit set of the signals the crash reporter handles; combine the
+  `BugseeCrashSignals` constants with `or` (`BugseeCrashSignals.ABRT or BugseeCrashSignals.TRAP`).
+  The default `BugseeCrashSignals.Default` lets the SDK choose (every signal); combined with other
+  bits it is ignored. Leaving out `ABRT` also stops uncaught Objective-C and C++ exceptions from
+  being reported.
 - `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos` are removed; all options live on
   `BugseeLaunchOptions`. The class is no longer `open`.
 
@@ -143,7 +144,7 @@ Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (And
 
 Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
 `Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`,
-`BugseeCrashHandlerType`.
+`BugseeCrashHandlerType`, and the `BugseeCrashSignals` constants.
 
 ## Temporarily unavailable (nextgen only)
 

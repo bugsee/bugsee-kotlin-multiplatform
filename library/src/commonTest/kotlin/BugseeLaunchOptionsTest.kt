@@ -338,6 +338,26 @@ class BugseeLaunchOptionsTest {
     }
 
     @Test
+    fun `crash signals default to the SDK choice and combine with or`() {
+        val options = BugseeLaunchOptions()
+        assertEquals(BugseeCrashSignals.Default, options.captureCrashSignals)
+        assertEquals(BugseeCrashSignals.Default, BugseeOptionsSpec.defaults(isAndroid = false)[BugseeOptions.CaptureCrashSignals])
+
+        options.captureCrashSignals = BugseeCrashSignals.ABRT or BugseeCrashSignals.ILL or BugseeCrashSignals.TRAP
+
+        assertEquals(41, options.captureCrashSignals)
+        assertEquals(if (isAndroid) null else 41, options.toMap()[BugseeOptions.CaptureCrashSignals])
+    }
+
+    @Test
+    fun `crash signal bits match the iOS SDK`() {
+        assertEquals(0, BugseeCrashSignals.None)
+        assertEquals(listOf(1, 2, 4, 8, 16, 32), with(BugseeCrashSignals) { listOf(ABRT, SEGV, BUS, ILL, FPE, TRAP) })
+        assertEquals(63, BugseeCrashSignals.All)
+        assertEquals(128, BugseeCrashSignals.Default)
+    }
+
+    @Test
     fun `removed iOS options are passed through as custom options`() {
         val options = BugseeLaunchOptions(
             mapOf(
