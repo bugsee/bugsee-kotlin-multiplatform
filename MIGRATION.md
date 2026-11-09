@@ -17,8 +17,14 @@
   - Build your shared module into the app with `embedAndSignAppleFrameworkForXcode` (direct
     integration). The Kotlin Gradle plugin links Bugsee into your Kotlin tests and framework. The
     first Xcode build fails with the command that adds the Kotlin linkage package, which brings
-    Bugsee into the app, to your Xcode project (`integrateLinkagePackage`); run it and commit the
-    generated package and the project.
+    Bugsee into the app, to your Xcode project (`integrateLinkagePackage`); run it, build again,
+    and commit `KotlinMultiplatformLinkedPackage`, the project and the `Package.resolved` that
+    Xcode writes.
+  - The linkage package names its subpackage after the library version. After you update the
+    library, the first Xcode build regenerates the package and fails with "Synthetic project
+    regenerated"; resolve the packages in Xcode (File > Packages > Resolve Package Versions) and
+    build again. Delete the previous version's folder under
+    `KotlinMultiplatformLinkedPackage/subpackages`, which is left behind.
   - The Kotlin CocoaPods plugin (`kotlin("native.cocoapods")`) does not work with the library: it
     does not accept SwiftPM dependencies, and its `syncFramework` task, which the Xcode build
     runs, fails with "You are using CocoaPods integration with SwiftPM dependencies". Move the
