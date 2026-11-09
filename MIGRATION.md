@@ -109,7 +109,12 @@ user identifier. Use `setUserIdentifier` / `getUserIdentifier` / `clearUserIdent
 The identifier is attached to every report and kept across app restarts; if it is an email
 address, the server may link the reports to that user's account. `setUserIdentifier(null)` and
 `setUserIdentifier("")` clear it on both platforms, and `getUserIdentifier()` returns `null` when
-none is set.
+none is set. The email field of the report dialog edits the same value.
+
+An email set with 0.1.x is carried over on iOS only: iOS SDK 7 reads the identifier from the
+Keychain item iOS SDK 6 stored the email in, while Android SDK 7 does not read the email Android
+SDK 6 stored. Call `setUserIdentifier` again after the upgrade, for example at app start, rather
+than only when the user logs in.
 
 ## Appearance
 

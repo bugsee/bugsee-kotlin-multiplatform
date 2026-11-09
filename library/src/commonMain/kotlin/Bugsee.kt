@@ -149,12 +149,18 @@ public object Bugsee {
      * Sets the user identifier attached to every report from now on. The native SDK keeps it
      * across app restarts. If it is an email address, the server may link the reports to that
      * user's account. `null` or an empty string clears it, as [clearUserIdentifier] does.
+     *
+     * The email field of the report dialog edits the same value: what the user enters there
+     * replaces the identifier, and clearing the field clears it.
      */
     public fun setUserIdentifier(userIdentifier: String?) {
         bugseeInternal.setUserIdentifier(userIdentifier)
     }
 
-    /** Returns the user identifier set with [setUserIdentifier], or `null` if none is set. */
+    /**
+     * Returns the current user identifier: the last one set with [setUserIdentifier] or entered
+     * in the report dialog's email field, or `null` if none is set.
+     */
     public fun getUserIdentifier(): String? {
         return bugseeInternal.getUserIdentifier()
     }

@@ -226,20 +226,27 @@ class BugseeInternalAndroidSimpleTest {
 
     @Test
     fun `user identifier round trip`() {
-        bugseeInternal.setUserIdentifier("user@example.com")
-        assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
+        // The native SDK persists the identifier: leave none behind, whatever fails.
+        try {
+            bugseeInternal.setUserIdentifier("user@example.com")
+            assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
 
-        // Android SDK 7 would store the empty string; it clears, as on iOS.
-        bugseeInternal.setUserIdentifier("")
-        assertNull(bugseeInternal.getUserIdentifier())
+            // Android SDK 7 stores "" as given; the wrapper clears instead.
+            // Checked on the native value: getUserIdentifier() maps "" to null anyway.
+            bugseeInternal.setUserIdentifier("")
+            assertNull(com.bugsee.library.Bugsee.getUserIdentifier())
+            assertNull(bugseeInternal.getUserIdentifier())
 
-        bugseeInternal.setUserIdentifier("user-42")
-        bugseeInternal.clearUserIdentifier()
-        assertNull(bugseeInternal.getUserIdentifier())
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.clearUserIdentifier()
+            assertNull(com.bugsee.library.Bugsee.getUserIdentifier())
 
-        bugseeInternal.setUserIdentifier("user-42")
-        bugseeInternal.setUserIdentifier(null)
-        assertNull(bugseeInternal.getUserIdentifier())
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.setUserIdentifier(null)
+            assertNull(com.bugsee.library.Bugsee.getUserIdentifier())
+        } finally {
+            bugseeInternal.clearUserIdentifier()
+        }
     }
 
     @Test

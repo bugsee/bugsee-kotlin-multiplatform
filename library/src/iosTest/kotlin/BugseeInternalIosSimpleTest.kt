@@ -137,19 +137,26 @@ class BugseeInternalIosSimpleTest {
     @Test
     fun `user identifier round trip`() {
         setup()
-        bugseeInternal.setUserIdentifier("user@example.com")
-        assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
+        // The native SDK persists the identifier: leave none behind, whatever fails.
+        try {
+            bugseeInternal.setUserIdentifier("user@example.com")
+            assertEquals("user@example.com", bugseeInternal.getUserIdentifier())
 
-        // Android SDK 7 would store the empty string; it clears, as on iOS.
-        bugseeInternal.setUserIdentifier("")
-        assertNull(bugseeInternal.getUserIdentifier())
+            // iOS SDK 7 itself clears on ""; the wrapper clears before calling it.
+            // Checked on the native value: getUserIdentifier() maps "" to null anyway.
+            bugseeInternal.setUserIdentifier("")
+            assertNull(swiftPMImport.com.bugsee.library.Bugsee.getUserIdentifier())
+            assertNull(bugseeInternal.getUserIdentifier())
 
-        bugseeInternal.setUserIdentifier("user-42")
-        bugseeInternal.clearUserIdentifier()
-        assertNull(bugseeInternal.getUserIdentifier())
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.clearUserIdentifier()
+            assertNull(swiftPMImport.com.bugsee.library.Bugsee.getUserIdentifier())
 
-        bugseeInternal.setUserIdentifier("user-42")
-        bugseeInternal.setUserIdentifier(null)
-        assertNull(bugseeInternal.getUserIdentifier())
+            bugseeInternal.setUserIdentifier("user-42")
+            bugseeInternal.setUserIdentifier(null)
+            assertNull(swiftPMImport.com.bugsee.library.Bugsee.getUserIdentifier())
+        } finally {
+            bugseeInternal.clearUserIdentifier()
+        }
     }
 }
