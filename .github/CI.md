@@ -5,7 +5,7 @@ repo's own `scripts/{build,test,deploy}.sh`, so CI and local runs stay identical
 
 | Workflow | Trigger | Environment | `RELEASE` | What it does |
 |---|---|---|---|---|
-| `pr.yml` | any PR (stacked PRs included) | — | `false` | `build.sh` + `test.sh all` |
+| `pr.yml` | any PR (stacked PRs included) | — | `false` | `check-swiftpm-remote.sh` + `build.sh` + `test.sh all` |
 | `main.yml` | push to `main` / `nextgen`, manual | — | `false` | `build.sh` + `test.sh all` + `deploy.sh --local` (mavenLocal) |
 | `deploy-production.yml` | manual dispatch from `release` | `production` | `true` | `build.sh` + `test.sh all` + `deploy.sh --skip-tests` (publish + auto-release to Maven Central) |
 

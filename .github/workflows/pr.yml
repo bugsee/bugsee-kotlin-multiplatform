@@ -32,6 +32,11 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      # A build with bugsee.ios.localPackage writes a local path into the iosApp
+      # linkage package; committed, it breaks the sample for everyone else.
+      - name: Check the Bugsee SwiftPM package
+        run: bash ./scripts/check-swiftpm-remote.sh
+
       # Android release AAR + iosArm64/iosX64/iosSimulatorArm64 klibs — covers
       # the device slice, which the simulator test run below never compiles.
       - name: Build

@@ -17,3 +17,6 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 Pods/
+# Kotlin SwiftPM import writes the resolved packages here when bugsee.ios.localPackage is set
+# (packageResolvedSynchronization is off then).
+library/Package.resolved

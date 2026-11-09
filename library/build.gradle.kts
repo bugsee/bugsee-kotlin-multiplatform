@@ -73,13 +73,16 @@ val generateBugseeOptions = tasks.register<GenerateBugseeOptionsTask>("generateB
 // A local iOS SDK build for SDK development: the directory (absolute, or relative to the
 // repository root) of a Swift package with the Bugsee product, e.g. a binaryTarget pointing at a
 // locally built Bugsee.xcframework. Set bugsee.ios.localPackage in local.properties, which the
-// Xcode build phase also reads, or pass -Pbugsee.ios.localPackage=<dir>. Publishing fails while
+// Xcode build phase also reads, or pass -Pbugsee.ios.localPackage=<dir>. A blank value means
+// unset, so -Pbugsee.ios.localPackage= builds against the remote package. Publishing fails while
 // it is set.
-val bugseeIosLocalPackage: String? = providers.gradleProperty("bugsee.ios.localPackage").orNull
-    ?: rootProject.file("local.properties").takeIf { it.isFile }?.let { file ->
-        Properties().apply { file.inputStream().use { load(it) } }
-            .getProperty("bugsee.ios.localPackage")
-    }
+val bugseeIosLocalPackage: String? = (
+    providers.gradleProperty("bugsee.ios.localPackage").orNull
+        ?: rootProject.file("local.properties").takeIf { it.isFile }?.let { file ->
+            Properties().apply { file.inputStream().use { load(it) } }
+                .getProperty("bugsee.ios.localPackage")
+        }
+    )?.takeIf { it.isNotBlank() }
 
 kotlin {
     explicitApi()
