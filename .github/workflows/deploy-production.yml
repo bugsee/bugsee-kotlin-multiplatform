@@ -1,9 +1,10 @@
 name: Deploy (production)
 
 # Manual only. RELEASE=true: builds, runs the full test suite, then publishes
-# and auto-releases both artifacts to Maven Central:
+# and auto-releases the artifacts to Maven Central:
 #   com.bugsee:bugsee-kotlin-multiplatform:<version.txt>
 #   com.bugsee:bugsee-kotlin-multiplatform-protect:<version.txt>
+#   com.bugsee:bugsee-kotlin-multiplatform-feedback:<version.txt>
 # A Central release cannot be deleted or overwritten, so the gates are:
 #   1. workflow_dispatch -> only users with write access can start it
 #   2. environment: production, restricted by deployment branch policy to
@@ -113,6 +114,7 @@ jobs:
             echo
             echo "- \`com.bugsee:bugsee-kotlin-multiplatform:${version}\`"
             echo "- \`com.bugsee:bugsee-kotlin-multiplatform-protect:${version}\`"
+            echo "- \`com.bugsee:bugsee-kotlin-multiplatform-feedback:${version}\`"
             echo
             echo "Artifacts can take up to ~30 minutes to appear on repo1.maven.org."
           } >> "$GITHUB_STEP_SUMMARY"

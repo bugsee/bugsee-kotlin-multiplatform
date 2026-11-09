@@ -116,6 +116,26 @@ Keychain item iOS SDK 6 stored the email in, while Android SDK 7 does not read t
 SDK 6 stored. Call `setUserIdentifier` again after the upgrade, for example at app start, rather
 than only when the user logs in.
 
+## Feedback
+
+The feedback chat is a separate artifact, as in the native SDKs 7, where it became an optional
+add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version as
+`bugsee-kotlin-multiplatform`) and use `com.bugsee.kmp.feedback.BugseeFeedback`:
+
+| 0.1.x | 0.2.0 |
+|---|---|
+| `Bugsee.showFeedback()` | `BugseeFeedback.show()` |
+| `Bugsee.setDefaultFeedbackGreeting(greeting)` | `BugseeFeedback.setGreeting(greeting)` |
+| `Bugsee.setOnNewFeedbackListener { messages -> … }` | `BugseeFeedback.setListener(object : BugseeFeedbackListener { override fun onNewMessagesReceived(messages: List<String>) { … } })` |
+
+- `BugseeFeedbackEventListener` is removed. `BugseeFeedbackListener` also reports the messages
+  the user sends (`onNewMessageSent`), and both callbacks run on the main thread.
+- The artifact brings the Feedback add-ons: `com.bugsee:bugsee-android-feedback` on Android and
+  the Swift package `github.com/bugsee/feedback-spm` on iOS. The Kotlin Gradle plugin adds the
+  Swift package to the app through the linkage package, as it does for the core package; the
+  first Xcode build after adding the artifact fails once with "Synthetic project regenerated".
+- On Android the feedback screen does not open before `Bugsee.launch`.
+
 ## Appearance
 
 `BugseeAppearance` keeps its properties; each property's KDoc names the platforms it applies to.
@@ -212,9 +232,3 @@ Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (And
 Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
 `Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`,
 `BugseeCrashHandlerType`, and the `BugseeCrashSignals` constants.
-
-## Temporarily unavailable (nextgen only)
-
-These do not work yet; the API calls among them log an error:
-
-- Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.

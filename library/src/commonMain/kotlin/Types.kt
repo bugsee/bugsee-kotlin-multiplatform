@@ -6,7 +6,6 @@ public typealias TransformHandler<T> = ((T) -> T)
 public typealias ProducerHandler<T> = () -> T
 public typealias ProducerArgHandler<T, R> = (T) -> R
 
-public typealias BugseeFeedbackEventListener = EventHandler<List<String>>
 public typealias BugseeReportFieldsFiller = EventHandler<BugseeReportFields>
 public typealias BugseeReportFieldsFilter = TransformHandler<BugseeReportFields>
 

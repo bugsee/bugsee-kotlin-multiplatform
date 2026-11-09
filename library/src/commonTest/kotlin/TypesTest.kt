@@ -77,19 +77,6 @@ class TypesTest {
     }
 
     @Test
-    fun `test BugseeFeedbackEventListener type alias`() {
-        // Test BugseeFeedbackEventListener = EventHandler<List<String>>
-        val feedbackListener: BugseeFeedbackEventListener = { feedbackList ->
-            assertNotNull(feedbackList)
-            assertTrue(feedbackList is List<String>)
-        }
-        
-        // Test feedback listener
-        feedbackListener(listOf("feedback1", "feedback2"))
-        feedbackListener(emptyList())
-    }
-
-    @Test
     fun `test BugseeReportFieldsFiller type alias`() {
         // Test BugseeReportFieldsFiller = EventHandler<BugseeReportFields>
         val reportFieldsFiller: BugseeReportFieldsFiller = { fields ->

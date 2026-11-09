@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run tests for every publishable module (:library and :library-protect) on CI
+# Run tests for every publishable module (:library, :library-protect, :library-feedback) on CI
 # simulators for both platforms:
 #   - Android: Robolectric (JVM-hosted Android runtime simulator)
 #   - iOS:     Xcode simulator — iosSimulatorArm64 on Apple Silicon, iosX64 on Intel
@@ -54,7 +54,7 @@ case "$ARCH" in
 esac
 
 # Every publishable KMP module must be covered on both CI simulators.
-MODULES=(":library" ":library-protect")
+MODULES=(":library" ":library-protect" ":library-feedback")
 IOS_TASKS=()
 ANDROID_TASKS=()
 for m in "${MODULES[@]}"; do

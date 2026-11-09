@@ -70,21 +70,6 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
-    fun `test feedback methods`() {
-        // Test feedback methods - these should not throw exceptions
-        bugseeInternal.showFeedback()
-        
-        val listener: BugseeFeedbackEventListener = { report ->
-            assertNotNull(report, "Report should not be null")
-        }
-        bugseeInternal.setOnNewFeedbackListener(listener)
-        
-        bugseeInternal.setDefaultFeedbackGreeting("Test greeting")
-        
-        assertTrue(true, "All feedback methods should complete successfully")
-    }
-
-    @Test
     fun `test logging methods`() {
         // Test logging methods - these should not throw exceptions
         bugseeInternal.log("Test log message")

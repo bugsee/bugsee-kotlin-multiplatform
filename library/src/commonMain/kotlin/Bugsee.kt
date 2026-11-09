@@ -33,19 +33,6 @@ public object Bugsee {
         bugseeInternal.relaunch(options)
     }
 
-    // Feedback methods
-    public fun showFeedback() {
-        bugseeInternal.showFeedback()
-    }
-
-    public fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
-        bugseeInternal.setOnNewFeedbackListener(listener)
-    }
-
-    public fun setDefaultFeedbackGreeting(greeting: String) {
-        bugseeInternal.setDefaultFeedbackGreeting(greeting)
-    }
-
     // Logging methods
     public fun log(message: String) {
         bugseeInternal.log(message)

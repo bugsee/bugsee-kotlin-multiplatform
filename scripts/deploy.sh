@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Publish both KMP modules to Maven Central (Sonatype Central Portal):
+# Publish the KMP modules to Maven Central (Sonatype Central Portal):
 #   com.bugsee:bugsee-kotlin-multiplatform:<version from version.txt>
 #   com.bugsee:bugsee-kotlin-multiplatform-protect:<version from version.txt>
+#   com.bugsee:bugsee-kotlin-multiplatform-feedback:<version from version.txt>
 #
 # Targets per module: androidRelease, iosArm64, iosX64, iosSimulatorArm64, kotlinMultiplatform.
 #
@@ -98,7 +99,7 @@ else
 fi
 export RELEASE="$RELEASE_FLAG"
 
-MODULES=(":library" ":library-protect")
+MODULES=(":library" ":library-protect" ":library-feedback")
 echo "RELEASE=$RELEASE_FLAG  ->  publishing $EFFECTIVE_VERSION for: ${MODULES[*]}"
 
 # ---------- credential sanity check (remote publish only) ----------
