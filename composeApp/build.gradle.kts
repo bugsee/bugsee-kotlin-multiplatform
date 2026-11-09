@@ -49,6 +49,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(project(":library"))
             implementation(project(":library-protect"))
+            implementation(project(":library-feedback"))
             implementation(libs.ktor3.client.core)
             implementation(libs.ktor3.client.websockets)
             implementation(libs.kotlinx.coroutines.core)

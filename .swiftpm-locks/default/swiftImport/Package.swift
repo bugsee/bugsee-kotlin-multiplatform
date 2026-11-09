@@ -15,7 +15,9 @@ let package = Package(
   dependencies: [
     .package(path: "subpackages/_composeApp"),
     .package(path: "subpackages/_library"),
-    .package(path: "subpackages/_library-protect")
+    .package(path: "subpackages/_library-feedback"),
+    .package(path: "subpackages/_library-protect"),
+    .package(path: "subpackages/_library_feedback")
   ],
   targets: [
     .target(
@@ -23,7 +25,9 @@ let package = Package(
       dependencies: [
         .product(name: "_composeApp", package: "_composeApp"),
         .product(name: "_library", package: "_library"),
-        .product(name: "_library-protect", package: "_library-protect")
+        .product(name: "_library-feedback", package: "_library-feedback"),
+        .product(name: "_library-protect", package: "_library-protect"),
+        .product(name: "_library_feedback", package: "_library_feedback")
       ]
     )
   ]

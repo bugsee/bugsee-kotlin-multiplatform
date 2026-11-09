@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.Bugsee
 import com.bugsee.kmp.BugseeLogLevel
 import com.bugsee.kmp.BugseeSeverity
+import com.bugsee.kmp.feedback.BugseeFeedback
 import com.bugsee.kmp.protect.BugseeProtect
 import com.bugsee.kmp.sample.screens.*
 import kotlinx.coroutines.launch
@@ -143,8 +144,8 @@ private fun DrawerContent(onAction: () -> Unit) {
 
             // Feedback
             SectionLabel("Feedback")
-            DrawerButton("Show Feedback") { Bugsee.showFeedback(); onAction() }
-            DrawerButton("Set Feedback Greeting") { Bugsee.setDefaultFeedbackGreeting("Hello from KMP!"); onAction() }
+            DrawerButton("Show Feedback") { BugseeFeedback.show(); onAction() }
+            DrawerButton("Set Feedback Greeting") { BugseeFeedback.setGreeting("Hello from KMP!"); onAction() }
             HorizontalDivider()
 
             // Logging

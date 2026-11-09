@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
-# Fails when a committed SwiftPM manifest takes Bugsee from somewhere other than
-# github.com/bugsee/spm. A build with bugsee.ios.localPackage set writes the local package
-# path into the iosApp linkage package, and that change must not be committed.
+# Fails when a committed SwiftPM manifest takes Bugsee or its Feedback add-on from somewhere
+# other than github.com/bugsee/spm / github.com/bugsee/feedback-spm. A build with
+# bugsee.ios.localPackage set writes the local package path into the iosApp linkage package,
+# and that change must not be committed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 status=0
-for manifest in \
-    iosApp/KotlinMultiplatformLinkedPackage/subpackages/_library/Package.swift \
-    .swiftpm-locks/default/swiftImport/subpackages/_library/Package.swift; do
-    if ! grep -q 'url: "https://github.com/bugsee/spm.git"' "$manifest"; then
-        echo "error: $manifest does not take Bugsee from https://github.com/bugsee/spm.git." >&2
+check() {
+    local manifest="$1" url="$2"
+    if ! grep -q "url: \"$url\"" "$manifest"; then
+        echo "error: $manifest does not take its package from $url." >&2
         echo "       Was it built with bugsee.ios.localPackage? Restore it: git checkout -- $manifest" >&2
         status=1
     fi
-done
+}
+
+check iosApp/KotlinMultiplatformLinkedPackage/subpackages/_library/Package.swift \
+    https://github.com/bugsee/spm.git
+check .swiftpm-locks/default/swiftImport/subpackages/_library/Package.swift \
+    https://github.com/bugsee/spm.git
+check iosApp/KotlinMultiplatformLinkedPackage/subpackages/_library_feedback/Package.swift \
+    https://github.com/bugsee/feedback-spm.git
+check .swiftpm-locks/default/swiftImport/subpackages/_library-feedback/Package.swift \
+    https://github.com/bugsee/feedback-spm.git
 exit "$status"

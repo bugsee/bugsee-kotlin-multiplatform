@@ -1,6 +1,15 @@
 {
-  "originHash" : "c2570576f11cea76ebd4f9def2594fa53444b72d9000424cebd8dc7e88b9974d",
+  "originHash" : "92105f9f7216fccf829c9e49dd79533e34a53644d54865b615bdf1dec3f8ef58",
   "pins" : [
+    {
+      "identity" : "feedback-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/bugsee/feedback-spm.git",
+      "state" : {
+        "revision" : "0d203389a1bc04df8fa92299483967f59c7cbce9",
+        "version" : "7.0.1"
+      }
+    },
     {
       "identity" : "spm",
       "kind" : "remoteSourceControl",
