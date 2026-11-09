@@ -1,3 +1,7 @@
+import com.bugsee.gradle.LocalIosPackages
+import com.bugsee.gradle.localIosPackage
+import com.bugsee.gradle.refusePublishingWithLocalIosPackage
+import com.bugsee.gradle.usesLocalIosPackage
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -78,16 +82,45 @@ kotlin {
     // core package (github.com/bugsee/spm) to the same exact version, so it follows bugsee-ios.
     // The dependency is published with the module, so a consumer's Kotlin Gradle plugin adds the
     // package to the app through its linkage package, as for :library.
+    //
+    // Local iOS SDK builds (see buildSrc LocalIosPackages and CLAUDE.md):
+    // - bugsee.ios.localFeedbackPackage replaces feedback-spm with a local BugseeFeedback package;
+    // - otherwise, with bugsee.ios.localPackage, feedback-spm's core dependency must resolve to
+    //   the local core. SwiftPM does that only for a local package with the same identity, so
+    //   the local core's folder must be named "spm".
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     swiftPMDependencies {
         iosMinimumDeploymentTarget.set("15.0")
-        swiftPackage(
-            url = url("https://github.com/bugsee/feedback-spm.git"),
-            version = exact(libs.versions.bugsee.ios.get()),
-            products = listOf(product("BugseeFeedback")),
-        )
+        if (usesLocalIosPackage) {
+            packageResolvedSynchronization = noSynchronization()
+        }
+        val localFeedbackPackage = localIosPackage(LocalIosPackages.FEEDBACK)
+        val localCorePackage = localIosPackage(LocalIosPackages.CORE)
+        if (localFeedbackPackage != null) {
+            localSwiftPackage(
+                directory = rootProject.layout.projectDirectory.dir(localFeedbackPackage),
+                products = listOf("BugseeFeedback"),
+            )
+        } else {
+            if (localCorePackage != null && !rootProject.file(localCorePackage).name.equals("spm", ignoreCase = true)) {
+                throw GradleException(
+                    "${LocalIosPackages.CORE} points to '${rootProject.file(localCorePackage).name}': " +
+                        "feedback-spm depends on github.com/bugsee/spm, and SwiftPM uses a local core " +
+                        "for it only when the local package's folder is named 'spm'. Rename the folder, " +
+                        "or set ${LocalIosPackages.FEEDBACK} to a local BugseeFeedback package that " +
+                        "depends on your local core by path."
+                )
+            }
+            swiftPackage(
+                url = url("https://github.com/bugsee/feedback-spm.git"),
+                version = exact(libs.versions.bugsee.ios.get()),
+                products = listOf(product("BugseeFeedback")),
+            )
+        }
     }
 }
+
+refusePublishingWithLocalIosPackage()
 
 android {
     namespace = "com.bugsee.kmp.feedback"
