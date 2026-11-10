@@ -140,6 +140,8 @@ add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version 
   newer (its Compose UI 1.8 and `androidx.dynamicanimation` 1.1 dependencies require them).
 - The greeting set with `setGreeting` is kept across app restarts on Android, but only until the
   app exits on iOS: set it at every start.
+- The lifecycle events `BeforeFeedbackShown` and `AfterFeedbackShown` are reported on Android
+  only: the iOS Feedback add-on does not report them.
 
 ## Appearance
 

@@ -1,5 +1,6 @@
 package com.bugsee.kmp.feedback
 
+import platform.Foundation.NSLock
 import platform.Foundation.NSLog
 import platform.darwin.NSObject
 import swiftPMImport.com.bugsee.library.feedback.BugseeFeedbackListenerProtocol
@@ -8,8 +9,8 @@ import swiftPMImport.com.bugsee.library.feedback.BugseeFeedback as NativeBugseeF
 
 /**
  * The Feedback extension of iOS SDK 7. The package's BugseeFeedbackAutoRegister registers it
- * when it is loaded; registering again is idempotent, and an extension registered after launch
- * is launched right away.
+ * when it is loaded, before the app can launch Bugsee; registering again is idempotent. (An
+ * extension registered after Bugsee.launch is launched only once the SDK reports Launched.)
  */
 internal fun nativeFeedback(): NativeBugseeFeedback {
     NativeBugseeFeedback.register()
@@ -19,6 +20,10 @@ internal fun nativeFeedback(): NativeBugseeFeedback {
 // The add-on holds its listener weakly, so the adapter is kept alive here.
 @Volatile
 internal var listenerAdapter: FeedbackListenerAdapter? = null
+
+// Keeps listenerAdapter and the add-on's listener the same when setListener is called from
+// several threads; otherwise the add-on could keep an adapter that is no longer retained.
+private val listenerLock = NSLock()
 
 internal actual fun platformShowFeedback() {
     nativeFeedback().showFeedbackUI()
@@ -30,8 +35,13 @@ internal actual fun platformSetFeedbackGreeting(greeting: String?) {
 
 internal actual fun platformSetFeedbackListener(listener: BugseeFeedbackListener?) {
     val adapter = listener?.let(::FeedbackListenerAdapter)
-    listenerAdapter = adapter
-    nativeFeedback().setListener(adapter)
+    listenerLock.lock()
+    try {
+        listenerAdapter = adapter
+        nativeFeedback().setListener(adapter)
+    } finally {
+        listenerLock.unlock()
+    }
 }
 
 /** iOS SDK 7 already calls the listener on the main thread. */

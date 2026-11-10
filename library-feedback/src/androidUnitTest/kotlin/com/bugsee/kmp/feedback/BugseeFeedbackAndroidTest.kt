@@ -4,6 +4,7 @@ import android.os.Looper
 import com.bugsee.library.contracts.extensions.Feedback
 import com.bugsee.library.contracts.lifecycle.FeedbackLifecycleEvents
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -11,6 +12,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import com.bugsee.library.Bugsee as BugseeSDK
@@ -18,6 +20,21 @@ import com.bugsee.library.Bugsee as BugseeSDK
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class BugseeFeedbackAndroidTest {
+
+    // The SDK's extension registry is static and the tests share it, so each test starts with
+    // the extension unregistered, as an app whose init provider was stripped does.
+    @Before
+    fun unregisterExtensions() {
+        val registry = Class.forName("com.bugsee.library.BugseeExtensions")
+        for (name in listOf("sLoadedExtensions", "sLaunchedExtensions")) {
+            val field = registry.getDeclaredField(name).apply { isAccessible = true }
+            when (val value = field.get(null)) {
+                is MutableMap<*, *> -> value.clear()
+                is MutableCollection<*> -> value.clear()
+                else -> error("BugseeExtensions.$name is ${value?.javaClass}")
+            }
+        }
+    }
 
     @After
     fun removeListener() {
@@ -27,7 +44,8 @@ class BugseeFeedbackAndroidTest {
 
     @Test
     fun `the native extension is registered when missing and reused after`() {
-        // Robolectric does not run the add-on's init provider, so the first lookup registers it.
+        assertNull(BugseeSDK.ext(Feedback::class.java))
+
         val feedback = nativeFeedback()
 
         assertNotNull(feedback)

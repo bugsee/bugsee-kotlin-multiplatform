@@ -104,9 +104,10 @@ kotlin {
         } else {
             val localCoreFolder = localCorePackage?.let { rootProject.file(it).name }
             if (localCoreFolder != null && !localCoreFolder.equals("spm", ignoreCase = true)) {
-                // Fails only builds that resolve Swift packages including feedback-spm (this module
-                // and the sample, which links it), so Android-only builds, IDE sync and :library's
-                // iOS builds keep working with any folder name.
+                // Fails the builds that resolve feedback-spm (this module's and the sample's Swift
+                // package tasks, IDE sync included): SwiftPM would fail them anyway, on targets
+                // named Bugsee in both the local core and github.com/bugsee/spm, with a less clear
+                // error. Android builds and :library's iOS builds keep working with any folder name.
                 val swiftPMWork = Regex("swiftpm|syntheticimport|syntheticlinkage|linkagepackage|embedandsign", RegexOption.IGNORE_CASE)
                 val feedbackProjects = setOf(project.path, ":composeApp")
                 gradle.taskGraph.whenReady {

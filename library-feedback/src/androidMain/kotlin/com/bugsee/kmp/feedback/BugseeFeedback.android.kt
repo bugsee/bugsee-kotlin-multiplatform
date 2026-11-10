@@ -31,6 +31,10 @@ internal fun nativeFeedback(): Feedback? {
 @Volatile
 internal var currentListenerAdapter: MainThreadFeedbackListener? = null
 
+// Keeps currentListenerAdapter and the add-on's listener the same when setListener is called
+// from several threads: the add-on applies listeners in the order they are passed to it.
+private val listenerLock = Any()
+
 internal actual fun platformShowFeedback() {
     nativeFeedback()?.showFeedbackActivity()
 }
@@ -41,8 +45,10 @@ internal actual fun platformSetFeedbackGreeting(greeting: String?) {
 
 internal actual fun platformSetFeedbackListener(listener: BugseeFeedbackListener?) {
     val adapter = listener?.let(::MainThreadFeedbackListener)
-    currentListenerAdapter = adapter
-    nativeFeedback()?.setOnNewFeedbackListener(adapter)
+    synchronized(listenerLock) {
+        currentListenerAdapter = adapter
+        nativeFeedback()?.setOnNewFeedbackListener(adapter)
+    }
 }
 
 /**
