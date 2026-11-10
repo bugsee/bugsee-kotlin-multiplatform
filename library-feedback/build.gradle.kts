@@ -102,14 +102,24 @@ kotlin {
                 products = listOf("BugseeFeedback"),
             )
         } else {
-            if (localCorePackage != null && !rootProject.file(localCorePackage).name.equals("spm", ignoreCase = true)) {
-                throw GradleException(
-                    "${LocalIosPackages.CORE} points to '${rootProject.file(localCorePackage).name}': " +
-                        "feedback-spm depends on github.com/bugsee/spm, and SwiftPM uses a local core " +
-                        "for it only when the local package's folder is named 'spm'. Rename the folder, " +
-                        "or set ${LocalIosPackages.FEEDBACK} to a local BugseeFeedback package that " +
-                        "depends on your local core by path."
-                )
+            val localCoreFolder = localCorePackage?.let { rootProject.file(it).name }
+            if (localCoreFolder != null && !localCoreFolder.equals("spm", ignoreCase = true)) {
+                // Fails only builds that resolve Swift packages including feedback-spm (this module
+                // and the sample, which links it), so Android-only builds, IDE sync and :library's
+                // iOS builds keep working with any folder name.
+                val swiftPMWork = Regex("swiftpm|syntheticimport|syntheticlinkage|linkagepackage|embedandsign", RegexOption.IGNORE_CASE)
+                val feedbackProjects = setOf(project.path, ":composeApp")
+                gradle.taskGraph.whenReady {
+                    if (allTasks.any { it.project.path in feedbackProjects && swiftPMWork.containsMatchIn(it.name) }) {
+                        throw GradleException(
+                            "${LocalIosPackages.CORE} points to '$localCoreFolder': feedback-spm depends on " +
+                                "github.com/bugsee/spm, and SwiftPM uses a local core for it only when the " +
+                                "local package's folder is named 'spm'. Rename the folder, or set " +
+                                "${LocalIosPackages.FEEDBACK} to a local BugseeFeedback package that depends " +
+                                "on your local core by path."
+                        )
+                    }
+                }
             }
             swiftPackage(
                 url = url("https://github.com/bugsee/feedback-spm.git"),

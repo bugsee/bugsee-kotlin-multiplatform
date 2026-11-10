@@ -17,7 +17,8 @@ public object BugseeFeedback {
 
     /**
      * Sets the greeting the feedback screen shows at the start of the conversation; `null`
-     * removes a greeting set earlier.
+     * removes a greeting set earlier. Android keeps it across app restarts, iOS only until the
+     * app exits, so set it at every start.
      */
     public fun setGreeting(greeting: String?) {
         platformSetFeedbackGreeting(greeting)

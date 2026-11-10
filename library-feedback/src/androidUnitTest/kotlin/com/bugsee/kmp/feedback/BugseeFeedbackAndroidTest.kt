@@ -2,6 +2,8 @@ package com.bugsee.kmp.feedback
 
 import android.os.Looper
 import com.bugsee.library.contracts.extensions.Feedback
+import com.bugsee.library.contracts.lifecycle.FeedbackLifecycleEvents
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -17,12 +19,20 @@ import com.bugsee.library.Bugsee as BugseeSDK
 @Config(sdk = [28])
 class BugseeFeedbackAndroidTest {
 
+    @After
+    fun removeListener() {
+        BugseeFeedback.setListener(null)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
     @Test
-    fun `the native extension is registered on first use`() {
+    fun `the native extension is registered when missing and reused after`() {
+        // Robolectric does not run the add-on's init provider, so the first lookup registers it.
         val feedback = nativeFeedback()
 
         assertNotNull(feedback)
         assertSame(feedback, BugseeSDK.ext(Feedback::class.java))
+        assertSame(feedback, nativeFeedback())
     }
 
     @Test
@@ -38,7 +48,7 @@ class BugseeFeedbackAndroidTest {
     fun `listener calls from a background thread arrive on the main thread`() {
         val received = mutableListOf<String>()
         val threads = mutableListOf<Thread>()
-        val adapter = MainThreadFeedbackListener(object : BugseeFeedbackListener {
+        BugseeFeedback.setListener(object : BugseeFeedbackListener {
             override fun onNewMessagesReceived(messages: List<String>) {
                 received += messages
                 threads += Thread.currentThread()
@@ -49,13 +59,12 @@ class BugseeFeedbackAndroidTest {
                 threads += Thread.currentThread()
             }
         })
+        val adapter = assertNotNull(currentListenerAdapter)
 
-        val worker = Thread {
+        onWorkerThread {
             adapter.onNewMessagesReceived(listOf("first", "second"))
             adapter.onNewMessageSent("reply")
         }
-        worker.start()
-        worker.join()
         assertTrue(received.isEmpty(), "delivered before the main looper ran")
 
         shadowOf(Looper.getMainLooper()).idle()
@@ -65,12 +74,43 @@ class BugseeFeedbackAndroidTest {
     }
 
     @Test
-    fun `an exception from the listener does not escape`() {
-        val adapter = MainThreadFeedbackListener(object : BugseeFeedbackListener {
-            override fun onNewMessageSent(message: String) = throw IllegalStateException("listener bug")
+    fun `callbacks posted for a replaced listener are dropped`() {
+        val received = mutableListOf<String>()
+        BugseeFeedback.setListener(object : BugseeFeedbackListener {
+            override fun onNewMessageSent(message: String) {
+                received += message
+            }
         })
+        val replaced = assertNotNull(currentListenerAdapter)
+
+        onWorkerThread { replaced.onNewMessageSent("late") }
+        BugseeFeedback.setListener(null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(received.isEmpty())
+    }
+
+    @Test
+    fun `an error from the listener does not escape`() {
+        BugseeFeedback.setListener(object : BugseeFeedbackListener {
+            override fun onNewMessageSent(message: String) = TODO("listener bug")
+        })
+        val adapter = assertNotNull(currentListenerAdapter)
 
         adapter.onNewMessageSent("reply")
         shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    @Test
+    fun `the core maps the add-on's lifecycle event names`() {
+        // :library maps these names without depending on the add-on; keep them in sync.
+        assertEquals("com.bugsee.lifecycle.BeforeFeedbackShown", FeedbackLifecycleEvents.BeforeFeedbackShown)
+        assertEquals("com.bugsee.lifecycle.AfterFeedbackShown", FeedbackLifecycleEvents.AfterFeedbackShown)
+    }
+
+    private fun onWorkerThread(block: () -> Unit) {
+        val worker = Thread(block)
+        worker.start()
+        worker.join()
     }
 }

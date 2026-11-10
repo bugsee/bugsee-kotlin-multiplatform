@@ -44,8 +44,9 @@
   are reported when a blackout starts / ends. `pause()` before `launch()` is now honored: capture
   starts paused and `Launched` is followed by `Paused`. A pause ends when the SDK stops (`Resumed`
   is reported before `Stopped`), so call `pause()` again before a relaunch.
-- The lifecycle events `Started`, `BeforeFeedbackShown` and `AfterFeedbackShown` are no longer
-  reported on Android. The SDK 7 events `Launching`, `Stopping` and `ReportAssemblyFailed` have no
+- The lifecycle event `Started` is no longer reported on Android. `BeforeFeedbackShown` and
+  `AfterFeedbackShown` are reported only when the app uses `bugsee-kotlin-multiplatform-feedback`
+  (see [Feedback](#feedback)). The SDK 7 events `Launching`, `Stopping` and `ReportAssemblyFailed` have no
   0.1.x counterpart and are not reported either.
 - Messages sent with `Bugsee.log(...)` are not passed through the log filter set with
   `setLogFilter`: Android SDK 7 treats them as already sanitized by your app. Only captured
@@ -135,6 +136,10 @@ add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version 
   Swift package to the app through the linkage package, as it does for the core package; the
   first Xcode build after adding the artifact fails once with "Synthetic project regenerated".
 - On Android the feedback screen does not open before `Bugsee.launch`.
+- Android: the Feedback add-on needs `compileSdk` 35 or newer and Android Gradle plugin 8.1.1 or
+  newer (its Compose UI 1.8 and `androidx.dynamicanimation` 1.1 dependencies require them).
+- The greeting set with `setGreeting` is kept across app restarts on Android, but only until the
+  app exits on iOS: set it at every start.
 
 ## Appearance
 
@@ -147,7 +152,7 @@ add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version 
 - `reportSendButtonColor` and `reportCloseButtonColor` (iOS) are deprecated: iOS SDK 7 does not
   apply them.
 - On iOS an unset placeholder (`reportSummaryPlaceholder`, …) reads as `null` instead of `""`.
-- On Android the feedback colors take effect only with the `bugsee-android-feedback` module.
+- The feedback colors take effect only in apps that use `bugsee-kotlin-multiplatform-feedback`.
 - The native SDKs do not apply every property they declare; the property KDoc says so:
   - the iOS SDK 7.0 feedback screens use only `feedbackBackgroundColor` and the feedback e-mail
     screen colors (`feedbackEmailBackgroundColor`, `feedbackEmailContinueActiveColor`,

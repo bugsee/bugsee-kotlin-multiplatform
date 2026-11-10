@@ -185,6 +185,10 @@ internal class BugseeAndroidUtils {
                 LifecycleEvents.AfterReportAssembled -> BugseeLifecycleEvent.AfterReportAssembled
                 LifecycleEvents.ReportUploadFailedWithFutureRetry -> BugseeLifecycleEvent.ReportUploadFailedWithFutureRetry
                 LifecycleEvents.ReportUploadFailed -> BugseeLifecycleEvent.ReportUploadFailed
+                // Dispatched by the Feedback add-on (bugsee-kotlin-multiplatform-feedback). Its
+                // FeedbackLifecycleEvents constants are not in the core SDK this module links.
+                "com.bugsee.lifecycle.BeforeFeedbackShown" -> BugseeLifecycleEvent.BeforeFeedbackShown
+                "com.bugsee.lifecycle.AfterFeedbackShown" -> BugseeLifecycleEvent.AfterFeedbackShown
                 else -> null
             }
         }

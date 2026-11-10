@@ -9,7 +9,8 @@ package com.bugsee.kmp
  * Reading a property returns the native SDK's current value: on Android `null` until it is set; on
  * iOS the SDK default until it is set, or `null` for the placeholders.
  *
- * On Android the feedback properties take effect only with the `bugsee-android-feedback` module.
+ * The feedback properties take effect only in apps that use the `bugsee-kotlin-multiplatform-feedback`
+ * artifact, which brings the feedback screens.
  *
  * Some properties are declared by a native SDK but not applied by its current UI; their KDoc says so.
  */

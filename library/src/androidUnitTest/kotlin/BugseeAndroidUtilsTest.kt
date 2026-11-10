@@ -353,6 +353,8 @@ class BugseeAndroidUtilsTest {
     @Test
     fun `convertLifecycleEvent - all event types`() {
         assertEquals(BugseeLifecycleEvent.Launched, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.Launched))
+        assertEquals(BugseeLifecycleEvent.BeforeFeedbackShown, BugseeAndroidUtils.convertLifecycleEvent("com.bugsee.lifecycle.BeforeFeedbackShown"))
+        assertEquals(BugseeLifecycleEvent.AfterFeedbackShown, BugseeAndroidUtils.convertLifecycleEvent("com.bugsee.lifecycle.AfterFeedbackShown"))
         assertEquals(BugseeLifecycleEvent.Stopped, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.Stopped))
         assertEquals(BugseeLifecycleEvent.Resumed, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BlackoutEnded))
         assertEquals(BugseeLifecycleEvent.Paused, BugseeAndroidUtils.convertLifecycleEvent(LifecycleEvents.BlackoutStarted))

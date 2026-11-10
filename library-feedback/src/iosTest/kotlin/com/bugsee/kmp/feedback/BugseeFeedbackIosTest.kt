@@ -6,7 +6,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import swiftPMImport.com.bugsee.library.Bugsee as BugseeSDK
 import swiftPMImport.com.bugsee.library.feedback.BugseeFeedback as NativeBugseeFeedback
@@ -70,6 +69,5 @@ class BugseeFeedbackIosTest {
         })
 
         adapter.onNewMessageSent("reply")
-        assertSame(adapter, adapter)
     }
 }
