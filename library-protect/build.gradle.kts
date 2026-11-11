@@ -103,8 +103,8 @@ mavenPublishing {
 
         licenses {
             license {
-                name = "Proprietary"
-                url = "https://bugsee.com/tos/"
+                name = "MIT License"
+                url = "https://opensource.org/licenses/MIT"
             }
         }
 
