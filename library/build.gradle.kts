@@ -1,7 +1,6 @@
 import com.bugsee.gradle.options.GenerateBugseeOptionsTask
 import com.bugsee.gradle.options.UpdateBugseeOptionsManifestsTask
 import com.codingfeline.buildkonfig.compiler.FieldSpec
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -226,8 +225,9 @@ tasks.withType<AbstractTestTask> {
 refusePublishingWithLocalIosPackage()
 
 mavenPublishing {
-    // Target the new Central Portal (https://central.sonatype.com), not the legacy OSSRH.
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    // The Central Portal (https://central.sonatype.com), the only Maven Central target since
+    // OSSRH was shut down.
+    publishToMavenCentral()
 
     // GPG-sign every publication (KMP root + android + iosarm64 + sources/javadoc).
     // Central Portal rejects unsigned artifacts, but local smoke tests

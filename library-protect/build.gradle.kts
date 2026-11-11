@@ -1,4 +1,3 @@
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -81,7 +80,7 @@ tasks.withType<AbstractTestTask> {
 // Required local setup (~/.gradle/gradle.properties keys, GPG key export, publish
 // commands) is documented at the top of the mavenPublishing block in :library/build.gradle.kts.
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     // Sign only when a signing key is configured, so local smoke tests
     // (./gradlew :library-protect:publishToMavenLocal) work without GPG keys.
