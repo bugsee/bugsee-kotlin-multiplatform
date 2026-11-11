@@ -23,8 +23,6 @@ check .swiftpm-locks/default/swiftImport/subpackages/_library/Package.swift \
     https://github.com/bugsee/spm.git
 check iosApp/KotlinMultiplatformLinkedPackage/subpackages/_library_feedback/Package.swift \
     https://github.com/bugsee/feedback-spm.git
-check .swiftpm-locks/default/swiftImport/subpackages/_library-feedback/Package.swift \
-    https://github.com/bugsee/feedback-spm.git
 check .swiftpm-locks/default/swiftImport/subpackages/_library_feedback/Package.swift \
     https://github.com/bugsee/feedback-spm.git
 exit "$status"

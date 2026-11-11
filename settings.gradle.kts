@@ -17,6 +17,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "bugsee-kotlin-multiplatform"
 include(":composeApp")
+include(":androidApp")
 include(":library")
 include(":library-protect")
 include(":library-feedback")

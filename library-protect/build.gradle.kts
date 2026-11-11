@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.vanniktech.mavenPublish)
@@ -19,7 +19,7 @@ val isReleaseBuild: Boolean =
 val libraryVersionName: String = rootProject.file("version.txt").readLines().first().trim() +
         if (isReleaseBuild) "" else "-SNAPSHOT"
 
-group = "${project.properties["LIB_GROUP"]}"
+group = providers.gradleProperty("LIB_GROUP").get()
 version = libraryVersionName
 
 println("[:library-protect] Release build: $isReleaseBuild  —  version: $version")
@@ -32,10 +32,11 @@ kotlin {
     explicitApi()
     applyDefaultHierarchyTemplate()
 
-    androidTarget {
-        // Publish only the `release` variant — debug variants are not shipped.
-        publishLibraryVariants("release")
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    // The Android-KMP library plugin builds and publishes a single Android variant.
+    android {
+        namespace = "com.bugsee.kmp.protect"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_1_8)
         }
@@ -53,7 +54,7 @@ kotlin {
             freeCompilerArgs.add("-Xexpect-actual-classes")
         }
 
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 // Depends on the main library for com.bugsee.kmp.Bugsee.addSecureView().
                 // `implementation` (not `api`): consumers must add bugsee-kotlin-multiplatform
@@ -65,18 +66,6 @@ kotlin {
                 implementation(compose.ui)
             }
         }
-    }
-}
-
-android {
-    namespace = "com.bugsee.kmp.protect"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
 

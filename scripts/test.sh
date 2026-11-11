@@ -17,7 +17,7 @@ cd "$REPO_ROOT"
 
 # ---------- JAVA_HOME ----------
 if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1; then
-    for v in 21 17 11; do
+    for v in 21 17; do
         candidate="$(/usr/libexec/java_home -v "$v" 2>/dev/null || true)"
         if [ -n "$candidate" ] && [ -x "$candidate/bin/javac" ]; then
             export JAVA_HOME="$candidate"
@@ -26,7 +26,7 @@ if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1;
     done
 fi
 if [ -z "${JAVA_HOME:-}" ]; then
-    echo "error: JDK 11+ required. Install with: brew install openjdk@21" >&2
+    echo "error: JDK 17+ required. Install with: brew install openjdk@21" >&2
     exit 1
 fi
 
@@ -59,7 +59,12 @@ IOS_TASKS=()
 ANDROID_TASKS=()
 for m in "${MODULES[@]}"; do
     IOS_TASKS+=("$m:$IOS_TEST_NAME")
-    ANDROID_TASKS+=("$m:testDebugUnitTest")
+    # Robolectric tests run for every module with an androidHostTest source set. The Android-KMP
+    # library plugin creates testAndroidHostTest only when the module enables withHostTest, so a
+    # module with tests but without it fails here with "task not found" instead of being skipped.
+    if [ -d "${m#:}/src/androidHostTest" ]; then
+        ANDROID_TASKS+=("$m:testAndroidHostTest")
+    fi
 done
 
 # ---------- arg parsing ----------

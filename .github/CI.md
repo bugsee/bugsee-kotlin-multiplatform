@@ -9,9 +9,11 @@ repo's own `scripts/{build,test,deploy}.sh`, so CI and local runs stay identical
 | `main.yml` | push to `main` / `nextgen`, manual | — | `false` | `build.sh` + `test.sh all` + `deploy.sh --local` (mavenLocal) |
 | `deploy-production.yml` | manual dispatch from `release` | `production` | `true` | `build.sh` + `test.sh all` + `deploy.sh --skip-tests` (publish + auto-release to Maven Central) |
 
-`test.sh all` = Robolectric unit tests and iOS simulator tests for `:library`,
-`:library-protect` and `:library-feedback`. `build.sh` assembles every published target,
-including the `iosArm64` device slice that the simulator tests never compile.
+`test.sh all` = Robolectric unit tests (`testAndroidHostTest` in every module with an
+`androidHostTest` source set) and iOS simulator tests for `:library`, `:library-protect` and
+`:library-feedback`. `build.sh` assembles every published target, including the `iosArm64`
+device slice that the simulator tests never compile, and the Android sample
+(`:androidApp:assembleDebug`).
 
 ## Runners: GitHub-hosted, not the org Mac
 
@@ -42,7 +44,7 @@ The shared `.github/actions/setup` action:
 
 - selects **Xcode 26.4.1** explicitly rather than trusting the image default
   (26.6) — move its `xcode-version` default together with the Kotlin version;
-- installs Temurin **JDK 21** (AGP 8 needs 17+);
+- installs Temurin **JDK 21** (Gradle 9 and AGP 9 need 17+);
 - restores the Gradle cache (`gradle/actions/setup-gradle`) and `~/.konan`
   (Kotlin/Native toolchain, keyed on `gradle/libs.versions.toml`). The Gradle
   cache is written only by pushes to `main` and `nextgen` (via `main.yml`);
