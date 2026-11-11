@@ -44,8 +44,9 @@
   are reported when a blackout starts / ends. `pause()` before `launch()` is now honored: capture
   starts paused and `Launched` is followed by `Paused`. A pause ends when the SDK stops (`Resumed`
   is reported before `Stopped`), so call `pause()` again before a relaunch.
-- The lifecycle events `Started`, `BeforeFeedbackShown` and `AfterFeedbackShown` are no longer
-  reported on Android. The SDK 7 events `Launching`, `Stopping` and `ReportAssemblyFailed` have no
+- The lifecycle event `Started` is no longer reported on Android. `BeforeFeedbackShown` and
+  `AfterFeedbackShown` are reported only when the app uses `bugsee-kotlin-multiplatform-feedback`
+  (see [Feedback](#feedback)). The SDK 7 events `Launching`, `Stopping` and `ReportAssemblyFailed` have no
   0.1.x counterpart and are not reported either.
 - Messages sent with `Bugsee.log(...)` are not passed through the log filter set with
   `setLogFilter`: Android SDK 7 treats them as already sanitized by your app. Only captured
@@ -116,6 +117,32 @@ Keychain item iOS SDK 6 stored the email in, while Android SDK 7 does not read t
 SDK 6 stored. Call `setUserIdentifier` again after the upgrade, for example at app start, rather
 than only when the user logs in.
 
+## Feedback
+
+The feedback chat is a separate artifact, as in the native SDKs 7, where it became an optional
+add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version as
+`bugsee-kotlin-multiplatform`) and use `com.bugsee.kmp.feedback.BugseeFeedback`:
+
+| 0.1.x | 0.2.0 |
+|---|---|
+| `Bugsee.showFeedback()` | `BugseeFeedback.show()` |
+| `Bugsee.setDefaultFeedbackGreeting(greeting)` | `BugseeFeedback.setGreeting(greeting)` |
+| `Bugsee.setOnNewFeedbackListener { messages -> … }` | `BugseeFeedback.setListener(object : BugseeFeedbackListener { override fun onNewMessagesReceived(messages: List<String>) { … } })` |
+
+- `BugseeFeedbackEventListener` is removed. `BugseeFeedbackListener` also reports the messages
+  the user sends (`onNewMessageSent`), and both callbacks run on the main thread.
+- The artifact brings the Feedback add-ons: `com.bugsee:bugsee-android-feedback` on Android and
+  the Swift package `github.com/bugsee/feedback-spm` on iOS. The Kotlin Gradle plugin adds the
+  Swift package to the app through the linkage package, as it does for the core package; the
+  first Xcode build after adding the artifact fails once with "Synthetic project regenerated".
+- On Android the feedback screen does not open before `Bugsee.launch`.
+- Android: the Feedback add-on needs `compileSdk` 35 or newer and Android Gradle plugin 8.1.1 or
+  newer (its Compose UI 1.8 and `androidx.dynamicanimation` 1.1 dependencies require them).
+- The greeting set with `setGreeting` is kept across app restarts on Android, but only until the
+  app exits on iOS: set it at every start.
+- The lifecycle events `BeforeFeedbackShown` and `AfterFeedbackShown` are reported on Android
+  only: the iOS Feedback add-on does not report them.
+
 ## Appearance
 
 `BugseeAppearance` keeps its properties; each property's KDoc names the platforms it applies to.
@@ -127,7 +154,7 @@ than only when the user logs in.
 - `reportSendButtonColor` and `reportCloseButtonColor` (iOS) are deprecated: iOS SDK 7 does not
   apply them.
 - On iOS an unset placeholder (`reportSummaryPlaceholder`, …) reads as `null` instead of `""`.
-- On Android the feedback colors take effect only with the `bugsee-android-feedback` module.
+- The feedback colors take effect only in apps that use `bugsee-kotlin-multiplatform-feedback`.
 - The native SDKs do not apply every property they declare; the property KDoc says so:
   - the iOS SDK 7.0 feedback screens use only `feedbackBackgroundColor` and the feedback e-mail
     screen colors (`feedbackEmailBackgroundColor`, `feedbackEmailContinueActiveColor`,
@@ -212,9 +239,3 @@ Removed without a direct replacement: `serviceMode` and `fallbackVideoMode` (And
 Enums: `BugseeFrameRate` gains `Raw` (Android); `BugseeVideoMode.V3` / `V4` are replaced by
 `Fullscreen` / `DirectBuffers`. New: `BugseeMemoryLeakMode`, `BugseeDataEncryptionMode`, `BugseeStyle`,
 `BugseeCrashHandlerType`, and the `BugseeCrashSignals` constants.
-
-## Temporarily unavailable (nextgen only)
-
-These do not work yet; the API calls among them log an error:
-
-- Feedback: `showFeedback`, `setOnNewFeedbackListener`, `setDefaultFeedbackGreeting`.

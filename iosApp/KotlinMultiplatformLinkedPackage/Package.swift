@@ -13,12 +13,14 @@ let package = Package(
     )
   ],
   dependencies: [
+    .package(path: "subpackages/_library_feedback"),
     .package(path: "subpackages/_library")
   ],
   targets: [
     .target(
       name: "KotlinMultiplatformLinkedPackage",
       dependencies: [
+        .product(name: "_library_feedback", package: "_library_feedback"),
         .product(name: "_library", package: "_library")
       ]
     )

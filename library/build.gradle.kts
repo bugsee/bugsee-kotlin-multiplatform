@@ -5,8 +5,10 @@ import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import java.util.Properties
+import com.bugsee.gradle.LocalIosPackages
+import com.bugsee.gradle.localIosPackage
+import com.bugsee.gradle.refusePublishingWithLocalIosPackage
+import com.bugsee.gradle.usesLocalIosPackage
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -70,19 +72,11 @@ val generateBugseeOptions = tasks.register<GenerateBugseeOptionsTask>("generateB
     outputDir.set(layout.buildDirectory.dir("generated/bugseeOptions/commonMain/kotlin"))
 }
 
-// A local iOS SDK build for SDK development: the directory (absolute, or relative to the
-// repository root) of a Swift package with the Bugsee product, e.g. a binaryTarget pointing at a
-// locally built Bugsee.xcframework. Set bugsee.ios.localPackage in local.properties, which the
-// Xcode build phase also reads, or pass -Pbugsee.ios.localPackage=<dir>. A blank value means
-// unset, so -Pbugsee.ios.localPackage= builds against the remote package. Publishing fails while
-// it is set.
-val bugseeIosLocalPackage: String? = (
-    providers.gradleProperty("bugsee.ios.localPackage").orNull
-        ?: rootProject.file("local.properties").takeIf { it.isFile }?.let { file ->
-            Properties().apply { file.inputStream().use { load(it) } }
-                .getProperty("bugsee.ios.localPackage")
-        }
-    )?.takeIf { it.isNotBlank() }
+// A local iOS SDK build for SDK development: bugsee.ios.localPackage is the directory of a Swift
+// package with the Bugsee product, e.g. a binaryTarget pointing at a locally built
+// Bugsee.xcframework (see buildSrc LocalIosPackages and CLAUDE.md). A blank value means unset, so
+// -Pbugsee.ios.localPackage= builds against the remote package.
+val bugseeIosLocalPackage: String? = localIosPackage(LocalIosPackages.CORE)
 
 kotlin {
     explicitApi()
@@ -160,9 +154,13 @@ kotlin {
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     swiftPMDependencies {
         iosMinimumDeploymentTarget.set("15.0")
+        // .swiftpm-locks is shared by the whole build: with any local package it would record the
+        // local path, so leave it alone.
+        if (usesLocalIosPackage) {
+            packageResolvedSynchronization = noSynchronization()
+        }
         val localPackage = bugseeIosLocalPackage
         if (localPackage != null) {
-            packageResolvedSynchronization = noSynchronization()
             localSwiftPackage(
                 directory = rootProject.layout.projectDirectory.dir(localPackage),
                 products = listOf("Bugsee"),
@@ -238,14 +236,7 @@ android {
 // Publish steps:
 //   1. ./gradlew :library:publishToMavenLocal           (smoke test, writes to ~/.m2)
 //   2. ./gradlew :library:publishAndReleaseToMavenCentral (uploads + auto-releases)
-// The SwiftPM metadata published with the library would carry the local package path.
-if (bugseeIosLocalPackage != null) {
-    tasks.withType<AbstractPublishToMaven>().configureEach {
-        doFirst {
-            throw GradleException("bugsee.ios.localPackage is set; unset it before publishing the library.")
-        }
-    }
-}
+refusePublishingWithLocalIosPackage()
 
 mavenPublishing {
     // Target the new Central Portal (https://central.sonatype.com), not the legacy OSSRH.

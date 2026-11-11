@@ -5,7 +5,6 @@ import com.bugsee.kmp.BugseeAttachmentsProvider
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeExtendedReport
 import com.bugsee.kmp.BugseeExtendedReportProvider
-import com.bugsee.kmp.BugseeFeedbackEventListener
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
@@ -35,13 +34,6 @@ public expect class BugseeInternal() {
     public fun relaunch(options: BugseeLaunchOptions?)
 
     public fun relaunch(options: Map<String, Any>?)
-
-    // Feedback methods
-    public fun showFeedback()
-
-    public fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener)
-
-    public fun setDefaultFeedbackGreeting(greeting: String)
 
     // Logging methods
     public fun log(message: String)

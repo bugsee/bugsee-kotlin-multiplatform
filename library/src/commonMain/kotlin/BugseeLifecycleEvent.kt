@@ -43,11 +43,17 @@ public enum class BugseeLifecycleEvent(private val eventType: Int) {
      */
     AfterReportUploaded(9),
     /**
-     * Event is dispatched before the Feedback controller is shown
+     * Event is dispatched before the Feedback controller is shown.
+     *
+     * Android only, and only in apps that use `bugsee-kotlin-multiplatform-feedback`: the iOS
+     * SDK 7 does not report it.
      */
     BeforeFeedbackShown(10),
     /**
-     * Event is dispatched after the Feedback controller is shown
+     * Event is dispatched after the Feedback controller is shown.
+     *
+     * Android only, and only in apps that use `bugsee-kotlin-multiplatform-feedback`: the iOS
+     * SDK 7 does not report it.
      */
     AfterFeedbackShown(11),
     /**

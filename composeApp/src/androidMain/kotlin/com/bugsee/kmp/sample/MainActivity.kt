@@ -10,6 +10,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.bugsee.kmp.Bugsee
 import com.bugsee.kmp.BugseeAttachment
 import com.bugsee.kmp.BugseeLaunchOptions
+import com.bugsee.kmp.feedback.BugseeFeedback
+import com.bugsee.kmp.feedback.BugseeFeedbackListener
 import com.bugsee.kmp.sample.composeapp.generated.resources.Res
 import io.ktor.utils.io.core.toByteArray
 
@@ -31,11 +33,17 @@ class KMPSample: Application() {
         options.setCustomOption("com.bugsee.option.\$\$DEBUG", true)
         Bugsee.launch(getPlatform().token, options)
 
-        Bugsee.setOnNewFeedbackListener { messages ->
-            messages.forEach { message ->
-                AppLogger.d("KMPSample", "New feedback: $message")
+        BugseeFeedback.setListener(object : BugseeFeedbackListener {
+            override fun onNewMessagesReceived(messages: List<String>) {
+                messages.forEach { message ->
+                    AppLogger.d("KMPSample", "New feedback: $message")
+                }
             }
-        }
+
+            override fun onNewMessageSent(message: String) {
+                AppLogger.d("KMPSample", "Feedback sent: $message")
+            }
+        })
     }
 }
 

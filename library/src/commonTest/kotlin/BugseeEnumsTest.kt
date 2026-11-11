@@ -111,7 +111,6 @@ class BugseeEnumsTest {
         assertNotNull(ProducerHandler::class)
         assertNotNull(ProducerArgHandler::class)
         
-        assertNotNull(BugseeFeedbackEventListener::class)
         assertNotNull(BugseeReportFieldsFiller::class)
         assertNotNull(BugseeReportFieldsFilter::class)
         assertNotNull(BugseeNetworkFilter::class)

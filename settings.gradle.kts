@@ -19,3 +19,4 @@ rootProject.name = "bugsee-kotlin-multiplatform"
 include(":composeApp")
 include(":library")
 include(":library-protect")
+include(":library-feedback")

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build every publishable module (:library and :library-protect) for all targets
+# Build every publishable module (:library, :library-protect, :library-feedback) for all targets
 # (android release, iosArm64, iosX64, iosSimulatorArm64).
 #
 # Usage:
@@ -53,7 +53,7 @@ done
 
 # Android release AAR + all three iOS klibs for each module. `assemble` on a
 # KMP library covers every publishable target without pulling in test tasks.
-TASKS+=(":library:assemble" ":library-protect:assemble")
+TASKS+=(":library:assemble" ":library-protect:assemble" ":library-feedback:assemble")
 
 echo "> ./gradlew ${TASKS[*]} ${GRADLE_ARGS[*]}"
 ./gradlew "${TASKS[@]}" "${GRADLE_ARGS[@]}"

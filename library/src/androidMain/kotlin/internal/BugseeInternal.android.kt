@@ -69,21 +69,6 @@ public actual class BugseeInternal {
     }
 
 
-    // Feedback methods
-    // In 7.x feedback lives in the separate bugsee-android-feedback module; these become
-    // available again through the KMP feedback module.
-    public actual fun showFeedback() {
-        Logger.e(TAG, "showFeedback: feedback is not available in this build")
-    }
-
-    public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
-        Logger.e(TAG, "setOnNewFeedbackListener: feedback is not available in this build")
-    }
-
-    public actual fun setDefaultFeedbackGreeting(greeting: String) {
-        Logger.e(TAG, "setDefaultFeedbackGreeting: feedback is not available in this build")
-    }
-
 
     // Logging methods
     public actual fun log(message: String) {

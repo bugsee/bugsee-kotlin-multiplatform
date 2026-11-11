@@ -9,7 +9,6 @@ import com.bugsee.kmp.BugseeReportHandlerWrapper
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeExtendedReport
 import com.bugsee.kmp.BugseeExtendedReportProvider
-import com.bugsee.kmp.BugseeFeedbackEventListener
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
@@ -114,21 +113,6 @@ public actual class BugseeInternal {
     // Like launch: a raw map goes through BugseeLaunchOptions.
     public actual fun relaunch(options: Map<String, Any>?) {
         relaunch(options?.let { BugseeLaunchOptions(it) })
-    }
-
-    // Feedback methods
-    // In iOS SDK 7 feedback lives in the separate BugseeFeedback package; these become
-    // available again through the KMP feedback step.
-    public actual fun showFeedback() {
-        Logger.e(TAG, "showFeedback: feedback is not available in this build")
-    }
-
-    public actual fun setOnNewFeedbackListener(listener: BugseeFeedbackEventListener) {
-        Logger.e(TAG, "setOnNewFeedbackListener: feedback is not available in this build")
-    }
-
-    public actual fun setDefaultFeedbackGreeting(greeting: String) {
-        Logger.e(TAG, "setDefaultFeedbackGreeting: feedback is not available in this build")
     }
 
     public fun getAppearance(): BugseeTheme {
