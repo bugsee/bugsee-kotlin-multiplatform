@@ -6,8 +6,8 @@
 ## Requirements
 
 - **iOS 15.0 or later.** The minimum iOS deployment target is raised from 12.0 to 15.0.
-- **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.20 and depends on
-  `kotlin-stdlib` 2.4.20. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
+- **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.21 and depends on
+  `kotlin-stdlib` 2.4.21. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
   read; Android consumers on Kotlin 2.3 may work but are not supported.
 - **iOS: Bugsee SDK 7.0.1 through Swift Package Manager; CocoaPods is not supported.** iOS SDK 7
   is published only as the Swift package `https://github.com/bugsee/spm`, not to CocoaPods, so

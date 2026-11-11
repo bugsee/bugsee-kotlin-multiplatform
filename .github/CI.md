@@ -33,7 +33,7 @@ job gets a clean VM — so none of the shared-runner workarounds (`--clean`,
 disabled file watching, on-disk report archiving) are needed.
 
 Every job runs on **`macos-26`** (standard arm64). It is the only hosted image
-with an Xcode 26.4.x, which is what Kotlin/Native 2.4.20 is built against;
+with an Xcode 26.4.x, which is what Kotlin/Native 2.4.21 is built against;
 `macos-15` stops at Xcode 26.3. Image contents (Xcodes, simulators, JDKs,
 Android SDK) are listed in
 [actions/runner-images](https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md)

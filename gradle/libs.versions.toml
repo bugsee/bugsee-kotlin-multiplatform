@@ -1,6 +1,6 @@
 [versions]
 agp = "9.4.1"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 # iOS SDK the library links (SwiftPM package github.com/bugsee/spm) and whose option manifest
 # generates BugseeLaunchOptions.
 bugsee-ios = "7.0.1"

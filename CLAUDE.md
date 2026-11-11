@@ -82,14 +82,14 @@ Filters transform events in-place (return modified or null to suppress). Listene
 
 ## Key Build Configuration
 
-- Kotlin: 2.4.20, Compose Multiplatform: 1.12.2 (plugin and sample; `compose-multiplatform` in the catalog). `library-protect` compiles against and declares Compose 1.9.3 (`compose-multiplatform-protect`), without the Compose Multiplatform plugin, so its consumers are not moved onto 1.12, which needs compileSdk 37 and AGP 9.1+
+- Kotlin: 2.4.21, Compose Multiplatform: 1.12.2 (plugin and sample; `compose-multiplatform` in the catalog). `library-protect` compiles against and declares Compose 1.9.3 (`compose-multiplatform-protect`), without the Compose Multiplatform plugin, so its consumers are not moved onto 1.12, which needs compileSdk 37 and AGP 9.1+
 - Gradle wrapper: 9.6.1 (AGP 9.4 requires ≥ 9.6.0; JDK 17+), AGP 9.4.1. Library modules use `com.android.kotlin.multiplatform.library` (`kotlin { android { … } }`, a single Android variant); the sample app is the plain `com.android.application` module `androidApp` with AGP's built-in Kotlin
 - Android: minSdk 24, compileSdk 35 for the published modules (AGP writes it into each AAR as `minCompileSdk`, so consumers must meet it) and 37 for the sample (`sample-compileSdk`), JVM target 1.8 (library) / 11 (sample)
 - iOS: deployment target 15.0 (library), 16.6 (sample)
 - `kotlin.mpp.enableCInteropCommonization=true`
 - Language opt-ins (iOS/native code): `kotlinx.cinterop.ExperimentalForeignApi`, `kotlinx.cinterop.UnsafeNumber`, `kotlin.experimental.ExperimentalNativeApi`
 - Publishing: Maven Central via `com.vanniktech:maven-publish` plugin (Sonatype Central Portal). Coordinates: `com.bugsee:bugsee-kotlin-multiplatform`, `com.bugsee:bugsee-kotlin-multiplatform-protect` and `com.bugsee:bugsee-kotlin-multiplatform-feedback`. Version sourced from `version.txt` (`-SNAPSHOT` appended unless `RELEASE=true`). Release via the **Deploy (production)** GitHub Actions workflow from the `release` branch (or `RELEASE=true ./scripts/deploy.sh` locally).
-- CI/CD: GitHub Actions on hosted `macos-26` runners with Xcode 26.4.1 pinned (Kotlin/Native 2.4.20's Xcode) — `pr.yml` (build + test, every PR), `main.yml` (build + test + mavenLocal publish on push to `main` / `nextgen`), `deploy-production.yml` (manual release). See `.github/CI.md`.
+- CI/CD: GitHub Actions on hosted `macos-26` runners with Xcode 26.4.1 pinned (Kotlin/Native 2.4.21's Xcode) — `pr.yml` (build + test, every PR), `main.yml` (build + test + mavenLocal publish on push to `main` / `nextgen`), `deploy-production.yml` (manual release). See `.github/CI.md`.
 
 ## Testing
 
