@@ -54,6 +54,9 @@ done
 # Android release AAR + all three iOS klibs for each module. `assemble` on a
 # KMP library covers every publishable target without pulling in test tasks.
 TASKS+=(":library:assemble" ":library-protect:assemble" ":library-feedback:assemble")
+# The Android sample: :androidApp on top of the :composeApp library, with the Bugsee Gradle
+# plugin. Building it catches breaks in that wiring that the library tasks do not reach.
+TASKS+=(":androidApp:assembleDebug")
 
 echo "> ./gradlew ${TASKS[*]} ${GRADLE_ARGS[*]}"
 ./gradlew "${TASKS[@]}" "${GRADLE_ARGS[@]}"

@@ -56,12 +56,16 @@ esac
 # Every publishable KMP module must be covered on both CI simulators.
 MODULES=(":library" ":library-protect" ":library-feedback")
 IOS_TASKS=()
+ANDROID_TASKS=()
 for m in "${MODULES[@]}"; do
     IOS_TASKS+=("$m:$IOS_TEST_NAME")
+    # Robolectric tests run for every module with an androidHostTest source set. The Android-KMP
+    # library plugin creates testAndroidHostTest only when the module enables withHostTest, so a
+    # module with tests but without it fails here with "task not found" instead of being skipped.
+    if [ -d "${m#:}/src/androidHostTest" ]; then
+        ANDROID_TASKS+=("$m:testAndroidHostTest")
+    fi
 done
-# Robolectric tests. The Android-KMP library plugin creates testAndroidHostTest only in modules
-# that enable withHostTest, so a module that gains Android tests must be added here too.
-ANDROID_TASKS=(":library:testAndroidHostTest" ":library-feedback:testAndroidHostTest")
 
 # ---------- arg parsing ----------
 RUN_ANDROID=1
