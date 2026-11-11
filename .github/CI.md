@@ -62,18 +62,19 @@ org's shared storage allowance — see
 
 ## Why there is no staging / SNAPSHOT deploy
 
-`bugsee-android` publishes a SNAPSHOT on every push to `main`. This repo cannot:
-it publishes through the Sonatype **Central Portal** with
-`com.vanniktech.maven.publish` **0.29.0**, which throws *"Snapshots are not
-supported when publishing through the central portal."* `deploy.sh` now refuses a
-remote SNAPSHOT publish up front instead of failing after the test run.
+`bugsee-android` publishes a SNAPSHOT on every push to `main`. This repo does not:
+it publishes through the Sonatype **Central Portal**, which accepts SNAPSHOTs only
+for namespaces with snapshots enabled on central.sonatype.com, and that has not
+been done for `com.bugsee`. `deploy.sh` refuses a remote SNAPSHOT publish up front
+instead of failing after the test run.
 
 `main.yml` runs `deploy.sh --local` instead. That still exercises every
 publication — POMs, KMP metadata, all Android/iOS targets — so a broken
 publishing setup shows up on merge, not on release day.
 
-Real SNAPSHOTs would need plugin ≥ 0.33 (Central Portal snapshot support) plus
-snapshots enabled for the `com.bugsee` namespace on central.sonatype.com.
+Real SNAPSHOTs would need snapshots enabled for the `com.bugsee` namespace; the
+plugin (`com.vanniktech.maven.publish` 0.37.0) publishes them to the Central
+Portal since 0.31.
 
 ## Releasing
 

@@ -25,9 +25,9 @@
 #   RELEASE=true  -> publish version.txt value as-is (e.g. 0.1.0)
 #   unset / false -> publish with a -SNAPSHOT suffix (e.g. 0.1.0-SNAPSHOT)
 #
-# A SNAPSHOT can only be published with --local: maven-publish 0.29.0 rejects
-# SNAPSHOTs on the Central Portal ("Snapshots are not supported when publishing
-# through the central portal"), so a remote SNAPSHOT publish is refused up front.
+# A SNAPSHOT can only be published with --local: the Central Portal accepts
+# SNAPSHOTs only for namespaces with snapshots enabled, and com.bugsee does not
+# have them, so a remote SNAPSHOT publish is refused up front (see .github/CI.md).
 #
 # Usage:
 #   RELEASE=true scripts/deploy.sh        # tests, then release publish to Maven Central
@@ -105,7 +105,7 @@ echo "RELEASE=$RELEASE_FLAG  ->  publishing $EFFECTIVE_VERSION for: ${MODULES[*]
 # ---------- credential sanity check (remote publish only) ----------
 if [ "$LOCAL_ONLY" = "0" ]; then
     if [ "$RELEASE_FLAG" != "true" ]; then
-        echo "error: cannot publish $EFFECTIVE_VERSION to Maven Central — the Central Portal does not accept SNAPSHOTs with this plugin version" >&2
+        echo "error: cannot publish $EFFECTIVE_VERSION to Maven Central — snapshots are not enabled for the com.bugsee namespace on the Central Portal" >&2
         echo "       set RELEASE=true for a release, or pass --local for a SNAPSHOT smoke test" >&2
         exit 1
     fi
