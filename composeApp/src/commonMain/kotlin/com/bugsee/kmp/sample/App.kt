@@ -36,7 +36,7 @@ import com.bugsee.kmp.feedback.BugseeFeedback
 import com.bugsee.kmp.protect.BugseeProtect
 import com.bugsee.kmp.sample.screens.*
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 sealed class Screen {
     data object Main : Screen()

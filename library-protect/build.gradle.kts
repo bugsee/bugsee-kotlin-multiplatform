@@ -6,7 +6,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
-    alias(libs.plugins.composeMultiplatform)
+    // Only the Compose compiler: the Compose Multiplatform plugin would tie the Compose
+    // dependencies to the sample's version (see compose-multiplatform-protect in the catalog).
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.vanniktech.mavenPublish)
 }
@@ -61,9 +62,9 @@ kotlin {
                 // themselves to call Bugsee.launch(); the protect library does not re-export it.
                 implementation(project(":library"))
 
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.ui)
+                implementation(libs.compose.protect.runtime)
+                implementation(libs.compose.protect.foundation)
+                implementation(libs.compose.protect.ui)
             }
         }
     }
