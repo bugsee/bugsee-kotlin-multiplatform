@@ -1,25 +1,28 @@
-import org.gradle.kotlin.dsl.implementation
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+// The shared UI of the sample: an Android-KMP library used by :androidApp, and the iOS framework
+// that iosApp links. Since AGP 9 the Android application itself lives in :androidApp.
 plugins {
-    alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-
-    alias(libs.plugins.bugsee.gradle.plugin)
 }
 
 group = "com.bugsee.kmp.sample"
 version = "1.0-SNAPSHOT"
 
 kotlin {
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    android {
+        namespace = "com.bugsee.kmp.sample.shared"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+        }
+        // Compose resources (composeResources/) are packaged as Android assets.
+        androidResources {
+            enable = true
         }
     }
 
@@ -35,8 +38,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
             implementation("io.ktor:ktor-client-android:${libs.versions.ktor3.get()}")
         }
 
@@ -65,56 +66,4 @@ kotlin {
             }
         }
     }
-}
-
-android {
-    namespace = "com.bugsee.kmp.sample"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "com.bugsee.kmp.sample"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    buildTypes {
-        debug {
-            // Enables code-related app optimization.
-//            isMinifyEnabled = true
-
-            // Enables resource shrinking.
-//            isShrinkResources = true
-
-//            proguardFiles(
-//                // Default file with automatically generated optimization rules.
-//                getDefaultProguardFile("proguard-android-optimize.txt"),
-//            )
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    bugsee {
-        appToken("629d2d4a-8804-4210-8951-3b3c3f83761a")
-        endpoint = "https://apidev.bugsee.com"  // custom endpoint (optional) "https://apidev.bugsee.com"
-        debug = true                         // enable plugin debug logging
-        ndk {                                 // upload NDK debug symbols
-            enabled.set(true)
-        }
-    }
-}
-
-dependencies {
-    debugImplementation(compose.uiTooling)
 }

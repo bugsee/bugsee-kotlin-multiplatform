@@ -8,12 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.bugsee.kmp.Bugsee
-import com.bugsee.kmp.BugseeAttachment
 import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.feedback.BugseeFeedback
 import com.bugsee.kmp.feedback.BugseeFeedbackListener
-import com.bugsee.kmp.sample.composeapp.generated.resources.Res
-import io.ktor.utils.io.core.toByteArray
 
 
 class KMPSample: Application() {

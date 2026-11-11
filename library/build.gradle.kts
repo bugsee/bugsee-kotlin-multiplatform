@@ -12,7 +12,7 @@ import com.bugsee.gradle.usesLocalIosPackage
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.buildKonfig)
 }
@@ -38,7 +38,7 @@ val buildChecksum: String = runCatching {
     }.standardOutput.asText.get().trim()
 }.getOrElse { "unknown" }
 
-group = "${project.properties["LIB_GROUP"]}"
+group = providers.gradleProperty("LIB_GROUP").get()
 version = libraryVersionName
 
 println("[:library] Release build: $isReleaseBuild  —  version: $version  —  build: $buildChecksum")
@@ -82,12 +82,18 @@ kotlin {
     explicitApi()
     applyDefaultHierarchyTemplate()
 
-    androidTarget {
-        // Publish only the `release` Android variant to Maven Central; debug variants are not shipped.
-        publishLibraryVariants("release")
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    // The Android-KMP library plugin builds and publishes a single Android variant.
+    android {
+        namespace = "com.bugsee.kmp"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_1_8)
+        }
+        // Robolectric tests (androidHostTest).
+        withHostTest {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
         }
     }
 
@@ -112,13 +118,13 @@ kotlin {
             }
         }
 
-        val commonMain by getting {
+        commonMain {
             kotlin.srcDir(generateBugseeOptions)
             dependencies {
                 //put your multiplatform dependencies here
             }
         }
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
             }
@@ -133,7 +139,7 @@ kotlin {
             }
         }
         
-        val androidUnitTest by getting {
+        getByName("androidHostTest") {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.robolectric)
@@ -193,25 +199,6 @@ tasks.withType<AbstractTestTask> {
     outputs.upToDateWhen { false }
     testLogging {
         events("passed", "skipped", "failed")
-    }
-}
-
-android {
-    namespace = "com.bugsee.kmp"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            isReturnDefaultValues = true
-        }
     }
 }
 

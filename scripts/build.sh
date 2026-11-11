@@ -13,9 +13,9 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # ---------- JAVA_HOME ----------
-# On macOS CI runners JAVA_HOME is often unset; auto-pick a JDK (21 > 17 > 11).
+# On macOS CI runners JAVA_HOME is often unset; auto-pick a JDK (21 > 17; Gradle 9 needs 17+).
 if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1; then
-    for v in 21 17 11; do
+    for v in 21 17; do
         candidate="$(/usr/libexec/java_home -v "$v" 2>/dev/null || true)"
         if [ -n "$candidate" ] && [ -x "$candidate/bin/javac" ]; then
             export JAVA_HOME="$candidate"
@@ -24,7 +24,7 @@ if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1;
     done
 fi
 if [ -z "${JAVA_HOME:-}" ]; then
-    echo "error: JDK 11+ required. Install with: brew install openjdk@21" >&2
+    echo "error: JDK 17+ required. Install with: brew install openjdk@21" >&2
     exit 1
 fi
 

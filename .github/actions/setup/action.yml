@@ -31,7 +31,7 @@ runs:
         sudo xcode-select -s "$app/Contents/Developer"
         xcodebuild -version
 
-    # AGP 8.x needs 17+. The scripts only probe java_home when JAVA_HOME is
+    # Gradle 9 and AGP 9 need 17+. The scripts only probe java_home when JAVA_HOME is
     # unset, so this pins what Gradle runs on.
     - uses: actions/setup-java@v6
       with:

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
@@ -21,7 +21,7 @@ val isReleaseBuild: Boolean =
 val libraryVersionName: String = rootProject.file("version.txt").readLines().first().trim() +
         if (isReleaseBuild) "" else "-SNAPSHOT"
 
-group = "${project.properties["LIB_GROUP"]}"
+group = providers.gradleProperty("LIB_GROUP").get()
 version = libraryVersionName
 
 println("[:library-feedback] Release build: $isReleaseBuild  —  version: $version")
@@ -34,12 +34,18 @@ kotlin {
     explicitApi()
     applyDefaultHierarchyTemplate()
 
-    androidTarget {
-        // Publish only the `release` variant — debug variants are not shipped.
-        publishLibraryVariants("release")
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    // The Android-KMP library plugin builds and publishes a single Android variant.
+    android {
+        namespace = "com.bugsee.kmp.feedback"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_1_8)
+        }
+        // Robolectric tests (androidHostTest).
+        withHostTest {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
         }
     }
 
@@ -68,7 +74,7 @@ kotlin {
             // The Feedback add-on of Android SDK 7, in lockstep with the core SDK :library links.
             implementation(libs.bugsee.android.feedback)
         }
-        val androidUnitTest by getting {
+        getByName("androidHostTest") {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.robolectric)
@@ -132,24 +138,6 @@ kotlin {
 }
 
 refusePublishingWithLocalIosPackage()
-
-android {
-    namespace = "com.bugsee.kmp.feedback"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            isReturnDefaultValues = true
-        }
-    }
-}
 
 tasks.withType<AbstractTestTask> {
     outputs.upToDateWhen { false }

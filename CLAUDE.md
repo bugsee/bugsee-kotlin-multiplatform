@@ -8,10 +8,11 @@ Kotlin Multiplatform (KMP) wrapper library around native Bugsee crash reporting 
 
 ## Modules
 
-- **library/** — Core KMP library (`com.bugsee.kmp`). Targets: `androidTarget`, `iosArm64`. Uses explicit API mode and `-Xexpect-actual-classes` compiler flag.
+- **library/** — Core KMP library (`com.bugsee.kmp`). Targets: `android` (the Android-KMP library plugin `com.android.kotlin.multiplatform.library`), `iosArm64`, `iosX64`, `iosSimulatorArm64`. Uses explicit API mode and `-Xexpect-actual-classes` compiler flag. `library-protect` and `library-feedback` use the same plugin.
 - **library-feedback/** — Optional feedback (in-app chat) artifact (`com.bugsee.kmp.feedback.BugseeFeedback`): wraps the SDK 7 Feedback add-ons, `com.bugsee:bugsee-android-feedback` (reached through `Bugsee.ext(Feedback)`) and the Swift package `github.com/bugsee/feedback-spm` (imported as `swiftPMImport.com.bugsee.library.feedback`). Depends on `:library`.
 - **library-protect/** — Compose helper that hides content from recordings (`BugseeProtect`). Depends on `:library`.
-- **composeApp/** — Sample Compose Multiplatform app (`com.bugsee.kmp.sample`) demonstrating library usage.
+- **composeApp/** — Shared UI of the sample (Compose Multiplatform, an Android-KMP library): used by `androidApp` and built into the iOS framework.
+- **androidApp/** — Android app of the sample (`com.bugsee.kmp.sample`): `MainActivity`, the manifest and the Bugsee Gradle plugin. Since AGP 9 an application module cannot apply Kotlin Multiplatform, so it is separate from `composeApp`.
 - **iosApp/** — Native iOS app wrapper. Builds the composeApp framework through direct integration (an Xcode build phase runs `:composeApp:embedAndSignAppleFrameworkForXcode`) and gets Bugsee from the SwiftPM linkage package `iosApp/KotlinMultiplatformLinkedPackage`.
 
 ## Build Commands
@@ -20,8 +21,8 @@ Kotlin Multiplatform (KMP) wrapper library around native Bugsee crash reporting 
 # Build library
 ./gradlew :library:build
 
-# Build sample app
-./gradlew :composeApp:build
+# Build the Android sample app
+./gradlew :androidApp:assembleDebug
 
 # Regenerate the iOS cinterop from the Bugsee SwiftPM package
 ./gradlew :library:cinteropSwiftPMImportIosSimulatorArm64
@@ -32,13 +33,13 @@ XCODEPROJ_PATH="$PWD/iosApp/iosApp.xcodeproj" ./gradlew :composeApp:integrateEmb
 # Run all library tests
 ./gradlew :library:test
 
-# Run Android unit tests (Robolectric)
-./gradlew :library:testDebugUnitTest
+# Run Android unit tests (Robolectric, the androidHostTest source set)
+./gradlew :library:testAndroidHostTest
 
 # Run a single test class
-./gradlew :library:testDebugUnitTest --tests "BugseeAndroidSimpleTest"
+./gradlew :library:testAndroidHostTest --tests "BugseeAndroidSimpleTest"
 
-# Full test suite via script (auto-detects JDK 21/17/11)
+# Full test suite via script (auto-detects JDK 21/17)
 ./scripts/test.sh
 ```
 
@@ -82,7 +83,7 @@ Filters transform events in-place (return modified or null to suppress). Listene
 ## Key Build Configuration
 
 - Kotlin: 2.4.20, Compose Multiplatform: 1.9.3
-- Gradle wrapper: 8.14.5 (Kotlin 2.5 requires ≥ 8.14.4; Gradle 9 deferred to an AGP upgrade), AGP 8.6.0
+- Gradle wrapper: 9.6.1 (AGP 9.4 requires ≥ 9.6.0; JDK 17+), AGP 9.4.1. Library modules use `com.android.kotlin.multiplatform.library` (`kotlin { android { … } }`, a single Android variant); the sample app is the plain `com.android.application` module `androidApp` with AGP's built-in Kotlin
 - Android: minSdk 24, compileSdk 35, JVM target 1.8 (library) / 11 (sample)
 - iOS: deployment target 15.0 (library), 16.6 (sample)
 - `kotlin.mpp.enableCInteropCommonization=true`
@@ -93,6 +94,6 @@ Filters transform events in-place (return modified or null to suppress). Listene
 ## Testing
 
 - Common tests in `library/src/commonTest/`
-- Android tests use Robolectric (`library/src/androidUnitTest/`) with SDK 28
+- Android tests use Robolectric (`library/src/androidHostTest/`, enabled by `withHostTest` in `kotlin { android { } }`) with SDK 28
 - iOS tests in `library/src/iosTest/`
 - Dependencies: JUnit 4.13.2, Mockito 5.8.0, Mockito-Kotlin 5.3.1, Robolectric 4.12.1

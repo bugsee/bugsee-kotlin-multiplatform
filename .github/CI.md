@@ -42,7 +42,7 @@ The shared `.github/actions/setup` action:
 
 - selects **Xcode 26.4.1** explicitly rather than trusting the image default
   (26.6) — move its `xcode-version` default together with the Kotlin version;
-- installs Temurin **JDK 21** (AGP 8 needs 17+);
+- installs Temurin **JDK 21** (Gradle 9 and AGP 9 need 17+);
 - restores the Gradle cache (`gradle/actions/setup-gradle`) and `~/.konan`
   (Kotlin/Native toolchain, keyed on `gradle/libs.versions.toml`). The Gradle
   cache is written only by pushes to `main` and `nextgen` (via `main.yml`);

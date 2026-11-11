@@ -1,0 +1,62 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+// The Android app of the sample. Since AGP 9 an Android application module cannot also apply
+// Kotlin Multiplatform, so the shared UI lives in :composeApp (an Android-KMP library that also
+// builds the iOS framework) and this module holds only the Android entry point. Kotlin is built
+// into AGP 9, so no Kotlin Android plugin is applied.
+plugins {
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
+
+    alias(libs.plugins.bugsee.gradle.plugin)
+}
+
+android {
+    namespace = "com.bugsee.kmp.sample"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+    defaultConfig {
+        applicationId = "com.bugsee.kmp.sample"
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    bugsee {
+        appToken("629d2d4a-8804-4210-8951-3b3c3f83761a")
+        endpoint = "https://apidev.bugsee.com"  // custom endpoint (optional) "https://apidev.bugsee.com"
+        debug = true                         // enable plugin debug logging
+        ndk {                                 // upload NDK debug symbols
+            enabled.set(true)
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
+}
+
+dependencies {
+    implementation(project(":composeApp"))
+    // MainActivity launches Bugsee and sets the feedback listener itself.
+    implementation(project(":library"))
+    implementation(project(":library-feedback"))
+    implementation(libs.androidx.activity.compose)
+    implementation(compose.preview)
+    debugImplementation(compose.uiTooling)
+}

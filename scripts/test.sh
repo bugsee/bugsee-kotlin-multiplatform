@@ -17,7 +17,7 @@ cd "$REPO_ROOT"
 
 # ---------- JAVA_HOME ----------
 if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1; then
-    for v in 21 17 11; do
+    for v in 21 17; do
         candidate="$(/usr/libexec/java_home -v "$v" 2>/dev/null || true)"
         if [ -n "$candidate" ] && [ -x "$candidate/bin/javac" ]; then
             export JAVA_HOME="$candidate"
@@ -26,7 +26,7 @@ if [ -z "${JAVA_HOME:-}" ] && command -v /usr/libexec/java_home >/dev/null 2>&1;
     done
 fi
 if [ -z "${JAVA_HOME:-}" ]; then
-    echo "error: JDK 11+ required. Install with: brew install openjdk@21" >&2
+    echo "error: JDK 17+ required. Install with: brew install openjdk@21" >&2
     exit 1
 fi
 
@@ -56,11 +56,12 @@ esac
 # Every publishable KMP module must be covered on both CI simulators.
 MODULES=(":library" ":library-protect" ":library-feedback")
 IOS_TASKS=()
-ANDROID_TASKS=()
 for m in "${MODULES[@]}"; do
     IOS_TASKS+=("$m:$IOS_TEST_NAME")
-    ANDROID_TASKS+=("$m:testDebugUnitTest")
 done
+# Robolectric tests. The Android-KMP library plugin creates testAndroidHostTest only in modules
+# that enable withHostTest, so a module that gains Android tests must be added here too.
+ANDROID_TASKS=(":library:testAndroidHostTest" ":library-feedback:testAndroidHostTest")
 
 # ---------- arg parsing ----------
 RUN_ANDROID=1
