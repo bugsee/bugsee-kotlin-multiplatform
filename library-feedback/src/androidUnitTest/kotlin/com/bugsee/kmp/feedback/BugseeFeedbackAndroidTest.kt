@@ -92,20 +92,36 @@ class BugseeFeedbackAndroidTest {
     }
 
     @Test
-    fun `callbacks posted for a replaced listener are dropped`() {
+    fun `callbacks posted for a removed listener are dropped`() {
         val received = mutableListOf<String>()
-        BugseeFeedback.setListener(object : BugseeFeedbackListener {
-            override fun onNewMessageSent(message: String) {
-                received += message
-            }
-        })
-        val replaced = assertNotNull(currentListenerAdapter)
+        BugseeFeedback.setListener(recordingListener(received))
+        val removed = assertNotNull(currentListenerAdapter)
 
-        onWorkerThread { replaced.onNewMessageSent("late") }
+        onWorkerThread { removed.onNewMessageSent("late") }
         BugseeFeedback.setListener(null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(received.isEmpty())
+    }
+
+    // As on iOS, which reads the current listener when it delivers. The add-on reports each
+    // message once, so a message dropped here would be lost.
+    @Test
+    fun `callbacks posted for a replaced listener reach the new listener`() {
+        val old = mutableListOf<String>()
+        val new = mutableListOf<String>()
+        BugseeFeedback.setListener(recordingListener(old))
+        val replaced = assertNotNull(currentListenerAdapter)
+
+        onWorkerThread {
+            replaced.onNewMessagesReceived(listOf("hi"))
+            replaced.onNewMessageSent("late")
+        }
+        BugseeFeedback.setListener(recordingListener(new))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(old.isEmpty())
+        assertEquals(listOf("hi", "late"), new)
     }
 
     @Test
@@ -124,6 +140,16 @@ class BugseeFeedbackAndroidTest {
         // :library maps these names without depending on the add-on; keep them in sync.
         assertEquals("com.bugsee.lifecycle.BeforeFeedbackShown", FeedbackLifecycleEvents.BeforeFeedbackShown)
         assertEquals("com.bugsee.lifecycle.AfterFeedbackShown", FeedbackLifecycleEvents.AfterFeedbackShown)
+    }
+
+    private fun recordingListener(received: MutableList<String>) = object : BugseeFeedbackListener {
+        override fun onNewMessagesReceived(messages: List<String>) {
+            received += messages
+        }
+
+        override fun onNewMessageSent(message: String) {
+            received += message
+        }
     }
 
     private fun onWorkerThread(block: () -> Unit) {

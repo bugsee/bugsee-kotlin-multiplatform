@@ -27,7 +27,7 @@ internal fun nativeFeedback(): Feedback? {
     return feedback
 }
 
-// The adapter of the listener set last; callbacks already posted for a replaced one are dropped.
+// The adapter of the listener set last. Callbacks are delivered to its listener when they run.
 @Volatile
 internal var currentListenerAdapter: MainThreadFeedbackListener? = null
 
@@ -53,30 +53,31 @@ internal actual fun platformSetFeedbackListener(listener: BugseeFeedbackListener
 
 /**
  * Android SDK 7 calls the listener on the thread that synced the conversation; iOS calls it on
- * the main thread. This moves the calls to the main thread, as on iOS, and delivers them only
- * while this adapter belongs to the current listener (iOS also reads the current listener when
- * it delivers).
+ * the main thread. This moves the calls to the main thread, as on iOS, and, as iOS does, delivers
+ * them to the listener that is current when they run: a call posted before the listener was
+ * replaced reaches the new one, and one posted before it was removed is dropped. The add-on
+ * reports each message once, so dropping it for a replaced listener would lose it.
  */
 internal class MainThreadFeedbackListener(
-    private val listener: BugseeFeedbackListener,
+    internal val listener: BugseeFeedbackListener,
 ) : FeedbackListener {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onNewMessagesReceived(newMessages: List<String>) {
         val messages = newMessages.toList()
-        post { listener.onNewMessagesReceived(messages) }
+        post { it.onNewMessagesReceived(messages) }
     }
 
     override fun onNewMessageSent(message: String) {
-        post { listener.onNewMessageSent(message) }
+        post { it.onNewMessageSent(message) }
     }
 
-    private fun post(call: () -> Unit) {
+    private fun post(call: (BugseeFeedbackListener) -> Unit) {
         mainHandler.post {
-            if (currentListenerAdapter !== this) return@post
+            val listener = currentListenerAdapter?.listener ?: return@post
             // Throwable, as on iOS: an Error such as TODO()'s must not crash the main thread.
             try {
-                call()
+                call(listener)
             } catch (e: Throwable) {
                 Log.e(TAG, "BugseeFeedbackListener threw", e)
             }
