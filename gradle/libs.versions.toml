@@ -6,11 +6,24 @@ kotlin = "2.4.20"
 bugsee-ios = "7.0.1"
 bugsee-android = "7.4.1"
 android-minSdk = "24"
+# The published modules. AGP writes compileSdk into each AAR as minCompileSdk, which consumers
+# must meet, so raise it only when a library needs a newer API.
 android-compileSdk = "35"
 android-targetSdk = "35"
+# The sample (composeApp, androidApp): Compose Multiplatform 1.12 (AndroidX Compose 1.12) needs
+# compileSdk 37 and AGP 9.1+.
+sample-compileSdk = "37"
 coroutines = "1.3.0"
 ktor3 = "3.2.3"
-compose-multiplatform = "1.9.3"
+# The Compose Multiplatform Gradle plugin and the sample.
+compose-multiplatform = "1.12.2"
+# What library-protect compiles against and declares in its POM: the oldest Compose it supports.
+# An app with a newer Compose gets its own version through dependency resolution; raising this
+# would move every consumer onto it (1.12 needs compileSdk 37 and AGP 9.1+).
+compose-multiplatform-protect = "1.9.3"
+# Compose Material 3 for Compose Multiplatform has its own versions; 1.9.0 is the one the
+# Compose Multiplatform 1.12 plugin maps compose.material3 to.
+compose-material3 = "1.9.0"
 androidx-activity = "1.10.1"
 androidx-fragment = "1.8.5"
 androidx-test = "1.5.0"
@@ -31,6 +44,17 @@ ktor3-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor3"
 ktor3-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor3" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+# The sample's Compose (the compose.* accessors are deprecated in Compose Multiplatform 1.12).
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+compose-protect-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform-protect" }
+compose-protect-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform-protect" }
+compose-protect-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform-protect" }
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "androidx-fragment" }
 
 # Testing Libraries

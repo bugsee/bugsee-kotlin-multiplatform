@@ -14,7 +14,7 @@ plugins {
 
 android {
     namespace = "com.bugsee.kmp.sample"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = libs.versions.sample.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.bugsee.kmp.sample"
@@ -57,6 +57,6 @@ dependencies {
     implementation(project(":library"))
     implementation(project(":library-feedback"))
     implementation(libs.androidx.activity.compose)
-    implementation(compose.preview)
-    debugImplementation(compose.uiTooling)
+    implementation(libs.compose.ui.tooling.preview)
+    debugImplementation(libs.compose.ui.tooling)
 }
