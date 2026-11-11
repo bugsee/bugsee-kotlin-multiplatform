@@ -7,7 +7,7 @@ inputs:
   xcode-version:
     description: Xcode to select; must exist as /Applications/Xcode_<version>.app on the image.
     required: false
-    # Kotlin/Native 2.4.20 is built against Xcode 26.4, and of the hosted images
+    # Kotlin/Native 2.4.21 is built against Xcode 26.4, and of the hosted images
     # only macos-26 carries a 26.4.x. Pinned rather than trusting the image
     # default (26.6 there); move it together with the Kotlin version.
     default: '26.4.1'
