@@ -75,13 +75,15 @@ public actual fun BugseeProtect(
     }
 }
 
+// A plain View with no background draws nothing, so the overlay is invisible as it is. It must not
+// be made transparent with alpha 0: Android SDK 7 treats a secure view with alpha 0 as not on screen
+// and leaves its area unmasked (UIUtils.isViewVisibleOnScreen).
 @Composable
 private fun BugseeOverlay(size: Size) {
     AndroidView(
         factory = { ctx ->
             View(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(size.width.toInt(), size.height.toInt())
-                alpha = 0.0F
             }
         }, update = { view ->
             view.layoutParams = view.layoutParams?.apply {
