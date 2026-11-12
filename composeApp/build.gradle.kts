@@ -39,6 +39,8 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation("io.ktor:ktor-client-android:${libs.versions.ktor3.get()}")
+            // WebSockets: the Android engine has none (see SampleHttpClients).
+            implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor3.get()}")
         }
 
         commonMain.dependencies {

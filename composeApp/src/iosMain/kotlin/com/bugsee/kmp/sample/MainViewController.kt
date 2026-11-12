@@ -18,6 +18,9 @@ fun MainViewController(): UIViewController {
     options.reportingTriggerByShake = true
     options.reportingUILabelsEnabled = true
     options.reportingUILabelsRequired = false
+    // Chosen on the Crash Signals screen.
+    options.captureCrashSignals = SampleSettings.crashSignals
+    launchedCrashSignals = options.captureCrashSignals
     options.setCustomOption("endpoint", getPlatform().appdevEndpoint)
     options.setCustomOption("debug", true)
     Bugsee.launch(getPlatform().token, options)

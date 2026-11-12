@@ -38,6 +38,8 @@ bugseeGradle = "4.0.7"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 bugsee-android = { module = "com.bugsee:bugsee-android", version.ref = "bugsee-android" }
 bugsee-android-feedback = { module = "com.bugsee:bugsee-android-feedback", version.ref = "bugsee-android" }
+bugsee-android-ndk = { module = "com.bugsee:bugsee-android-ndk", version.ref = "bugsee-android" }
+bugsee-android-okhttp = { module = "com.bugsee:bugsee-android-okhttp", version.ref = "bugsee-android" }
 
 # Kotlin Libraries
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }

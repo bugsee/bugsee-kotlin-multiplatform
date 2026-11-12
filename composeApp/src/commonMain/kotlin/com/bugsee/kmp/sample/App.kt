@@ -51,6 +51,8 @@ sealed class Screen {
     data object Attributes : Screen()
     data object ReportFilters : Screen()
     data object ExtendedReports : Screen()
+    data object CrashSignals : Screen()
+    data object Appearance : Screen()
 }
 
 private const val TAG = "App.kt"
@@ -111,6 +113,8 @@ fun App() {
                     onBackClick = { currentScreen = Screen.Main }
                 )
                 Screen.ExtendedReports -> ExtendedReportsScreen(onBackClick = { currentScreen = Screen.Main })
+                Screen.CrashSignals -> CrashSignalsScreen(onBackClick = { currentScreen = Screen.Main })
+                Screen.Appearance -> AppearanceScreen(onBackClick = { currentScreen = Screen.Main })
             }
         }
     }
@@ -220,6 +224,8 @@ fun MainScreen(
                 CategoryButton("Extended Reports") { onNavigate(Screen.ExtendedReports) }
                 CategoryButton("Logging Tests") { onNavigate(Screen.LoggingTests) }
                 CategoryButton("CrashProbe Tests") { onNavigate(Screen.CrashProbe) }
+                CategoryButton("Crash Signals") { onNavigate(Screen.CrashSignals) }
+                CategoryButton("Appearance") { onNavigate(Screen.Appearance) }
                 CategoryButton("Modern Network Tests") { onNavigate(Screen.NetworkTests) }
                 CategoryButton("Advanced Network Tests") { onNavigate(Screen.AdvancedNetwork) }
                 CategoryButton("User Identifier Tests") { onNavigate(Screen.UserIdentifierTests) }

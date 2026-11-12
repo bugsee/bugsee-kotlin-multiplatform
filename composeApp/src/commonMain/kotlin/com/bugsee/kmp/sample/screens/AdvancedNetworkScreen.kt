@@ -12,7 +12,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.ktor.client.HttpClient
+import com.bugsee.kmp.sample.sampleHttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -33,7 +33,7 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             status = "Loading..."
             scope.launch {
                 try {
-                    val client = HttpClient()
+                    val client = sampleHttpClient()
                     val response = client.get("https://httpbin.org/delay/5")
                     status = "Slow request: ${response.status}"
                     client.close()
@@ -47,7 +47,7 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             status = "Loading..."
             scope.launch {
                 try {
-                    val client = HttpClient()
+                    val client = sampleHttpClient()
                     val response = client.get("https://httpbin.org/bytes/102400")
                     val body = response.bodyAsText()
                     status = "Large response: ${response.status}, ${body.length} chars"
@@ -62,7 +62,7 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             status = "Loading..."
             scope.launch {
                 try {
-                    val client = HttpClient()
+                    val client = sampleHttpClient()
                     val response = client.get("https://httpbin.org/status/404")
                     status = "404 request: ${response.status}"
                     client.close()
@@ -76,7 +76,7 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             status = "Loading..."
             scope.launch {
                 try {
-                    val client = HttpClient()
+                    val client = sampleHttpClient()
                     val response = client.get("https://httpbin.org/redirect/3")
                     status = "Redirect chain: ${response.status}"
                     client.close()
@@ -90,7 +90,7 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             status = "Loading..."
             scope.launch {
                 try {
-                    val client = HttpClient()
+                    val client = sampleHttpClient()
                     val response = client.post("https://httpbin.org/post") {
                         contentType(ContentType.Application.Json)
                         setBody("""{"test": "bugsee"}""")
@@ -107,7 +107,7 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             status = "Loading..."
             scope.launch {
                 try {
-                    val client = HttpClient()
+                    val client = sampleHttpClient()
                     val results = (1..5).map {
                         async { client.get("https://httpbin.org/get") }
                     }.awaitAll()

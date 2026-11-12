@@ -17,6 +17,8 @@ class KMPSample: Application() {
     override fun onCreate() {
         super.onCreate()
 
+        SampleSettings.init(this)
+
         val options = BugseeLaunchOptions()
         options.captureNetwork = true
         options.captureLogs = true
@@ -25,6 +27,9 @@ class KMPSample: Application() {
         options.reportingTriggerByShake = true
         options.reportingUILabelsEnabled = true
         options.reportingUILabelsRequired = false
+        // Chosen on the Crash Signals screen; takes effect with bugsee-android-ndk only.
+        options.captureCrashSignals = SampleSettings.crashSignals
+        launchedCrashSignals = options.captureCrashSignals
         // Internal Android SDK 7 keys; the 6.x "endpoint" / "debug" keys are ignored.
         options.setCustomOption("com.bugsee.option.\$\$ENDPOINT", getPlatform().appdevEndpoint)
         options.setCustomOption("com.bugsee.option.\$\$DEBUG", true)

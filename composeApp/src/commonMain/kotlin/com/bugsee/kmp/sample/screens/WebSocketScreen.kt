@@ -15,8 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.WebSockets
+import com.bugsee.kmp.sample.sampleWebSocketClient
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
@@ -42,7 +41,7 @@ fun WebSocketScreen(onBackClick: () -> Unit) {
                 log = ""
                 wsJob = scope.launch {
                     try {
-                        val client = HttpClient { install(WebSockets) }
+                        val client = sampleWebSocketClient()
                         client.webSocket("wss://ws.postman-echo.com/raw") {
                             connected = true
                             log += "Connected to echo server\n"
