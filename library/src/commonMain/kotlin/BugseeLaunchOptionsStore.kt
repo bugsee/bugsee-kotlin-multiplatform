@@ -17,7 +17,7 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
     fun put(key: String, value: Any?) {
         if (key == WRAPPER_INFO_KEY || key == ANDROID_WRAPPER_KEY) {
-            return // always injected by toMap()
+            return // the wrapper metadata comes from BugseeWrapperInfo only
         }
 
         val type = BugseeOptionsSpec.types[key]
@@ -67,32 +67,25 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
                 result[key] = BugseeOptionsSpec.types.getValue(key).toNative(value, isAndroid)
             }
         }
+        // iOS gets the wrapper metadata from the adapter registered with +[Bugsee setWrapper:]
+        // instead; its SDK would read a wrapper_info option only when no adapter is registered.
         if (isAndroid) {
             result[ANDROID_WRAPPER_KEY] = androidWrapperInfo()
-        } else {
-            result[WRAPPER_INFO_KEY] = iosWrapperInfo()
         }
         return result
     }
 
     // Hidden option of the Android SDK 7: {type, version, build, context}.
     private fun androidWrapperInfo(): HashMap<String, Any> = hashMapOf(
-        "type" to WRAPPER_TYPE,
-        "version" to BuildKonfig.libraryVersion,
-        "build" to BuildKonfig.buildChecksum,
-        "context" to hashMapOf("runtime" to KotlinVersion.CURRENT.toString()),
-    )
-
-    private fun iosWrapperInfo(): Map<String, Any> = mapOf(
-        "type" to WRAPPER_TYPE,
-        "version" to BuildKonfig.libraryVersion,
-        "build" to BuildKonfig.buildChecksum,
-        "runtime" to KotlinVersion.CURRENT.toString(),
+        "type" to BugseeWrapperInfo.TYPE,
+        "version" to BugseeWrapperInfo.version,
+        "build" to BugseeWrapperInfo.build,
+        "context" to hashMapOf("runtime" to BugseeWrapperInfo.runtime),
     )
 
     private companion object {
         const val TAG = "BugseeLaunchOptions"
-        const val WRAPPER_TYPE = "kmp"
+        // The legacy iOS key; not sent, and not accepted from the app either.
         const val WRAPPER_INFO_KEY = "wrapper_info"
         const val ANDROID_WRAPPER_KEY = "com.bugsee.option.\$\$WRAPPER"
     }

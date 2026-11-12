@@ -2,10 +2,12 @@ package com.bugsee.kmp.internal
 
 import swiftPMImport.com.bugsee.library.BugseeOptions
 import swiftPMImport.com.bugsee.library.BugseeTheme
+import swiftPMImport.com.bugsee.library.setWrapper
 import com.bugsee.kmp.BugseeAppearance
 import com.bugsee.kmp.BugseeAttachmentsProvider
 import com.bugsee.kmp.BugseeDelegateWrapper
 import com.bugsee.kmp.BugseeReportHandlerWrapper
+import com.bugsee.kmp.BugseeWrapperAdapter
 import com.bugsee.kmp.BugseeExceptionLoggingOptions
 import com.bugsee.kmp.BugseeExtendedReport
 import com.bugsee.kmp.BugseeExtendedReportProvider
@@ -58,9 +60,14 @@ public actual class BugseeInternal {
         BugseeSDK.setReportHandler(if (needed) reportHandler else null)
     }
 
+    // Registered before launch, so the first session already carries the wrapper metadata. The
+    // SDK holds it strongly; it is kept here too, as the instance this object registered.
+    internal val wrapperAdapter = BugseeWrapperAdapter()
+
     // +sharedInstance is declared nullable but is a dispatch_once singleton that exists before
     // launch, and launchWithToken / relaunch reuse it, so the delegate set here stays attached.
     init {
+        BugseeSDK.setWrapper(wrapperAdapter)
         val bugsee = BugseeSDK.sharedInstance()
         bugsee?.setDelegate(bugseeDelegate)
     }
