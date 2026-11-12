@@ -204,7 +204,14 @@ class BugseeOptionsGenerator(
 
     private fun kdoc(option: Merged, indent: String): String {
         val platforms = when {
-            option.android != null && option.ios != null -> "Android and iOS."
+            option.android != null && option.ios != null -> {
+                // An option of both SDKs can still need an add-on module on one of them.
+                val modules = listOfNotNull(
+                    option.android.option.module.takeIf { it != "bugsee-android" }?.let { "the `$it` module on Android" },
+                    option.ios.option.module.takeIf { it != "Bugsee" }?.let { "the `$it` module on iOS" },
+                )
+                if (modules.isEmpty()) "Android and iOS." else "Android and iOS, requires ${modules.joinToString(" and ")}."
+            }
             option.android != null -> "Android only" + moduleNote(option.android.option.module, "bugsee-android") + "."
             else -> "iOS only" + moduleNote(option.ios!!.option.module, "Bugsee") + "."
         }
