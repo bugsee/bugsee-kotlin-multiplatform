@@ -6,17 +6,16 @@ import io.ktor.client.statement.*
 
 class NetworkHelper {
     suspend fun ktorGetRequest(url: String): NetworkResult {
-        val client = sampleHttpClient()
-
+        // A client per request, closed after it.
         return try {
-            val response: HttpResponse = client.get(url)
-            val responseBody = response.bodyAsText()
-            
-            NetworkResult.Success(
-                statusCode = response.status.value,
-                body = responseBody,
-                headers = response.headers.entries().associate { it.key to it.value }
-            )
+            sampleHttpClient().use { client ->
+                val response: HttpResponse = client.get(url)
+                NetworkResult.Success(
+                    statusCode = response.status.value,
+                    body = response.bodyAsText(),
+                    headers = response.headers.entries().associate { it.key to it.value }
+                )
+            }
         } catch (e: Exception) {
             NetworkResult.Error(e.message ?: "Unknown error occurred")
         }

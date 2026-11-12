@@ -11,6 +11,12 @@ class AndroidPlatform : Platform {
 
     override val appdevEndpoint: String = "https://apidev.bugsee.com"
 
+    // Internal Android SDK 7 keys; the 6.x "endpoint" / "debug" keys are ignored.
+    override val endpointLaunchOptions: Map<String, Any> = mapOf(
+        "com.bugsee.option.\$\$ENDPOINT" to appdevEndpoint,
+        "com.bugsee.option.\$\$DEBUG" to true,
+    )
+
     override val tempDir: String = (System.getProperty("java.io.tmpdir") ?: "/tmp").let {
         if (it.endsWith("/")) it else "$it/"
     }

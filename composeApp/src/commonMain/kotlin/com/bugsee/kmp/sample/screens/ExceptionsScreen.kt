@@ -21,8 +21,10 @@ fun ExceptionsScreen(onBackClick: () -> Unit) {
                 @Suppress("UNUSED_VARIABLE")
                 val len = (null as String?)!!.length
             } catch (ex: Exception) {
+                // Both SDKs read only the domain and skipFrames; labels and includeVideo are
+                // ignored (labels can be added to a report in a report filter).
                 val options = BugseeExceptionLoggingOptions()
-                options.labels = arrayListOf("test", "qa", "withOptions")
+                options.exceptionDomain = "KMPSampleDomain"
                 options.rules.skipFrames = 2
                 Bugsee.logException(ex, options)
             }

@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.Bugsee
-import com.bugsee.kmp.BugseeLogLevel
 import com.bugsee.kmp.BugseeSeverity
 import com.bugsee.kmp.feedback.BugseeFeedback
 import com.bugsee.kmp.protect.BugseeProtect
@@ -72,6 +71,15 @@ fun App() {
         var networkFilterActive by remember { mutableStateOf(false) }
         var lifecycleListenerActive by remember { mutableStateOf(false) }
         var attachmentsProviderActive by remember { mutableStateOf(false) }
+
+        // The system Back (Android) closes the menu, then returns to the main screen.
+        SampleBackHandler(enabled = drawerState.isOpen || currentScreen != Screen.Main) {
+            if (drawerState.isOpen) {
+                scope.launch { drawerState.close() }
+            } else {
+                currentScreen = Screen.Main
+            }
+        }
 
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -122,47 +130,83 @@ fun App() {
 
 @Composable
 private fun DrawerContent(onAction: () -> Unit) {
+    // What the last button did. Buttons that open an SDK screen close the menu; the others keep it
+    // open so their result can be read here.
+    var status by remember { mutableStateOf("") }
+    fun setStatus(message: String) {
+        status = message
+        AppLogger.d(TAG, message)
+    }
+
     ModalDrawerSheet {
         Column(
             modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("Menu", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 8.dp))
+            if (status.isNotEmpty()) {
+                Text(status, style = MaterialTheme.typography.bodySmall)
+            }
             HorizontalDivider()
 
             // Recording Control
             SectionLabel("Recording Control")
-            DrawerButton("Resume") { Bugsee.resume(); onAction() }
-            DrawerButton("Pause") { Bugsee.pause(); onAction() }
-            DrawerButton("Stop") { Bugsee.stop(); onAction() }
-            DrawerButton("Relaunch") { Bugsee.relaunch(); onAction() }
-            DrawerButton("Is Launched?") { val l = Bugsee.isLaunched(); AppLogger.d(TAG, "isLaunched = $l"); Bugsee.log("isLaunched = $l", BugseeLogLevel.Info); onAction() }
+            DrawerButton("Resume") { Bugsee.resume(); setStatus("resume() called") }
+            DrawerButton("Pause") { Bugsee.pause(); setStatus("pause() called") }
+            DrawerButton("Stop") {
+                Bugsee.stop()
+                setStatus("stop() called. Once stopped, Delete Collected Data works and Launch starts Bugsee again.")
+            }
+            // Both pass the sample's options: without them the SDK would start with its defaults
+            // and lose the sample's endpoint.
+            DrawerButton("Launch") {
+                Bugsee.launch(getPlatform().token, sampleLaunchOptions())
+                setStatus("launch() called (options are ignored while Bugsee is running)")
+            }
+            DrawerButton("Relaunch") {
+                Bugsee.relaunch(sampleLaunchOptions())
+                setStatus("relaunch() called (refused unless Bugsee is running)")
+            }
+            DrawerButton("Is Launched?") { setStatus("isLaunched() = ${Bugsee.isLaunched()}") }
             HorizontalDivider()
 
             // Reports
             SectionLabel("Reports")
             DrawerButton("Show Report Dialog") { Bugsee.showReportDialog(); onAction() }
             DrawerButton("Show Filled Report Dialog") { Bugsee.showReportDialog("Test Summary", "Test Description", BugseeSeverity.Medium, listOf("qa")); onAction() }
-            DrawerButton("Send Extended Report") { Bugsee.createReport { report -> Bugsee.upload(report) }; onAction() }
+            DrawerButton("Send Extended Report") {
+                setStatus("Creating a report...")
+                Bugsee.createReport { extendedReport ->
+                    Bugsee.upload(extendedReport)
+                    setStatus("Extended report created and queued for upload")
+                }
+            }
             HorizontalDivider()
 
             // Feedback
             SectionLabel("Feedback")
             DrawerButton("Show Feedback") { BugseeFeedback.show(); onAction() }
-            DrawerButton("Set Feedback Greeting") { BugseeFeedback.setGreeting("Hello from KMP!"); onAction() }
+            DrawerButton("Set Feedback Greeting") { BugseeFeedback.setGreeting("Hello from KMP!"); setStatus("Feedback greeting set") }
             HorizontalDivider()
 
-            // Logging
+            // Exception
             SectionLabel("Exception")
             DrawerButton("Send Exception") {
                 try { throw NullPointerException("Sample exception from KMP") } catch (ex: Exception) { Bugsee.logException(ex) }
-                onAction()
+                setStatus("NullPointerException logged")
             }
+            HorizontalDivider()
 
             // Other
             SectionLabel("Other")
-            DrawerButton("Capture View Hierarchy") { Bugsee.captureViewHierarchy(); onAction() }
-            DrawerButton("Delete Collected Data") { Bugsee.deleteCollectedDataOnDevice { success -> Bugsee.log("Data deleted: $success", BugseeLogLevel.Info) }; onAction() }
+            DrawerButton("Capture View Hierarchy") { Bugsee.captureViewHierarchy(); setStatus("captureViewHierarchy() called") }
+            // Both SDKs delete only while Bugsee is stopped.
+            DrawerButton("Delete Collected Data (after Stop)") {
+                setStatus("Deleting collected data...")
+                Bugsee.deleteCollectedDataOnDevice { success ->
+                    setStatus(if (success) "Collected data deleted" else "Not deleted: Stop Bugsee first")
+                }
+            }
         }
     }
 }
@@ -218,6 +262,10 @@ fun MainScreen(
                 BugseeProtect(modifier = Modifier.fillMaxSize()) {
                     CategoryButton("Exceptions") { onNavigate(Screen.Exceptions) }
                 }
+                Text(
+                    "The Exceptions button is wrapped in BugseeProtect: it is hidden in the video.",
+                    style = MaterialTheme.typography.bodySmall
+                )
                 CategoryButton("Filters & Listeners") { onNavigate(Screen.FiltersListeners) }
                 CategoryButton("Report Filters") { onNavigate(Screen.ReportFilters) }
                 CategoryButton("Attributes") { onNavigate(Screen.Attributes) }
@@ -226,7 +274,7 @@ fun MainScreen(
                 CategoryButton("CrashProbe Tests") { onNavigate(Screen.CrashProbe) }
                 CategoryButton("Crash Signals") { onNavigate(Screen.CrashSignals) }
                 CategoryButton("Appearance") { onNavigate(Screen.Appearance) }
-                CategoryButton("Modern Network Tests") { onNavigate(Screen.NetworkTests) }
+                CategoryButton("Network Tests") { onNavigate(Screen.NetworkTests) }
                 CategoryButton("Advanced Network Tests") { onNavigate(Screen.AdvancedNetwork) }
                 CategoryButton("User Identifier Tests") { onNavigate(Screen.UserIdentifierTests) }
                 CategoryButton("WebSocket") { onNavigate(Screen.WebSocket) }

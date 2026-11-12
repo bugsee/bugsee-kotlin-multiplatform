@@ -6,10 +6,12 @@ import androidx.compose.runtime.Composable
 import com.bugsee.kmp.Bugsee
 import com.bugsee.kmp.BugseeAttachment
 import com.bugsee.kmp.BugseeLogLevel
+import com.bugsee.kmp.sample.AppLogger
 import com.bugsee.kmp.sample.composeapp.generated.resources.Res
 import com.bugsee.kmp.sample.getPlatform
 import com.bugsee.kmp.sample.writeTextFile
-import io.ktor.utils.io.core.toByteArray
+
+private const val TAG = "FiltersListeners"
 
 @Composable
 fun FiltersListenersScreen(
@@ -32,8 +34,7 @@ fun FiltersListenersScreen(
                 onLogFilterChange(false)
             } else {
                 Bugsee.setLogFilter { event ->
-                    event?.message = "[Filtered] ${event?.message}"
-                    event
+                    event?.apply { message = "[Filtered] $message" }
                 }
                 onLogFilterChange(true)
             }
@@ -48,6 +49,7 @@ fun FiltersListenersScreen(
                 onNetworkFilterChange(false)
             } else {
                 Bugsee.setNetworkEventFilter { event ->
+                    AppLogger.d(TAG, "Network filter: ${event?.method} ${event?.url}")
                     Bugsee.log("[Filtered] ${event?.method} ${event?.url}", BugseeLogLevel.Info)
                     event
                 }
@@ -64,6 +66,7 @@ fun FiltersListenersScreen(
                 onLifecycleListenerChange(false)
             } else {
                 Bugsee.setLifecycleEventsListener { event ->
+                    AppLogger.d(TAG, "Lifecycle: $event")
                     Bugsee.log("Lifecycle: $event", BugseeLogLevel.Info)
                 }
                 onLifecycleListenerChange(true)
@@ -81,7 +84,7 @@ fun FiltersListenersScreen(
                 Bugsee.setReportAttachmentsProvider { bugseeReport ->
                     // 1. Byte array attachment
                     val str = "Hello from Bugsee"
-                    val attachment1 = BugseeAttachment.create("from_bytes", str.toByteArray())
+                    val attachment1 = BugseeAttachment.create("from_bytes", str.encodeToByteArray())
 
                     // 2. JSON file via URI
                     val jsonUri = Res.getUri("files/sample_data.json")

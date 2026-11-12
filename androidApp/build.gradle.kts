@@ -72,9 +72,10 @@ dependencies {
     // OkHttp capture, including the WebSocket test's OkHttp WebSockets. The Bugsee Gradle plugin
     // adds network extensions only for dependencies it sees in this module, not in :composeApp.
     implementation(libs.bugsee.android.okhttp)
-    // MainActivity launches Bugsee and sets the feedback listener itself.
-    implementation(project(":library"))
-    implementation(project(":library-feedback"))
+    // Compose support of the Android SDK: masks Compose password fields in the video and hides
+    // taps on them. The Bugsee Gradle plugin adds it only when this module declares an
+    // androidx.compose dependency itself, and the sample's Compose comes through :composeApp.
+    implementation(libs.bugsee.android.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)

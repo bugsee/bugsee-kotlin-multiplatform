@@ -1,19 +1,32 @@
 package com.bugsee.kmp.sample.screens
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.bugsee.kmp.Bugsee
 
 @Composable
 fun ExtendedReportsScreen(onBackClick: () -> Unit) {
+    var status by remember { mutableStateOf("") }
+
     TestScreenScaffold(title = "Extended Reports", onBackClick = onBackClick) {
         TestButton("Send ExtendedReport with PNG") {
+            status = "Creating the report..."
             Bugsee.createReport { report ->
                 report.screenshot = createTestPng()
                 report.summary = "Test PNG from KMP"
                 report.addLabel("png-test")
                 report.setAttribute("kmp", "attr-kmp")
                 Bugsee.upload(report)
+                status = "Report \"Test PNG from KMP\" queued for upload"
             }
+        }
+
+        if (status.isNotEmpty()) {
+            Text(status)
         }
     }
 }

@@ -6,19 +6,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.bugsee.kmp.sample.AppLogger
 import com.bugsee.kmp.sample.runOnBackgroundThread
 
 /**
  * CrashProbe — exercises the Bugsee crash-capture pipeline with a representative set of failures.
  *
  * Every test dispatches its crashing block via [runOnBackgroundThread] for one Android-specific
- * reason: Compose Multiplatform 1.9.x's `Modifier.clickable` runs the click lambda inside a
- * `pointerInput` coroutine (`SuspendingPointerInputModifierNode`), and that coroutine silently
- * absorbs throwables raised synchronously from the lambda — they never reach
+ * reason: Compose Multiplatform's `Modifier.clickable` (seen with 1.9 and 1.12) runs the click
+ * lambda inside a `pointerInput` coroutine (`SuspendingPointerInputModifierNode`), and that
+ * coroutine silently absorbs throwables raised synchronously from the lambda — they never reach
  * `Thread.UncaughtExceptionHandler`, so Bugsee never sees them. Dispatching to a background
  * thread routes the exception to the platform's normal uncaught path.
  *
- * iOS does not have this problem: `ComposeSceneMediator.onTouchesEvent` calls
+ * iOS did not have this problem in 1.9: `ComposeSceneMediator.onTouchesEvent` calls
  * `ComposeScene.sendPointerEvent` synchronously, so a synchronous throw from a click lambda
  * propagates up to libc++abi and is captured by the native Bugsee iOS SDK. The bg-thread
  * wrapper is still used on iOS for uniformity — the throwable surfaces through the Kotlin/Native
@@ -123,7 +124,7 @@ fun CrashProbeScreen(onBackClick: () -> Unit) {
         }
 
         TestButton("[Diagnostic] Main-thread throw (Android: swallowed; iOS: crashes)") {
-            // Platform divergence in Compose Multiplatform 1.9.x:
+            // Platform divergence in Compose Multiplatform (seen with 1.9; Android rechecked with 1.12):
             //   Android — Modifier.clickable runs onClick inside a pointerInput coroutine
             //     (SuspendingPointerInputModifierNode). The throwable here is absorbed by the
             //     input coroutine scope, never reaches Thread.UncaughtExceptionHandler, and
@@ -133,6 +134,8 @@ fun CrashProbeScreen(onBackClick: () -> Unit) {
             //     call chain to libc++abi and is captured by Bugsee's native iOS SDK normally.
             // Kept as a button so future contributors don't re-discover the Android behavior
             // and assume the SDK is broken.
+            // Logged first: on Android the throw leaves no other trace.
+            AppLogger.d("CrashProbe", "Throwing on the main thread from a Compose click handler")
             throw RuntimeException("Main-thread throw from a Compose click handler")
         }
     }
