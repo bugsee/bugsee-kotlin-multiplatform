@@ -29,9 +29,9 @@ package com.bugsee.kmp
 public object BugseeCrashSignals {
     /**
      * No signals: native crashes (on iOS also uncaught Objective-C and C++ exceptions) are not
-     * reported, even with [BugseeLaunchOptions.detectAndReportCrash] on. Uncaught Kotlin and Java
-     * exceptions are still reported; turn [BugseeLaunchOptions.detectAndReportCrash] off to stop
-     * those too.
+     * reported, even with [BugseeLaunchOptions.detectAndReportCrash] on, apart from the signals the
+     * Android handler always intercepts (SIGQUIT and SIGSYS). Uncaught Kotlin and Java exceptions
+     * are still reported; turn [BugseeLaunchOptions.detectAndReportCrash] off to stop those too.
      */
     public const val None: Int = 0
 

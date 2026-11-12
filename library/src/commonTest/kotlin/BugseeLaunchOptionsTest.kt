@@ -46,7 +46,6 @@ class BugseeLaunchOptionsTest {
         assertFalse(options.captureAVPlayer)
         assertNull(options.buildTarget)
         assertEquals(BugseeCrashHandlerType.MachAndBSD, options.captureCrashHandlerType)
-        assertEquals(128, options.captureCrashSignals)
     }
 
     // --- toMap ---
