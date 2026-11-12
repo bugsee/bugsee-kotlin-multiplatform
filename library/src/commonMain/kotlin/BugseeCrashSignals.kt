@@ -12,17 +12,19 @@ package com.bugsee.kmp
  * ```
  *
  * A signal left out keeps the handler it had before, so a runtime that turns that signal into an
- * exception of its own keeps doing so.
+ * exception of its own keeps doing so. The value is read once per process, when the crash handler is
+ * first set up, so a later launch or relaunch with another value takes effect only after the app
+ * restarts.
  *
  * iOS: with a Mach handler ([BugseeCrashHandlerType.Mach], [BugseeCrashHandlerType.MachAndBSD]) a
  * bad memory access is intercepted when either [SEGV] or [BUS] is selected; leave both out to leave
  * bad memory accesses alone. With [BugseeCrashHandlerType.BSD] only the selected one of the two is.
  * Leaving out [ABRT] also stops uncaught Objective-C and C++ exceptions, which end in `abort()`,
- * from being reported.
+ * from being reported. A signal raised by software (`raise()`, `kill()`) never becomes a Mach
+ * exception, so only the BSD handler of a selected signal reports it. The SDK sets up no crash handler
+ * on the simulator or while a debugger is attached.
  *
- * Android: SIGQUIT and SIGSYS are always intercepted. The value is read once, when the handler is
- * first set up in the process, so a later launch or relaunch with another value takes effect only
- * after the app restarts.
+ * Android: SIGQUIT and SIGSYS are always intercepted.
  *
  * The values are those of the iOS SDK `BugseeCrashSignals` and of the Android SDK `CrashSignals`.
  */
