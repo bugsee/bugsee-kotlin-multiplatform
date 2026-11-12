@@ -32,6 +32,10 @@
     ([migration guide](https://kotl.in/cocoapods-to-swiftpm-migration)).
 - **Android: Bugsee SDK 7.5.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
+- **Android: `compileSdk` 35 or later in your app.** The library's AARs declare `minCompileSdk`
+  35 (0.1.x had no such requirement), so the build of an app module with a lower `compileSdk`
+  fails in `checkAarMetadata`. This concerns only the SDK your app compiles against: `minSdk`
+  stays 24.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
   Bugsee Gradle plugin does not see dependencies declared in Kotlin Multiplatform source sets, so
   add the extensions you need to your app yourself (for example
