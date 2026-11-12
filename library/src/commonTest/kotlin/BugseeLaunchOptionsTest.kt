@@ -113,7 +113,7 @@ class BugseeLaunchOptionsTest {
     }
 
     @Test
-    fun `toMap includes wrapper info under the platform key`() {
+    fun `toMap includes wrapper info on Android only`() {
         val map = BugseeLaunchOptions().toMap()
 
         if (isAndroid) {
@@ -123,15 +123,11 @@ class BugseeLaunchOptionsTest {
             assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
             assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
             assertEquals(KotlinVersion.CURRENT.toString(), (wrapperInfo["context"] as Map<*, *>)["runtime"])
-            assertFalse("wrapper_info" in map)
         } else {
-            val wrapperInfo = map["wrapper_info"] as Map<*, *>
-            assertEquals("kmp", wrapperInfo["type"])
-            assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
-            assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
-            assertEquals(KotlinVersion.CURRENT.toString(), wrapperInfo["runtime"])
+            // iOS gets it from the adapter registered with +[Bugsee setWrapper:] (BugseeWrapperAdapterIosTest).
             assertFalse(ANDROID_WRAPPER_KEY in map)
         }
+        assertFalse("wrapper_info" in map)
     }
 
     // --- nullable string options ---
@@ -180,8 +176,8 @@ class BugseeLaunchOptionsTest {
         options.setCustomOption(ANDROID_WRAPPER_KEY, "fake")
 
         val map = options.toMap()
-        assertTrue(map[if (isAndroid) ANDROID_WRAPPER_KEY else "wrapper_info"] is Map<*, *>)
-        assertFalse((if (isAndroid) "wrapper_info" else ANDROID_WRAPPER_KEY) in map)
+        assertEquals(isAndroid, map[ANDROID_WRAPPER_KEY] is Map<*, *>)
+        assertFalse("wrapper_info" in map)
     }
 
     @Test
