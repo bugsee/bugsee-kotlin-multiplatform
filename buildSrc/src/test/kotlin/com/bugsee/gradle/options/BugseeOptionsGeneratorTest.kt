@@ -211,8 +211,8 @@ class BugseeOptionsGeneratorTest {
         )
         val generator = BugseeOptionsGenerator(
             documented,
-            manifest("android", option("k.duration", "int", 60)),
-            manifest("ios", option("k.duration", "int", 60)),
+            manifest("android", option("k.duration", "int", 60, module = "bugsee-android")),
+            manifest("ios", option("k.duration", "int", 60, module = "Bugsee")),
         )
         val files = generator.generate()
 
@@ -225,6 +225,21 @@ class BugseeOptionsGeneratorTest {
         assertContains(files.getValue("BugseeOptions.kt"), expected)
         assertContains(files.getValue("BugseeLaunchOptions.kt"), expected)
         assertContains(generator.warnings, "kmp-options.json docs unknown key k.unknown")
+    }
+
+    @Test
+    fun `an option of both SDKs names the add-on module it needs on one of them`() {
+        val named = config.copy(names = config.names + ("k.signals" to "Signals"))
+        val files = BugseeOptionsGenerator(
+            named,
+            manifest("android", option("k.signals", "int", 128, module = "bugsee-android-ndk")),
+            manifest("ios", option("k.signals", "int", 128, module = "Bugsee")),
+        ).generate()
+
+        assertContains(
+            files.getValue("BugseeOptions.kt"),
+            "     * Option `k.signals`. Android and iOS, requires the `bugsee-android-ndk` module on Android.\n",
+        )
     }
 
     @Test

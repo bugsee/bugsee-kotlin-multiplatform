@@ -114,7 +114,7 @@ public expect class BugseeAppearance {
 
     /**
      * Background of a pressed action bar button on the report screen. Android only.
-     * Android SDK 7.4 does not apply it.
+     * Android SDK 7.5 does not apply it.
      */
     public var reportActionBarButtonBackgroundClickedColor: Int?
 
@@ -126,7 +126,7 @@ public expect class BugseeAppearance {
 
     /**
      * Background of a pressed action bar button on the feedback screen. Android only.
-     * Android SDK 7.4 does not apply it.
+     * Android SDK 7.5 does not apply it.
      */
     public var feedbackActionBarButtonBackgroundClickedColor: Int?
 
@@ -135,13 +135,13 @@ public expect class BugseeAppearance {
 
     /**
      * Background of the pressed Skip button on the feedback e-mail screen. Android only.
-     * Android SDK 7.4 does not apply it.
+     * Android SDK 7.5 does not apply it.
      */
     public var feedbackEmailSkipBackgroundClickedColor: Int?
 
     /**
      * Background of the pressed Continue button on the feedback e-mail screen. Android only.
-     * Android SDK 7.4 does not apply it.
+     * Android SDK 7.5 does not apply it.
      */
     public var feedbackEmailContinueClickedColor: Int?
 
@@ -153,14 +153,14 @@ public expect class BugseeAppearance {
 
     /**
      * Background color of the feedback loading bar. Android only.
-     * Android SDK 7.4 does not apply it.
+     * Android SDK 7.5 does not apply it.
      */
     public var feedbackLoadingBarBackgroundColor: Int?
 
-    /** Text color of the feedback loading bar. Android only. Android SDK 7.4 does not apply it. */
+    /** Text color of the feedback loading bar. Android only. Android SDK 7.5 does not apply it. */
     public var feedbackLoadingTextColor: Int?
 
-    /** Text color of feedback errors. Android only. Android SDK 7.4 does not apply it. */
+    /** Text color of feedback errors. Android only. Android SDK 7.5 does not apply it. */
     public var feedbackErrorTextColor: Int?
 
     /**
