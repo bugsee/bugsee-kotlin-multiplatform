@@ -15,10 +15,12 @@ import androidx.compose.ui.unit.dp
 import com.bugsee.kmp.sample.sampleHttpClient
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -68,9 +70,12 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             }
         }
 
-        TestButton("POST with JSON Body") {
+        // The Authorization header is a fake secret for the redaction: the SDK's built-in one, or
+        // the network filter of Filters & Listeners, which replaces it.
+        TestButton("POST with JSON Body and Authorization") {
             runRequest { client ->
                 val response = client.post("https://httpbin.org/post") {
+                    header(HttpHeaders.Authorization, "Bearer sample-secret-token")
                     contentType(ContentType.Application.Json)
                     setBody("""{"test": "bugsee"}""")
                 }

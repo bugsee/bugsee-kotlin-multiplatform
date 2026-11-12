@@ -14,6 +14,11 @@ fun ExtendedReportsScreen(onBackClick: () -> Unit) {
 
     TestScreenScaffold(title = "Extended Reports", onBackClick = onBackClick) {
         TestButton("Send ExtendedReport with PNG") {
+            // Without a running Bugsee no report is created and the callback is not called.
+            if (!Bugsee.isLaunched()) {
+                status = "Bugsee is not launched: no report is created"
+                return@TestButton
+            }
             status = "Creating the report..."
             Bugsee.createReport { report ->
                 report.screenshot = createTestPng()

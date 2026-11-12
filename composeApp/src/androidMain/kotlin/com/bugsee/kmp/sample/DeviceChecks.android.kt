@@ -21,6 +21,15 @@ actual object SampleSettings {
         set(value) {
             preferences?.edit()?.putInt(KEY_CRASH_SIGNALS, value)?.commit()
         }
+
+    actual fun isHandlerOn(handler: SampleHandler): Boolean =
+        preferences?.getBoolean(handlerKey(handler), false) ?: false
+
+    actual fun setHandlerOn(handler: SampleHandler, on: Boolean) {
+        preferences?.edit()?.putBoolean(handlerKey(handler), on)?.commit()
+    }
+
+    private fun handlerKey(handler: SampleHandler) = "handler_${handler.name}"
 }
 
 actual fun raiseNativeSignal(signal: NativeSignal) {

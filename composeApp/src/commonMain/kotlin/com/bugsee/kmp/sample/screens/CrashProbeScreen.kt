@@ -123,7 +123,7 @@ fun CrashProbeScreen(onBackClick: () -> Unit) {
             }
         }
 
-        TestButton("[Diagnostic] Main-thread throw (Android: swallowed; iOS: crashes)") {
+        TestButton("[Diagnostic] Main-thread throw (Android: swallowed; iOS: expected to crash)") {
             // Platform divergence in Compose Multiplatform (seen with 1.9; Android rechecked with 1.12):
             //   Android — Modifier.clickable runs onClick inside a pointerInput coroutine
             //     (SuspendingPointerInputModifierNode). The throwable here is absorbed by the

@@ -27,9 +27,12 @@ fun sampleLaunchOptions(): BugseeLaunchOptions = BugseeLaunchOptions().apply {
 
 /**
  * Launches Bugsee when the app starts (the Android Application, the iOS view controller) and
- * sets the feedback listener.
+ * sets the feedback listener. The filters, listeners and providers that are on are set first, so
+ * the crash report of the previous run, built during this launch, gets them too.
  */
 fun launchSampleBugsee() {
+    installSavedHandlers()
+
     val options = sampleLaunchOptions()
     launchedCrashSignals = options.captureCrashSignals
     Bugsee.launch(getPlatform().token, options)

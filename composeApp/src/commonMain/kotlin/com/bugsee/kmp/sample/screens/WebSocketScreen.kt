@@ -20,6 +20,7 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -32,14 +33,23 @@ fun WebSocketScreen(onBackClick: () -> Unit) {
     var sendAction by remember { mutableStateOf<(suspend (String) -> Unit)?>(null) }
     var closeAction by remember { mutableStateOf<(suspend () -> Unit)?>(null) }
 
-    // Runs [action] on the open connection, or notes that there is none.
+    // Runs [action] on the open connection, or notes that there is none. The connection can close
+    // while the action runs (Disconnect during the 10 messages): that is logged, not thrown.
     fun withConnection(action: suspend (send: suspend (String) -> Unit) -> Unit) {
         val send = sendAction
         if (send == null) {
             log += "Not connected: tap Connect first\n"
             return
         }
-        scope.launch { action(send) }
+        scope.launch {
+            try {
+                action(send)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log += "Send failed: ${e.message}\n"
+            }
+        }
     }
 
     TestScreenScaffold(title = "WebSocket", onBackClick = {
@@ -102,7 +112,15 @@ fun WebSocketScreen(onBackClick: () -> Unit) {
             if (close == null) {
                 log += "Not connected\n"
             } else {
-                scope.launch { close() }
+                scope.launch {
+                    try {
+                        close()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        log += "Disconnect failed: ${e.message}\n"
+                    }
+                }
             }
         }
 
