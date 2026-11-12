@@ -33,9 +33,12 @@
 - **Android: Bugsee SDK 7.5.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: `compileSdk` 35 or later in your app.** The library's AARs declare `minCompileSdk`
-  35 (0.1.x had no such requirement), so the build of an app module with a lower `compileSdk`
-  fails in `checkAarMetadata`. This concerns only the SDK your app compiles against: `minSdk`
-  stays 24.
+  35, so the build of an app module with a lower `compileSdk` fails in
+  `check<Variant>AarMetadata` (for example `checkDebugAarMetadata`: "requires libraries and
+  applications that depend on it to compile against version 35 or later"). The 0.1.x AARs
+  declared no minimum, although Compose 1.9, which `bugsee-kotlin-multiplatform-protect` depends
+  on, already required 35. This concerns only the SDK your app compiles against: `minSdk` stays
+  24.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
   Bugsee Gradle plugin does not see dependencies declared in Kotlin Multiplatform source sets, so
   add the extensions you need to your app yourself (for example
@@ -140,8 +143,9 @@ add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version 
   Swift package to the app through the linkage package, as it does for the core package; the
   first Xcode build after adding the artifact fails once with "Synthetic project regenerated".
 - On Android the feedback screen does not open before `Bugsee.launch`.
-- Android: the Feedback add-on needs `compileSdk` 35 or newer and Android Gradle plugin 8.1.1 or
-  newer (its Compose UI 1.8 and `androidx.dynamicanimation` 1.1 dependencies require them).
+- Android: the Feedback add-on needs Android Gradle plugin 8.1.1 or newer (its
+  `androidx.dynamicanimation` 1.1 dependency requires it). Its Compose UI 1.8 also needs
+  `compileSdk` 35, which every artifact requires anyway (see [Requirements](#requirements)).
 - The greeting set with `setGreeting` is kept across app restarts on Android, but only until the
   app exits on iOS: set it at every start.
 - The lifecycle events `BeforeFeedbackShown` and `AfterFeedbackShown` are reported on Android

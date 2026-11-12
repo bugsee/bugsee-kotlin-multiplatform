@@ -6,9 +6,9 @@ kotlin = "2.4.21"
 bugsee-ios = "7.0.1"
 bugsee-android = "7.5.1"
 android-minSdk = "24"
-# The published modules. The Android-KMP library plugin writes compileSdk into each AAR as
-# minCompileSdk, which consumers must meet (MIGRATION.md states it), so raise it only when a
-# library needs a newer API.
+# The published modules. Since AGP 9 (android.aar.metadata.defaultMinCompileSdkToCompileSdk, on
+# by default) each AAR declares compileSdk as minCompileSdk, which consumers must meet
+# (MIGRATION.md states it), so raise it only when a library needs a newer API.
 android-compileSdk = "35"
 android-targetSdk = "35"
 # The sample (composeApp, androidApp): Compose Multiplatform 1.12 (AndroidX Compose 1.12) needs
