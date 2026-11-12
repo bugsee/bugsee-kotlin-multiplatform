@@ -28,8 +28,8 @@ val isReleaseBuild: Boolean =
 val libraryVersionName: String = rootProject.file("version.txt").readLines().first().trim() +
         if (isReleaseBuild) "" else "-SNAPSHOT"
 
-// Short git SHA of the current HEAD — surfaced through BuildKonfig so wrapper_info
-// can report which commit produced the artifact. Falls back to "unknown" when the
+// Short git SHA of the current HEAD — surfaced through BuildKonfig so the wrapper metadata
+// (BugseeWrapperInfo) can report which commit produced the artifact. Falls back to "unknown" when the
 // repo has no commits or git is unavailable.
 val buildChecksum: String = runCatching {
     providers.exec {
@@ -181,8 +181,8 @@ kotlin {
 }
 
 // Generates a `com.bugsee.kmp.BuildKonfig` object in commonMain with compile-time
-// constants. `libraryVersion` is consumed by BugseeLaunchOptions.getWrapperInfo()
-// so the value reported to the Bugsee backend always matches the published artifact.
+// constants. `libraryVersion` is consumed by BugseeWrapperInfo, so the version reported to the
+// Bugsee backend always matches the published artifact.
 buildkonfig {
     packageName = "com.bugsee.kmp"
     defaultConfigs {

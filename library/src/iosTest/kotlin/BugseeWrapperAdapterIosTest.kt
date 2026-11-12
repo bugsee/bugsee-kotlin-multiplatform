@@ -1,7 +1,9 @@
 package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.BugseeInternal
+import kotlinx.cinterop.BetaInteropApi
 import platform.Foundation.NSClassFromString
+import platform.Foundation.NSSelectorFromString
 import platform.Foundation.valueForKey
 import platform.darwin.NSObject
 import swiftPMImport.com.bugsee.library.BGSDataRequestResultCallbackProtocol
@@ -31,23 +33,50 @@ class BugseeWrapperAdapterIosTest {
             }
         }
 
-        BugseeWrapperAdapter().requestDataWithType("viewHierarchy", callback)
+        BugseeWrapperAdapter().requestDataWithType("vh", callback)
 
         assertEquals(listOf<String?>(null), results)
     }
 
-    // The SDK has no public getter for the registered wrapper; it keeps it on its internal
-    // BGSBugseeEnvironment singleton, read here through key-value coding. If the SDK renames
-    // either, this test fails instead of passing vacuously.
+    // The SDK has no public getter for the registered wrapper or for what it reports. Both are read
+    // here from SDK internals through key-value coding: the BGSBugseeEnvironment singleton keeps the
+    // adapter, and +[BGSEnvironment wrapperDictionary] builds the session's sdk.wrapper from it.
+    // Each key is checked with respondsToSelector first: valueForKey on an unknown key raises an
+    // Objective-C exception, which would end the whole test process instead of failing this test.
+
     @Test
     fun `BugseeInternal registers its adapter with the SDK`() {
         val bugseeInternal = BugseeInternal()
 
-        val environmentClass = assertNotNull(NSClassFromString("BGSBugseeEnvironment")) as NSObject
-        val environment = assertNotNull(environmentClass.valueForKey("sharedEnvironment")) as NSObject
-        val registered = assertNotNull(environment.valueForKey("wrapper")) as NSObject
+        val environment = sdkValue(sdkClass("BGSBugseeEnvironment"), "sharedEnvironment") as NSObject
+        val registered = sdkValue(environment, "wrapper") as NSObject
 
-        // Two Kotlin references to one Objective-C object are not ===; compare the objects.
         assertTrue(registered.isEqual(bugseeInternal.wrapperAdapter))
+    }
+
+    @Test
+    fun `the SDK reports the library as sdk wrapper with the runtime under context`() {
+        BugseeInternal()
+
+        val wrapper = sdkValue(sdkClass("BGSEnvironment"), "wrapperDictionary") as Map<*, *>
+
+        assertEquals(
+            mapOf(
+                "type" to "kmp",
+                "version" to BuildKonfig.libraryVersion,
+                "build" to BuildKonfig.buildChecksum,
+                "context" to mapOf("runtime" to KotlinVersion.CURRENT.toString()),
+            ),
+            wrapper,
+        )
+    }
+
+    @OptIn(BetaInteropApi::class)
+    private fun sdkClass(name: String): NSObject =
+        assertNotNull(NSClassFromString(name), "the SDK has no class $name") as NSObject
+
+    private fun sdkValue(receiver: NSObject, key: String): Any {
+        assertTrue(receiver.respondsToSelector(NSSelectorFromString(key)), "the SDK has no $key on $receiver")
+        return assertNotNull(receiver.valueForKey(key), "$key is nil")
     }
 }

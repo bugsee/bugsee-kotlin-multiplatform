@@ -12,7 +12,11 @@ import swiftPMImport.com.bugsee.library.BugseeWrapperProtocol
  * is registered.
  *
  * Only the metadata and the required data-request callback are implemented; the optional parts of
- * the protocol (report handler, lifecycle events, secure rectangles, data channel) are not used.
+ * the protocol (report handler, lifecycle events, secure rectangles, data channel) are not used, and
+ * the SDK checks for each before calling it.
+ *
+ * The SDK keeps one wrapper adapter. Registering this one replaces an adapter another Bugsee wrapper
+ * in the same app (Flutter, React Native) may have registered, so an app uses one Bugsee wrapper.
  */
 internal class BugseeWrapperAdapter : NSObject(), BugseeWrapperProtocol {
     override fun wrapperType(): String = BugseeWrapperInfo.TYPE
