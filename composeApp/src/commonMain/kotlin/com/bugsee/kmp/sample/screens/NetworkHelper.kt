@@ -1,12 +1,12 @@
 package com.bugsee.kmp.sample.screens
 
-import io.ktor.client.*
+import com.bugsee.kmp.sample.sampleHttpClient
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 
 class NetworkHelper {
     suspend fun ktorGetRequest(url: String): NetworkResult {
-        val client = HttpClient()
+        val client = sampleHttpClient()
 
         return try {
             val response: HttpResponse = client.get(url)
