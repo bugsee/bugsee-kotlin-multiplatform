@@ -30,7 +30,7 @@
     runs, fails with "You are using CocoaPods integration with SwiftPM dependencies". Move the
     shared module to direct integration before upgrading
     ([migration guide](https://kotl.in/cocoapods-to-swiftpm-migration)).
-- **Android: Bugsee SDK 7.4.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
+- **Android: Bugsee SDK 7.5.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
   Bugsee Gradle plugin does not see dependencies declared in Kotlin Multiplatform source sets, so
@@ -159,14 +159,14 @@ add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version 
   - the iOS SDK 7.0 feedback screens use only `feedbackBackgroundColor` and the feedback e-mail
     screen colors (`feedbackEmailBackgroundColor`, `feedbackEmailContinueActiveColor`,
     `feedbackEmailContinueNotActiveColor`, `feedbackEmailSkipTextColor`);
-  - Android SDK 7.4 ignores `reportActionBarButtonBackgroundClickedColor`,
+  - Android SDK 7.5 ignores `reportActionBarButtonBackgroundClickedColor`,
     `feedbackActionBarButtonBackgroundClickedColor`, `feedbackEmailSkipBackgroundClickedColor`,
     `feedbackEmailContinueClickedColor`, `feedbackLoadingBarBackgroundColor`,
     `feedbackLoadingTextColor` and `feedbackErrorTextColor`.
 
 ## Launch options
 
-`BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.4.1,
+`BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.5.1,
 iOS 7.0.1) and follows the Android SDK 7 naming.
 
 - **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
@@ -195,11 +195,12 @@ iOS 7.0.1) and follows the Android SDK 7 naming.
     (`enableMachExceptions` was off).
 - iOS SDK 7 lets `captureScreenshot` follow `captureVideo` when it is not set. Because every option
   is sent, set `captureScreenshot = false` yourself when you turn video off.
-- `captureCrashSignals` (iOS) is a bit set of the signals the crash reporter handles; combine the
-  `BugseeCrashSignals` constants with `or` (`BugseeCrashSignals.ABRT or BugseeCrashSignals.TRAP`).
+- `captureCrashSignals` is a bit set of the signals the native crash handler intercepts; combine
+  the `BugseeCrashSignals` constants with `or` (`BugseeCrashSignals.ABRT or BugseeCrashSignals.TRAP`).
   The default `BugseeCrashSignals.Default` lets the SDK choose (every signal); combined with other
-  bits it is ignored. Leaving out `ABRT` also stops uncaught Objective-C and C++ exceptions from
-  being reported.
+  bits it is ignored. On Android it needs the `bugsee-android-ndk` module and is read once per
+  process. On iOS, leaving out `ABRT` also stops uncaught Objective-C and C++ exceptions from being
+  reported.
 - `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos` are removed; all options live on
   `BugseeLaunchOptions`. The class is no longer `open`.
 

@@ -4,7 +4,7 @@ kotlin = "2.4.21"
 # iOS SDK the library links (SwiftPM package github.com/bugsee/spm) and whose option manifest
 # generates BugseeLaunchOptions.
 bugsee-ios = "7.0.1"
-bugsee-android = "7.4.1"
+bugsee-android = "7.5.1"
 android-minSdk = "24"
 # The published modules. AGP writes compileSdk into each AAR as minCompileSdk, which consumers
 # must meet, so raise it only when a library needs a newer API.

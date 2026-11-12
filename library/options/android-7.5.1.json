@@ -1,15 +1,16 @@
 {
   "manifestVersion": 1,
   "sdk": "android",
-  "sdkVersion": "7.4.1",
+  "sdkVersion": "7.5.1",
   "buildConfiguration": "release",
-  "generatedAt": "2026-10-13T15:21:34Z",
+  "generatedAt": "2026-11-11T18:23:01Z",
   "options": [
     {"key": "com.bugsee.option.$$DEBUG", "type": "boolean", "default": false, "module": "bugsee-android", "hidden": true},
     {"key": "com.bugsee.option.$$ENDPOINT", "type": "string", "default": null, "module": "bugsee-android", "hidden": true},
     {"key": "com.bugsee.option.$$WRAPPER", "type": "map", "default": null, "module": "bugsee-android", "hidden": true},
     {"key": "com.bugsee.option.capture.breadcrumbs", "type": "boolean", "default": false, "module": "bugsee-android", "hidden": false},
     {"key": "com.bugsee.option.capture.breadcrumbs.extras", "type": "boolean", "default": false, "module": "bugsee-android", "hidden": false},
+    {"key": "com.bugsee.option.capture.crash-signals", "type": "int", "default": 128, "module": "bugsee-android-ndk", "hidden": false},
     {"key": "com.bugsee.option.capture.logs", "type": "boolean", "default": true, "module": "bugsee-android", "hidden": false},
     {"key": "com.bugsee.option.capture.logs.allsources", "type": "boolean", "default": false, "module": "bugsee-android", "hidden": false},
     {"key": "com.bugsee.option.capture.logs.level", "type": "enum", "default": "Verbose", "module": "bugsee-android", "hidden": false, "enum": {"name": "LogLevel", "values": {"Error": 1, "Warning": 2, "Info": 3, "Debug": 4, "Verbose": 5}}},

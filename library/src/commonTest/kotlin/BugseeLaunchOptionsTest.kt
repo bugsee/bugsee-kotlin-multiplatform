@@ -313,10 +313,8 @@ class BugseeLaunchOptionsTest {
         assertEquals(BugseeCrashHandlerType.BSD, options.captureCrashHandlerType)
         if (isAndroid) {
             assertFalse(BugseeOptions.CaptureCrashHandlerType in map)
-            assertFalse(BugseeOptions.CaptureCrashSignals in map)
         } else {
             assertEquals(1, map[BugseeOptions.CaptureCrashHandlerType])
-            assertEquals(128, map[BugseeOptions.CaptureCrashSignals])
         }
     }
 
@@ -341,12 +339,15 @@ class BugseeLaunchOptionsTest {
     fun `crash signals default to the SDK choice and combine with or`() {
         val options = BugseeLaunchOptions()
         assertEquals(BugseeCrashSignals.Default, options.captureCrashSignals)
+        assertEquals(BugseeCrashSignals.Default, options.toMap()[BugseeOptions.CaptureCrashSignals])
         assertEquals(BugseeCrashSignals.Default, BugseeOptionsSpec.defaults(isAndroid = false)[BugseeOptions.CaptureCrashSignals])
+        // Android SDK 7.5 has the option too (NdkOptions.CrashSignals), with the same bit values.
+        assertEquals(BugseeCrashSignals.Default, BugseeOptionsSpec.defaults(isAndroid = true)[BugseeOptions.CaptureCrashSignals])
 
         options.captureCrashSignals = BugseeCrashSignals.ABRT or BugseeCrashSignals.ILL or BugseeCrashSignals.TRAP
 
         assertEquals(41, options.captureCrashSignals)
-        assertEquals(if (isAndroid) null else 41, options.toMap()[BugseeOptions.CaptureCrashSignals])
+        assertEquals(41, options.toMap()[BugseeOptions.CaptureCrashSignals])
     }
 
     @Test
