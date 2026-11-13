@@ -1,4 +1,6 @@
-import java.util.Properties
+import com.bugsee.gradle.SampleBugseeConfig
+import com.bugsee.gradle.localProperty
+import com.bugsee.gradle.sampleBugseeEndpoint
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // The Android app of the sample. Since AGP 9 an Android application module cannot also apply
@@ -17,12 +19,7 @@ plugins {
 // default; set bugsee.sample.ndk=false (-P, or in local.properties) to build the app without it.
 // The Bugsee Gradle plugin adds bugsee-android-ndk as a version range when its ndk block is
 // enabled; the catalog dependency below keeps it on the core SDK's version.
-val sampleWithNdk: Boolean = run {
-    val local = rootProject.file("local.properties").takeIf { it.isFile }
-        ?.let { file -> Properties().apply { file.inputStream().use { load(it) } } }
-    (providers.gradleProperty("bugsee.sample.ndk").orNull ?: local?.getProperty("bugsee.sample.ndk"))
-        ?.trim()?.toBoolean() ?: true
-}
+val sampleWithNdk: Boolean = localProperty("bugsee.sample.ndk")?.trim()?.toBoolean() ?: true
 
 
 android {
@@ -48,9 +45,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    // The app token and API base come from local.properties (see SampleBugseeConfig), as in the
+    // app itself. Without a token the plugin uploads nothing.
     bugsee {
-        appToken("629d2d4a-8804-4210-8951-3b3c3f83761a")
-        endpoint = "https://apidev.bugsee.com"  // custom endpoint (optional) "https://apidev.bugsee.com"
+        localProperty(SampleBugseeConfig.ANDROID_TOKEN)?.let { appToken(it) }
+        sampleBugseeEndpoint?.let { endpoint = it }
         debug = true                         // enable plugin debug logging
         ndk {                                 // adds bugsee-android-ndk, uploads NDK debug symbols
             enabled.set(sampleWithNdk)

@@ -7,6 +7,11 @@ import com.bugsee.kmp.feedback.BugseeFeedbackListener
 
 private const val TAG = "SampleLaunch"
 
+/** Shown and logged when this platform has no app token, so the sample does not launch Bugsee. */
+val bugseeNotConfiguredMessage: String
+    get() = "Bugsee is not launched: set ${getPlatform().tokenProperty} in local.properties " +
+        "(see CLAUDE.md) and rebuild."
+
 /**
  * The options the sample launches Bugsee with. Launch and Relaunch in the menu pass them again:
  * `relaunch()` without options restarts both SDKs with their defaults, which would drop the
@@ -31,11 +36,17 @@ fun sampleLaunchOptions(): BugseeLaunchOptions = BugseeLaunchOptions().apply {
  * the crash report of the previous run, built during this launch, gets them too.
  */
 fun launchSampleBugsee() {
+    val token = getPlatform().token
+    if (token == null) {
+        AppLogger.e(TAG, bugseeNotConfiguredMessage)
+        return
+    }
+
     installSavedHandlers()
 
     val options = sampleLaunchOptions()
     launchedCrashSignals = options.captureCrashSignals
-    Bugsee.launch(getPlatform().token, options)
+    Bugsee.launch(token, options)
 
     BugseeFeedback.setListener(object : BugseeFeedbackListener {
         override fun onNewMessagesReceived(messages: List<String>) {

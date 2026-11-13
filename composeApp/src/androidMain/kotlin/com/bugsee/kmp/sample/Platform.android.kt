@@ -5,17 +5,14 @@ import android.os.Build
 class AndroidPlatform : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
 
-    override val token: String = "629d2d4a-8804-4210-8951-3b3c3f83761a" // appdev
-//        "323a506c-3756-49dd-9833-39fef912639c" // app
-
-
-    override val appdevEndpoint: String = "https://apidev.bugsee.com"
+    override val token: String? = SampleConfig.androidToken.ifBlank { null }
+    override val tokenProperty: String = "bugsee.sample.android.token"
 
     // Internal Android SDK 7 keys; the 6.x "endpoint" / "debug" keys are ignored.
-    override val endpointLaunchOptions: Map<String, Any> = mapOf(
-        "com.bugsee.option.\$\$ENDPOINT" to appdevEndpoint,
-        "com.bugsee.option.\$\$DEBUG" to true,
-    )
+    override val endpointLaunchOptions: Map<String, Any> = buildMap {
+        SampleConfig.endpoint.ifBlank { null }?.let { put("com.bugsee.option.\$\$ENDPOINT", it) }
+        put("com.bugsee.option.\$\$DEBUG", true)
+    }
 
     override val tempDir: String = (System.getProperty("java.io.tmpdir") ?: "/tmp").let {
         if (it.endsWith("/")) it else "$it/"
