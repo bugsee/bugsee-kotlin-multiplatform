@@ -66,6 +66,14 @@ kotlin {
                 implementation(libs.compose.protect.ui)
             }
         }
+        androidMain {
+            dependencies {
+                // Modifier.bugseeSecure(), which BugseeProtect uses on Android. It also gives every
+                // app with this artifact the SDK's Compose support (Compose password fields are
+                // masked); its Compose dependency is compileOnly, so it brings no Compose version.
+                implementation(libs.bugsee.android.compose)
+            }
+        }
     }
 }
 
@@ -96,7 +104,7 @@ mavenPublishing {
 
     pom {
         name.set("Bugsee Kotlin Multiplatform Protect")
-        description.set("Compose Multiplatform helper that wraps content with a Bugsee secure overlay, hiding it from Bugsee video recordings and screenshots. Requires bugsee-kotlin-multiplatform.")
+        description.set("Compose Multiplatform helper that hides content from Bugsee video recordings and screenshots. Requires bugsee-kotlin-multiplatform.")
         inceptionYear.set("2026")
         url.set("https://bugsee.com")
 

@@ -43,10 +43,15 @@
   Bugsee Gradle plugin does not see dependencies declared in Kotlin Multiplatform source sets, so
   add the extensions you need to your app yourself (for example
   `com.bugsee:bugsee-android-ktor-3`, `com.bugsee:bugsee-android-okhttp`,
-  `com.bugsee:bugsee-android-compose`).
+  `com.bugsee:bugsee-android-compose`). `bugsee-kotlin-multiplatform-protect` brings
+  `bugsee-android-compose` with it.
 
 ## Android behavior changes
 
+- `BugseeProtect` marks its content with the SDK's `Modifier.bugseeSecure()` (from
+  `bugsee-android-compose`) instead of registering an overlay view with `addSecureView`. Android
+  SDK 7 erases views registered with `addSecureView` on `stop()`, so an overlay view would no
+  longer hide the content after a stop or a relaunch; the semantics mark survives both.
 - `pause()` / `resume()` map to the SDK 7 blackout API. The `Paused` / `Resumed` lifecycle events
   are reported when a blackout starts / ends. `pause()` before `launch()` is now honored: capture
   starts paused and `Launched` is followed by `Paused`. A pause ends when the SDK stops (`Resumed`
