@@ -43,7 +43,7 @@ XCODEPROJ_PATH="$PWD/iosApp/iosApp.xcodeproj" ./gradlew :composeApp:integrateEmb
 ./scripts/test.sh
 ```
 
-iOS app is built via the Xcode project `iosApp/iosApp.xcodeproj` (no workspace, no CocoaPods). Its "Compile Kotlin Framework" build phase runs Gradle.
+iOS app is built via the Xcode project `iosApp/iosApp.xcodeproj` (no workspace, no CocoaPods). Its "Compile Kotlin Framework" build phase runs Gradle. The shared `iosApp` scheme has a Build post-action that runs `BugseeAgent` (from the Bugsee SwiftPM checkout) to upload the dSYMs of device builds to the sample's app on apidev; `-e` takes the API base `https://apidev.bugsee.com`, not the SDK endpoint with `/v2`.
 
 ## Architecture
 
