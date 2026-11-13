@@ -4,7 +4,6 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.kotlin.dsl.withType
-import java.util.Properties
 
 /**
  * Local iOS SDK packages for SDK development. Each is the directory (absolute, or relative to
@@ -20,12 +19,7 @@ object LocalIosPackages {
 }
 
 /** The value of [name] from -P or local.properties, or null when it is unset or blank. */
-fun Project.localIosPackage(name: String): String? = (
-    providers.gradleProperty(name).orNull
-        ?: rootProject.file("local.properties").takeIf { it.isFile }?.let { file ->
-            Properties().apply { file.inputStream().use { load(it) } }.getProperty(name)
-        }
-    )?.takeIf { it.isNotBlank() }
+fun Project.localIosPackage(name: String): String? = localProperty(name)
 
 /** True when either local iOS package is set. */
 val Project.usesLocalIosPackage: Boolean

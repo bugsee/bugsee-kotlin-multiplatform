@@ -43,7 +43,21 @@ XCODEPROJ_PATH="$PWD/iosApp/iosApp.xcodeproj" ./gradlew :composeApp:integrateEmb
 ./scripts/test.sh
 ```
 
-iOS app is built via the Xcode project `iosApp/iosApp.xcodeproj` (no workspace, no CocoaPods). Its "Compile Kotlin Framework" build phase runs Gradle. The shared `iosApp` scheme has a Build post-action that runs `BugseeAgent` (from the Bugsee SwiftPM checkout) to upload the dSYMs of device builds to the sample's app on apidev; `-e` takes the API base `https://apidev.bugsee.com`, not the SDK endpoint with `/v2`.
+iOS app is built via the Xcode project `iosApp/iosApp.xcodeproj` (no workspace, no CocoaPods). Its "Compile Kotlin Framework" build phase runs Gradle. The shared `iosApp` scheme has a Build post-action that runs `BugseeAgent` (from the Bugsee SwiftPM checkout) to upload the dSYMs of device builds; it reads the token and API base from `composeApp/build/bugsee/ios-symbol-upload.properties`, which `:composeApp:writeIosSymbolUploadConfig` writes before Xcode embeds the framework.
+
+### Sample app tokens
+
+No app token is committed. The sample reads them from `local.properties` (or `-P`), through `buildSrc` `SampleBugseeConfig`:
+
+```properties
+bugsee.sample.android.token=<Android app token>
+bugsee.sample.ios.token=<iOS app token>
+# Optional API base for both platforms, e.g. https://apidev.bugsee.com; unset means production.
+# The iOS SDK endpoint is this base plus /v2.
+bugsee.sample.endpoint=https://apidev.bugsee.com
+```
+
+They reach the app through the generated `com.bugsee.kmp.sample.SampleConfig` (BuildKonfig), the Android Gradle plugin's `bugsee { }` block, and the iOS dSYM upload. Without the token of a platform the sample does not launch Bugsee there and says so on the main screen; the build still succeeds (CI has no tokens).
 
 ## Architecture
 

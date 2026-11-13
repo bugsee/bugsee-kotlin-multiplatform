@@ -169,7 +169,12 @@ private fun DrawerContent(onAction: () -> Unit) {
                 // Both pass the sample's options: without them the SDK would start with its defaults
                 // and lose the sample's endpoint.
                 DrawerButton("Launch") {
-                    Bugsee.launch(getPlatform().token, sampleLaunchOptions())
+                    val token = getPlatform().token
+                    if (token == null) {
+                        setStatus(BUGSEE_NOT_CONFIGURED)
+                        return@DrawerButton
+                    }
+                    Bugsee.launch(token, sampleLaunchOptions())
                     setStatus("launch() called (options are ignored while Bugsee is running)")
                 }
                 DrawerButton("Relaunch") {
@@ -271,6 +276,14 @@ fun MainScreen(
                 Text("\u2630", style = MaterialTheme.typography.titleLarge)
             }
             Text("Bugsee KMP Sample", style = MaterialTheme.typography.titleMedium)
+        }
+        if (getPlatform().token == null) {
+            Text(
+                BUGSEE_NOT_CONFIGURED,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
         val content = @Composable {
             Column(

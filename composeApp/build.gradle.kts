@@ -1,3 +1,7 @@
+import com.bugsee.gradle.SampleBugseeConfig
+import com.bugsee.gradle.localProperty
+import com.bugsee.gradle.sampleBugseeEndpoint
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // The shared UI of the sample: an Android-KMP library used by :androidApp, and the iOS framework
@@ -7,6 +11,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.buildKonfig)
 }
 
 group = "com.bugsee.kmp.sample"
@@ -75,4 +80,40 @@ kotlin {
             }
         }
     }
+}
+
+// The Bugsee apps the sample reports to come from local.properties (see SampleBugseeConfig), so no
+// app token is committed. A blank value means unset.
+val sampleAndroidToken: String = localProperty(SampleBugseeConfig.ANDROID_TOKEN).orEmpty()
+val sampleIosToken: String = localProperty(SampleBugseeConfig.IOS_TOKEN).orEmpty()
+val sampleEndpoint: String = sampleBugseeEndpoint.orEmpty()
+
+// Generates `com.bugsee.kmp.sample.SampleConfig` in commonMain; Platform.*.kt read it.
+buildkonfig {
+    packageName = "com.bugsee.kmp.sample"
+    objectName = "SampleConfig"
+    defaultConfigs {
+        buildConfigField(FieldSpec.Type.STRING, "androidToken", sampleAndroidToken)
+        buildConfigField(FieldSpec.Type.STRING, "iosToken", sampleIosToken)
+        buildConfigField(FieldSpec.Type.STRING, "endpoint", sampleEndpoint)
+    }
+}
+
+// The iosApp scheme's Build post-action uploads the dSYMs with the token and API base in this
+// file. It is written when Xcode builds the Kotlin framework, which comes before the post-action,
+// so the upload follows local.properties like the app does.
+val writeIosSymbolUploadConfig = tasks.register("writeIosSymbolUploadConfig") {
+    val token = sampleIosToken
+    val endpoint = sampleEndpoint
+    val output = layout.buildDirectory.file("bugsee/ios-symbol-upload.properties")
+    inputs.property("token", token)
+    inputs.property("endpoint", endpoint)
+    outputs.file(output)
+    doLast {
+        output.get().asFile.writeText("token=$token\nendpoint=$endpoint\n")
+    }
+}
+
+tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach {
+    dependsOn(writeIosSymbolUploadConfig)
 }

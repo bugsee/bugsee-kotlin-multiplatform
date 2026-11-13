@@ -12,17 +12,14 @@ import platform.UIKit.UIDevice
 class IOSPlatform: Platform {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 
-    override val token: String = "54d447f4-7058-4ad5-99da-96345330f40f" // appdev
+    override val token: String? = SampleConfig.iosToken.ifBlank { null }
 
-    //"a710ea5f-a2bc-4486-b84a-bf1bfcc79b12" // app
-
-    override val appdevEndpoint: String = "https://apidev.bugsee.com/v2"
-
-    // The iOS SDK maps these keys to its internal endpoint and debug options.
-    override val endpointLaunchOptions: Map<String, Any> = mapOf(
-        "endpoint" to appdevEndpoint,
-        "debug" to true,
-    )
+    // The iOS SDK maps these keys to its internal endpoint and debug options. Its endpoint is the
+    // API base plus /v2.
+    override val endpointLaunchOptions: Map<String, Any> = buildMap {
+        SampleConfig.endpoint.ifBlank { null }?.let { put("endpoint", "$it/v2") }
+        put("debug", true)
+    }
 
     override val tempDir: String = NSTemporaryDirectory()
 }
