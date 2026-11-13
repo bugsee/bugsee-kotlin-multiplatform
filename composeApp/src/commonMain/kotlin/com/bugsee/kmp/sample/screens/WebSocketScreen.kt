@@ -20,6 +20,7 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -32,36 +33,56 @@ fun WebSocketScreen(onBackClick: () -> Unit) {
     var sendAction by remember { mutableStateOf<(suspend (String) -> Unit)?>(null) }
     var closeAction by remember { mutableStateOf<(suspend () -> Unit)?>(null) }
 
+    // Runs [action] on the open connection, or notes that there is none. The connection can close
+    // while the action runs (Disconnect during the 10 messages): that is logged, not thrown.
+    fun withConnection(action: suspend (send: suspend (String) -> Unit) -> Unit) {
+        val send = sendAction
+        if (send == null) {
+            log += "Not connected: tap Connect first\n"
+            return
+        }
+        scope.launch {
+            try {
+                action(send)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log += "Send failed: ${e.message}\n"
+            }
+        }
+    }
+
     TestScreenScaffold(title = "WebSocket", onBackClick = {
         wsJob?.cancel()
         onBackClick()
     }) {
         TestButton(if (connected) "Connected" else "Connect") {
-            if (!connected) {
+            // Also while connecting, before the handshake has finished.
+            if (wsJob?.isActive != true) {
                 log = ""
                 wsJob = scope.launch {
                     try {
-                        val client = sampleWebSocketClient()
-                        client.webSocket("wss://ws.postman-echo.com/raw") {
-                            connected = true
-                            log += "Connected to echo server\n"
+                        sampleWebSocketClient().use { client ->
+                            client.webSocket("wss://ws.postman-echo.com/raw") {
+                                connected = true
+                                log += "Connected to echo server\n"
 
-                            sendAction = { message ->
-                                send(Frame.Text(message))
-                                log += "Sent: $message\n"
-                            }
+                                sendAction = { message ->
+                                    send(Frame.Text(message))
+                                    log += "Sent: $message\n"
+                                }
 
-                            closeAction = {
-                                close()
-                            }
+                                closeAction = {
+                                    close()
+                                }
 
-                            for (frame in incoming) {
-                                if (frame is Frame.Text) {
-                                    log += "Received: ${frame.readText()}\n"
+                                for (frame in incoming) {
+                                    if (frame is Frame.Text) {
+                                        log += "Received: ${frame.readText()}\n"
+                                    }
                                 }
                             }
                         }
-                        client.close()
                     } catch (e: Exception) {
                         log += "Error: ${e.message}\n"
                     } finally {
@@ -75,22 +96,31 @@ fun WebSocketScreen(onBackClick: () -> Unit) {
         }
 
         TestButton("Send Text Message") {
-            scope.launch {
-                sendAction?.invoke("Hello from Bugsee KMP!")
-            }
+            withConnection { send -> send("Hello from Bugsee KMP!") }
         }
 
         TestButton("Send Multiple Messages (10)") {
-            scope.launch {
+            withConnection { send ->
                 for (i in 1..10) {
-                    sendAction?.invoke("Message #$i")
+                    send("Message #$i")
                 }
             }
         }
 
         TestButton("Disconnect") {
-            scope.launch {
-                closeAction?.invoke()
+            val close = closeAction
+            if (close == null) {
+                log += "Not connected\n"
+            } else {
+                scope.launch {
+                    try {
+                        close()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        log += "Disconnect failed: ${e.message}\n"
+                    }
+                }
             }
         }
 

@@ -9,6 +9,11 @@ import com.bugsee.kmp.BugseeCrashSignals
 expect object SampleSettings {
     /** The [BugseeCrashSignals] bit set for `captureCrashSignals`; [BugseeCrashSignals.Default] if never set. */
     var crashSignals: Int
+
+    /** Whether [handler] is set; off if never set. */
+    fun isHandlerOn(handler: SampleHandler): Boolean
+
+    fun setHandlerOn(handler: SampleHandler, on: Boolean)
 }
 
 /** The `captureCrashSignals` value this process launched Bugsee with (set at launch). */

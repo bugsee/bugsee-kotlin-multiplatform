@@ -13,6 +13,11 @@ group = "com.bugsee.kmp.sample"
 version = "1.0-SNAPSHOT"
 
 kotlin {
+    // SampleSettings and AppLogger are expect objects.
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     android {
         namespace = "com.bugsee.kmp.sample.shared"
         compileSdk = libs.versions.sample.compileSdk.get().toInt()
@@ -38,6 +43,8 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            // BackHandler for the system Back (SampleBackHandler).
+            implementation(libs.androidx.activity.compose)
             implementation("io.ktor:ktor-client-android:${libs.versions.ktor3.get()}")
             // WebSockets: the Android engine has none (see SampleHttpClients).
             implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor3.get()}")

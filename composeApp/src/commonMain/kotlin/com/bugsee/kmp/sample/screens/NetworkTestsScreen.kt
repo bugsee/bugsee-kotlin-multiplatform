@@ -38,7 +38,7 @@ fun NetworkTestsScreen(
     
     val testUrl = "https://dummyjson.com/test"
 
-    TestScreenScaffold(title = "Exceptions", onBackClick = onBackClick) {
+    TestScreenScaffold(title = "Network Tests", onBackClick = onBackClick) {
 
         
         // Row 1: Ktor test button

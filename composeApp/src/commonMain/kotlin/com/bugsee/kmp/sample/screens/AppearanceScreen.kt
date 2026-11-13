@@ -27,12 +27,15 @@ import kotlin.reflect.KMutableProperty0
 private val testColors = mapOf(
     "reportBackgroundColor" to 0xFFFFF3E0.toInt(),
     "reportTextColor" to 0xFF3E2723.toInt(),
-    "reportActionBarColor" to 0xFFE65100.toInt(),
+    "reportActionBarColor" to 0xFFE65100.toInt(), // Android only
     "feedbackBackgroundColor" to 0xFFE8F5E9.toInt(),
     "feedbackIncomingBubbleColor" to 0xFFC8E6C9.toInt(),
     "feedbackOutgoingBubbleColor" to 0xFF2E7D32.toInt(),
     "feedbackTitleTextColor" to 0xFF1B5E20.toInt(),
 )
+
+// Colors that iOS does not have: on iOS they read "not set" before and after Apply test colors.
+private val androidOnlyColors = setOf("reportActionBarColor")
 
 private fun colorProperties(): List<Pair<String, KMutableProperty0<Int?>>> {
     val appearance = Bugsee.appearance
@@ -79,7 +82,8 @@ fun AppearanceScreen(onBackClick: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Box(Modifier.size(20.dp).background(value?.let { Color(it) } ?: Color.Transparent))
-                    Text("$name: ${hex(value)}", style = MaterialTheme.typography.bodySmall)
+                    val androidOnly = if (name in androidOnlyColors) " (Android only)" else ""
+                    Text("$name$androidOnly: ${hex(value)}", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

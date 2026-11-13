@@ -31,6 +31,15 @@ actual object SampleSettings {
         set(value) {
             NSUserDefaults.standardUserDefaults.setInteger(value.toLong(), KEY_CRASH_SIGNALS)
         }
+
+    actual fun isHandlerOn(handler: SampleHandler): Boolean =
+        NSUserDefaults.standardUserDefaults.boolForKey(handlerKey(handler))
+
+    actual fun setHandlerOn(handler: SampleHandler, on: Boolean) {
+        NSUserDefaults.standardUserDefaults.setBool(on, handlerKey(handler))
+    }
+
+    private fun handlerKey(handler: SampleHandler) = "bugsee-sample.handler.${handler.name}"
 }
 
 actual fun raiseNativeSignal(signal: NativeSignal) {

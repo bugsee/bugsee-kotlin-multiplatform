@@ -3,13 +3,14 @@ package com.bugsee.kmp.sample
 /**
  * Runs [block] on a background thread.
  *
- * Why this exists: on Android, Compose Multiplatform 1.9.x's `Modifier.clickable` invokes the
- * click lambda inside a `pointerInput` coroutine (`SuspendingPointerInputModifierNode`).
+ * Why this exists: on Android, Compose Multiplatform's `Modifier.clickable` (seen with 1.9 and
+ * 1.12) invokes the click lambda inside a `pointerInput` coroutine
+ * (`SuspendingPointerInputModifierNode`).
  * Throwables raised synchronously from that lambda are absorbed by the input coroutine scope
  * and never propagate to `Thread.UncaughtExceptionHandler`, so Bugsee cannot capture them.
  * Dispatching to a background thread sidesteps the input coroutine entirely.
  *
- * iOS does not have this problem in 1.9.x — `ComposeSceneMediator.onTouchesEvent` dispatches
+ * iOS did not have this problem in 1.9 — `ComposeSceneMediator.onTouchesEvent` dispatches
  * pointer events synchronously into `ComposeScene.sendPointerEvent`, so a synchronous throw
  * from a click lambda propagates up through the call chain, terminates via libc++abi, and is
  * captured by the native Bugsee iOS SDK. The bg-thread wrapper still works on iOS (the
