@@ -6,6 +6,7 @@ class AndroidPlatform : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
 
     override val token: String? = SampleConfig.androidToken.ifBlank { null }
+    override val tokenProperty: String = "bugsee.sample.android.token"
 
     // Internal Android SDK 7 keys; the 6.x "endpoint" / "debug" keys are ignored.
     override val endpointLaunchOptions: Map<String, Any> = buildMap {

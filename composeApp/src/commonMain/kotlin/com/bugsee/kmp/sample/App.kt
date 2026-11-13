@@ -171,7 +171,7 @@ private fun DrawerContent(onAction: () -> Unit) {
                 DrawerButton("Launch") {
                     val token = getPlatform().token
                     if (token == null) {
-                        setStatus(BUGSEE_NOT_CONFIGURED)
+                        setStatus(bugseeNotConfiguredMessage)
                         return@DrawerButton
                     }
                     Bugsee.launch(token, sampleLaunchOptions())
@@ -279,7 +279,7 @@ fun MainScreen(
         }
         if (getPlatform().token == null) {
             Text(
-                BUGSEE_NOT_CONFIGURED,
+                bugseeNotConfiguredMessage,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = 16.dp)

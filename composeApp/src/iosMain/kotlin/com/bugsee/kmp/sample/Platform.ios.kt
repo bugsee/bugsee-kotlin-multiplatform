@@ -13,6 +13,7 @@ class IOSPlatform: Platform {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 
     override val token: String? = SampleConfig.iosToken.ifBlank { null }
+    override val tokenProperty: String = "bugsee.sample.ios.token"
 
     // The iOS SDK maps these keys to its internal endpoint and debug options. Its endpoint is the
     // API base plus /v2.

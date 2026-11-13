@@ -21,6 +21,10 @@ object SampleBugseeConfig {
     const val ENDPOINT = "bugsee.sample.endpoint"
 }
 
-/** [SampleBugseeConfig.ENDPOINT] without a trailing slash or `/v2`, or null when unset. */
+/**
+ * [SampleBugseeConfig.ENDPOINT] without a trailing slash or `/v2`, or null when unset or when
+ * nothing else is left.
+ */
 val Project.sampleBugseeEndpoint: String?
     get() = localProperty(SampleBugseeConfig.ENDPOINT)?.trim()?.removeSuffix("/")?.removeSuffix("/v2")
+        ?.takeIf { it.isNotBlank() }

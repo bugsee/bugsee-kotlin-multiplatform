@@ -8,9 +8,9 @@ import com.bugsee.kmp.feedback.BugseeFeedbackListener
 private const val TAG = "SampleLaunch"
 
 /** Shown and logged when this platform has no app token, so the sample does not launch Bugsee. */
-const val BUGSEE_NOT_CONFIGURED: String =
-    "Bugsee is not launched: set bugsee.sample.android.token and bugsee.sample.ios.token in " +
-        "local.properties (see CLAUDE.md) and rebuild."
+val bugseeNotConfiguredMessage: String
+    get() = "Bugsee is not launched: set ${getPlatform().tokenProperty} in local.properties " +
+        "(see CLAUDE.md) and rebuild."
 
 /**
  * The options the sample launches Bugsee with. Launch and Relaunch in the menu pass them again:
@@ -38,7 +38,7 @@ fun sampleLaunchOptions(): BugseeLaunchOptions = BugseeLaunchOptions().apply {
 fun launchSampleBugsee() {
     val token = getPlatform().token
     if (token == null) {
-        AppLogger.e(TAG, BUGSEE_NOT_CONFIGURED)
+        AppLogger.e(TAG, bugseeNotConfiguredMessage)
         return
     }
 
