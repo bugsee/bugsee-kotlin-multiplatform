@@ -56,7 +56,8 @@ kotlin {
 
         commonMain {
             dependencies {
-                // Depends on the main library for com.bugsee.kmp.Bugsee.addSecureView().
+                // Depends on the main library for com.bugsee.kmp.Bugsee.addSecureView(), which the iOS
+                // BugseeProtect uses (the Android one uses Modifier.bugseeSecure(), see androidMain).
                 // `implementation` (not `api`): consumers must add bugsee-kotlin-multiplatform
                 // themselves to call Bugsee.launch(); the protect library does not re-export it.
                 implementation(project(":library"))
