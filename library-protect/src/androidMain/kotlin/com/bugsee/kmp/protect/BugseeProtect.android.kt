@@ -6,17 +6,10 @@
 
 package com.bugsee.kmp.protect
 
-import android.view.View
-import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.layout.Measurable
-import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.viewinterop.AndroidView
-import com.bugsee.kmp.Bugsee
+import androidx.compose.ui.layout.Layout
+import com.bugsee.library.compose.bugseeSecure
 
 // Usage:
 /*
@@ -27,70 +20,27 @@ setContent {
 }
 */
 
-private enum class SlotsEnum { Main, Dependent }
-
+// The node is marked with the Android SDK's Compose semantics key (bugsee-android-compose), which
+// the SDK's Compose scanner finds on every captured frame. Unlike a view registered with
+// Bugsee.addSecureView, the mark is not erased by Bugsee.stop(): the scanner is registered again
+// when the SDK launches, so the content stays hidden after a relaunch or Stop and Launch.
 @Composable
 public actual fun BugseeProtect(
     modifier: Modifier,
     placeMainContent: Boolean,
     content: @Composable () -> Unit
 ) {
-    SubcomposeLayout(
-        modifier = modifier
-    ) { constraints: Constraints ->
-
-        val mainPlaceables: List<Placeable> = subcompose(SlotsEnum.Main, content)
-            .map {
-                it.measure(constraints.copy(minWidth = 0, minHeight = 0))
-            }
+    Layout(content = content, modifier = modifier.bugseeSecure()) { measurables, constraints ->
+        val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
 
         // Lay out children like a Box: stack at (0,0), overall size = largest child
-        var maxWidth = 0
-        var maxHeight = 0
+        val width = placeables.maxOfOrNull { it.width } ?: 0
+        val height = placeables.maxOfOrNull { it.height } ?: 0
 
-        mainPlaceables.forEach { placeable: Placeable ->
-            maxWidth = maxOf(maxWidth, placeable.width)
-            maxHeight = maxOf(maxHeight, placeable.height)
-        }
-
-        val dependentPlaceables: List<Placeable> = subcompose(SlotsEnum.Dependent) {
-            BugseeOverlay(Size(maxWidth.toFloat(), maxHeight.toFloat()))
-        }
-            .map { measurable: Measurable ->
-                measurable.measure(Constraints.fixed(maxWidth, maxHeight))
-            }
-
-        layout(maxWidth, maxHeight) {
-
+        layout(width, height) {
             if (placeMainContent) {
-                mainPlaceables.forEach { placeable: Placeable ->
-                    placeable.placeRelative(0, 0)
-                }
-            }
-
-            dependentPlaceables.forEach { placeable: Placeable ->
-                placeable.placeRelative(0, 0)
+                placeables.forEach { it.placeRelative(0, 0) }
             }
         }
     }
-}
-
-// A plain View with no background draws nothing, so the overlay is invisible as it is. It must not
-// be made transparent with alpha 0: Android SDK 7 treats a secure view with alpha 0 as not on screen
-// and leaves its area unmasked (UIUtils.isViewVisibleOnScreen).
-@Composable
-private fun BugseeOverlay(size: Size) {
-    AndroidView(
-        factory = { ctx ->
-            View(ctx).apply {
-                layoutParams = ViewGroup.LayoutParams(size.width.toInt(), size.height.toInt())
-            }
-        }, update = { view ->
-            view.layoutParams = view.layoutParams?.apply {
-                width = size.width.toInt()
-                height = size.height.toInt()
-            } ?: ViewGroup.LayoutParams(size.width.toInt(), size.height.toInt())
-            Bugsee.addSecureView(view)
-        }
-    )
 }

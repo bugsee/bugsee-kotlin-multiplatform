@@ -124,11 +124,6 @@ fun App() {
     }
 }
 
-// Android: Stop erases the SDK's registration of BugseeProtect views, and BugseeProtect
-// registers again only when it is composed again (a library issue).
-private const val PROTECT_AFTER_STOP_NOTE =
-    "Android: the Exceptions button is masked again only after you leave and reopen the main screen."
-
 @Composable
 private fun DrawerContent(onAction: () -> Unit) {
     // What the last button did, above the scrolling buttons. Buttons that open an SDK screen close
@@ -164,7 +159,7 @@ private fun DrawerContent(onAction: () -> Unit) {
                 DrawerButton("Resume") { Bugsee.resume(); setStatus("resume(): the blackout ends") }
                 DrawerButton("Stop") {
                     Bugsee.stop()
-                    setStatus("stop() called. Once stopped, Delete Collected Data works and Launch starts Bugsee again. $PROTECT_AFTER_STOP_NOTE")
+                    setStatus("stop() called. Once stopped, Delete Collected Data works and Launch starts Bugsee again.")
                 }
                 // Both pass the sample's options: without them the SDK would start with its defaults
                 // and lose the sample's endpoint.
@@ -179,7 +174,7 @@ private fun DrawerContent(onAction: () -> Unit) {
                 }
                 DrawerButton("Relaunch") {
                     Bugsee.relaunch(sampleLaunchOptions())
-                    setStatus("relaunch() called (refused unless Bugsee is running). $PROTECT_AFTER_STOP_NOTE")
+                    setStatus("relaunch() called (refused unless Bugsee is running)")
                 }
                 DrawerButton("Is Launched?") { setStatus("isLaunched() = ${Bugsee.isLaunched()}") }
                 HorizontalDivider()
