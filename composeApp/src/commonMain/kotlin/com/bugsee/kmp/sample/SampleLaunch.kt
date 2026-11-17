@@ -23,6 +23,8 @@ fun sampleLaunchOptions(): BugseeLaunchOptions = BugseeLaunchOptions().apply {
     captureVideo = true
     captureViewHierarchy = true
     reportingTriggerByShake = true
+    // Off by default since Android SDK 7.6.0; the sample keeps the notification to report from.
+    reportingTriggerByNotification = true
     reportingUILabelsEnabled = true
     reportingUILabelsRequired = false
     // Chosen on the Crash Signals screen; on Android it takes effect with bugsee-android-ndk only.

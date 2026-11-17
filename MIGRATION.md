@@ -9,7 +9,7 @@
 - **Kotlin 2.4 or later in your project.** The library is built with Kotlin 2.4.21 and depends on
   `kotlin-stdlib` 2.4.21. Its iOS klibs carry metadata version 2.4.0, which older compilers cannot
   read; Android consumers on Kotlin 2.3 may work but are not supported.
-- **iOS: Bugsee SDK 7.0.1 through Swift Package Manager; CocoaPods is not supported.** iOS SDK 7
+- **iOS: Bugsee SDK 7.1.0 through Swift Package Manager; CocoaPods is not supported.** iOS SDK 7
   is published only as the Swift package `https://github.com/bugsee/spm`, not to CocoaPods, so
   remove `pod 'Bugsee'` from your Podfile. The library declares the package as a SwiftPM
   dependency (Kotlin SwiftPM import) and publishes it with the library, so you do not add Bugsee
@@ -30,7 +30,7 @@
     runs, fails with "You are using CocoaPods integration with SwiftPM dependencies". Move the
     shared module to direct integration before upgrading
     ([migration guide](https://kotl.in/cocoapods-to-swiftpm-migration)).
-- **Android: Bugsee SDK 7.5.1 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
+- **Android: Bugsee SDK 7.6.0 and Bugsee Gradle plugin 4.x.** Apply `com.bugsee.android.gradle`
   (4.0.7 or newer) to your Android application module; plugin 3.x does not work with SDK 7.x.
 - **Android: `compileSdk` 35 or later in your app.** The library's AARs declare `minCompileSdk`
   35, so the build of an app module with a lower `compileSdk` fails in
@@ -179,8 +179,8 @@ add-on. Add `com.bugsee:bugsee-kotlin-multiplatform-feedback` (the same version 
 
 ## Launch options
 
-`BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.5.1,
-iOS 7.0.1) and follows the Android SDK 7 naming.
+`BugseeLaunchOptions` is generated from the option manifests of the native SDKs (Android 7.6.0,
+iOS 7.1.0) and follows the Android SDK 7 naming.
 
 - **Keys** are the shared SDK 7 keys (`com.bugsee.option.*`), available as constants on the new
   `BugseeOptions` object. Use them with `setCustomOption` or the `Map` overload of `launch`.
@@ -201,8 +201,10 @@ iOS 7.0.1) and follows the Android SDK 7 naming.
 - Some defaults change with SDK 7.
   - `maxDataSize` is 150 (was 50).
   - `detectAndReportExit` is on (`detectAppExit` was off).
-  - iOS: `reportingTriggerByShake` is on and `reportingTriggerByScreenshot` is off (0.1.x had
-    `shakeToReport` off and `screenshotToReport` on). Set both to keep the 0.1.x gesture.
+  - The report triggers are off: `reportingTriggerByShake` on both platforms, and on Android
+    `reportingTriggerByNotification` (0.1.x had `shakeToReport` and `notificationBarTrigger` on
+    on Android). On iOS `reportingTriggerByScreenshot` is off too (0.1.x had `screenshotToReport`
+    on). Turn on the triggers you want to keep.
   - iOS: `detectAndReportEarlyCrash` and `captureVideoAdaptive` are on; iOS SDK 6 had neither.
   - iOS: `captureCrashHandlerType` is `MachAndBSD`. 0.1.x used BSD signal handlers only
     (`enableMachExceptions` was off).
