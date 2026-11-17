@@ -9,14 +9,14 @@ import kotlin.experimental.ExperimentalNativeApi
 
 private typealias BugseeSDK = swiftPMImport.com.bugsee.library.Bugsee
 
-// Set once the hook is installed: every successful launch callback asks for it, and a second
+// Set once the hook is installed: every successful launch and relaunch asks for it, and a second
 // hook would wrap the first, so one Kotlin crash would be logged once per launch.
 private val hookInstalled = AtomicInt(0)
 
 /**
  * Wraps the unhandled exception hook such that the provided hook is invoked
  * before the currently set unhandled exception hook is invoked. Only the first call per process
- * installs it; later calls (another successful launch) do nothing.
+ * installs it; later calls (another successful launch or relaunch) do nothing.
  * Note: once the unhandled exception hook returns the program will be terminated.
  * @see setUnhandledExceptionHook
  * @see terminateWithUnhandledException
