@@ -109,6 +109,9 @@
   - the report dialog opens with the severity you pass or `reportingDefaultBugPriority` (High by
     default); 0.1.x always opened it at Medium.
 - `upload(..., includeVideo = false)` cannot be honored: iOS SDK 7 always includes video.
+- A Kotlin exception's causes are reported on iOS: the reason of a logged exception or a Kotlin
+  crash lists them after the message, one `Caused by: <cause>` line each (up to 10). The stack
+  frames are those of the exception itself, as before.
 - `logException(ex, options)` uses only `exceptionDomain` and `rules.skipFrames` on iOS, as on
   Android. `labels`, `includeVideo = false` and custom merging rules are ignored.
 - The Kotlin bindings of the native SDK moved from the package `cocoapods.Bugsee` to
