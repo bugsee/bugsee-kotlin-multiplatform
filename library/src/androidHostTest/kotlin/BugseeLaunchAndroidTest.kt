@@ -50,7 +50,8 @@ class BugseeLaunchAndroidTest {
         assertEquals(true, map[BugseeOptions.CaptureLogs]) // invalid value ignored, default sent
         assertEquals(150, map[BugseeOptions.MaxDataSize]) // Android default
         assertEquals(1, map["custom"])
-        assertTrue("com.bugsee.option.\$\$WRAPPER" in map)
+        // The wrapper metadata comes from the registered BugseeWrapperAdapter, not an option.
+        assertTrue("com.bugsee.option.\$\$WRAPPER" !in map)
         assertTrue("wrapper_info" !in map)
     }
 
@@ -65,7 +66,7 @@ class BugseeLaunchAndroidTest {
             val map = captor.value
             assertEquals("Low", map[BugseeOptions.CaptureVideoFrameRate]) // constant name, not the KMP enum
             assertEquals(60, map[BugseeOptions.Duration])
-            assertTrue("com.bugsee.option.\$\$WRAPPER" in map)
+            assertTrue("com.bugsee.option.\$\$WRAPPER" !in map)
         }
     }
 

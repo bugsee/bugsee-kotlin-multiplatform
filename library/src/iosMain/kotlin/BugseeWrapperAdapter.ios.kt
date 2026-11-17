@@ -7,9 +7,9 @@ import swiftPMImport.com.bugsee.library.BugseeWrapperProtocol
 /**
  * Describes this library to iOS SDK 7 through `+[Bugsee setWrapper:]` (the `Bugsee.SPI`
  * submodule), the SDK's channel for cross-platform wrappers. The SDK attaches the type, version,
- * build and context to the session as `sdk.wrapper`, the same data Android gets from the
- * `$$WRAPPER` launch option. It reads the legacy `wrapper_info` launch option only when no adapter
- * is registered.
+ * build and context to the session as `sdk.wrapper`, the same data the Android SDK gets from the
+ * Android `BugseeWrapperAdapter`. It reads the legacy `wrapper_info` launch option only when no
+ * adapter is registered.
  *
  * Only the metadata and the required data-request callback are implemented; the optional parts of
  * the protocol (report handler, lifecycle events, secure rectangles, data channel) are not used, and

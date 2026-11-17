@@ -20,6 +20,15 @@ public actual class BugseeInternal {
         private const val TAG = "BugseeInternal"
     }
 
+    // Registered before any launch, so every session carries the wrapper metadata (sdk.wrapper),
+    // also one started by launch(apiKey) or relaunch() without options. The SDK holds it strongly;
+    // it is kept here too, as the instance this object registered.
+    internal val wrapperAdapter = BugseeWrapperAdapter()
+
+    init {
+        BugseeSDK.setWrapper(wrapperAdapter)
+    }
+
     // Read on the SDK's report-handler thread, written from the caller's thread.
     @Volatile
     private var reportFieldsFiller: BugseeReportFieldsFiller? = null
@@ -33,7 +42,7 @@ public actual class BugseeInternal {
     public actual val appearance: BugseeAppearance by lazy { BugseeAppearance(BugseeSDK.getAppearance()) }
 
     // Launch methods
-    // A raw map goes through BugseeLaunchOptions, as on iOS: defaults, type checks and wrapper info.
+    // A raw map goes through BugseeLaunchOptions, as on iOS: defaults and type checks.
     public actual fun launch(apiKey: String, options: Map<String, Any>?) {
         launch(apiKey, options?.let { BugseeLaunchOptions(it) })
     }
