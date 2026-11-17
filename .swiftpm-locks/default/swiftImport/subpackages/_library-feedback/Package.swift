@@ -15,7 +15,7 @@ let package = Package(
   dependencies: [
     .package(
       url: "https://github.com/bugsee/feedback-spm.git",
-      exact: "7.0.1"
+      exact: "7.1.0"
     )
   ],
   targets: [

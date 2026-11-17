@@ -19,8 +19,10 @@ class BugseeLaunchOptionsTest {
         val options = BugseeLaunchOptions()
 
         assertEquals(60, options.duration)
-        assertTrue(options.reportingTriggerByShake)
+        assertFalse(options.reportingTriggerByShake)
         assertFalse(options.reportingTriggerByScreenshot)
+        // Android only; on iOS it reports the Android default.
+        assertFalse(options.reportingTriggerByNotification)
         assertEquals(BugseeFrameRate.High, options.captureVideoFrameRate)
         assertEquals(BugseeLogLevel.Verbose, options.captureLogsLevel)
         assertEquals(BugseeSeverity.Blocker, options.reportingDefaultCrashPriority)
