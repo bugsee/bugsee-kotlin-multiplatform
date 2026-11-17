@@ -45,10 +45,15 @@ private fun Throwable.reasonWithCauses(): String? {
     val seen = mutableListOf<Throwable>(this)
     var next = cause
     while (next != null && seen.none { it === next } && seen.size <= MAX_CAUSES) {
-        lines += "Caused by: $next"
+        lines += "Caused by: ${next.describe()}"
         seen += next
         next = next.cause
     }
 
     return if (lines.isEmpty()) null else lines.joinToString("\n")
 }
+
+// toString of an app's exception can throw; the report is built in the crash hook, so a failing
+// toString is replaced by the class name.
+private fun Throwable.describe(): String =
+    runCatching { toString() }.getOrElse { this::class.qualifiedName ?: this::class.simpleName ?: "Throwable" }

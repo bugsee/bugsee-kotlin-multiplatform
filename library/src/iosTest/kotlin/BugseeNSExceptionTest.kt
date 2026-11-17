@@ -62,4 +62,37 @@ class BugseeNSExceptionTest {
         assertEquals(throwable.getStackTrace().toList(), exception.callStackSymbols)
         assertEquals(exception.callStackSymbols.size, exception.callStackReturnAddresses.size)
     }
+
+    @Test
+    fun `a cause cycle stops at the first repeat`() {
+        val first = LinkedException("first")
+        val second = LinkedException("second")
+        first.next = second
+        second.next = first
+
+        assertEquals(
+            "first\nCaused by: com.bugsee.kmp.nsexception.LinkedException: second",
+            BugseeNSException(first).reason,
+        )
+    }
+
+    @Test
+    fun `a cause whose toString throws is named by its class`() {
+        val throwable = RuntimeException("Outer", BrokenToStringException())
+
+        assertEquals(
+            "Outer\nCaused by: com.bugsee.kmp.nsexception.BrokenToStringException",
+            BugseeNSException(throwable).reason,
+        )
+    }
+}
+
+// Throwable.cause is open: a subclass can link two exceptions into a cycle.
+private class LinkedException(message: String) : Exception(message) {
+    var next: Throwable? = null
+    override val cause: Throwable? get() = next
+}
+
+private class BrokenToStringException : Exception("unused") {
+    override fun toString(): String = throw IllegalStateException("toString failed")
 }
