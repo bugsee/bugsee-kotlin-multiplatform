@@ -89,15 +89,19 @@ public actual class BugseeInternal {
     }
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
-        var nativeOptions: BugseeOptions? = null
-        if (options != null) {
-            @Suppress("UNCHECKED_CAST")
-            nativeOptions = BugseeOptions.optionsFrom(options.toMap() as? Map<Any?, *>)
-        }
-        // Decided from the KMP option, which also covers launch(apiKey, null).
+        BugseeSDK.launchWithToken(apiKey, nativeOptions(options), onStarted(options))
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun nativeOptions(options: BugseeLaunchOptions?): BugseeOptions? =
+        options?.let { BugseeOptions.optionsFrom(it.toMap() as? Map<Any?, *>) }
+
+    // Installs the Kotlin unhandled-exception hook once the SDK has started, by launch or relaunch,
+    // unless the KMP options turn crash detection off (no options: on). It is installed once per
+    // process, so an earlier launch that skipped it leaves it to a later launch or relaunch.
+    private fun onStarted(options: BugseeLaunchOptions?): (Boolean) -> Unit {
         val installExceptionHook = shouldInstallUnhandledExceptionHook(options)
-        BugseeSDK.launchWithToken(apiKey, nativeOptions) { started ->
-            // set Bugsee exception hook only after successful launch
+        return { started ->
             if (started && installExceptionHook) {
                 setBugseeUnhandledExceptionHook()
             }
@@ -109,12 +113,13 @@ public actual class BugseeInternal {
     }
 
     public actual fun relaunch() {
-        BugseeSDK.relaunchWithOptions(null)
+        relaunch(null as BugseeLaunchOptions?)
     }
 
+    // relaunchWithDictionaryOptions is relaunchWithOptions over +[BugseeOptions optionsFrom:]; the
+    // variant with a started block lets a relaunch install the Kotlin crash hook as launch does.
     public actual fun relaunch(options: BugseeLaunchOptions?) {
-        @Suppress("UNCHECKED_CAST")
-        BugseeSDK.relaunchWithDictionaryOptions(options?.toMap() as? Map<Any?, *>)
+        BugseeSDK.relaunchWithOptions(nativeOptions(options), onStarted(options))
     }
 
     // Like launch: a raw map goes through BugseeLaunchOptions.

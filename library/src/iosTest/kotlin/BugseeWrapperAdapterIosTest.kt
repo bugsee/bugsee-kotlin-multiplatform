@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 class BugseeWrapperAdapterIosTest {
 
     @Test
-    fun `the adapter describes this library as Android's wrapper option does`() {
+    fun `the adapter describes this library as the Android adapter does`() {
         val adapter = BugseeWrapperAdapter()
 
         assertEquals("kmp", adapter.wrapperType())

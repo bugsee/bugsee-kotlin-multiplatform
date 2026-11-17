@@ -3,6 +3,7 @@ package com.bugsee.kmp.internal
 import com.bugsee.kmp.BugseeAttachment
 import com.bugsee.kmp.BugseeAttachmentsProvider
 import com.bugsee.kmp.BugseeExtendedReportProvider
+import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
 import com.bugsee.kmp.BugseeNetworkFilter
@@ -158,5 +159,16 @@ class BugseeInternalIosSimpleTest {
         } finally {
             bugseeInternal.clearUserIdentifier()
         }
+    }
+
+    // relaunch goes through relaunchWithOptions:started: so that a started relaunch can install the
+    // Kotlin crash hook; before a launch the SDK refuses it and the block gets NO.
+    @Test
+    fun `relaunch before launch does not throw`() {
+        val bugseeInternal = BugseeInternal()
+
+        bugseeInternal.relaunch()
+        bugseeInternal.relaunch(BugseeLaunchOptions())
+        bugseeInternal.relaunch(mapOf<String, Any>())
     }
 }

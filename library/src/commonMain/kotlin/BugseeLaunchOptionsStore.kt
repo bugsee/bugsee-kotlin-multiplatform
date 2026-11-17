@@ -17,7 +17,7 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
     fun put(key: String, value: Any?) {
         if (key == WRAPPER_INFO_KEY || key == ANDROID_WRAPPER_KEY) {
-            return // the wrapper metadata comes from BugseeWrapperInfo only
+            return // the wrapper metadata comes from BugseeWrapperAdapter only
         }
 
         val type = BugseeOptionsSpec.types[key]
@@ -67,21 +67,10 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
                 result[key] = BugseeOptionsSpec.types.getValue(key).toNative(value, isAndroid)
             }
         }
-        // iOS gets the wrapper metadata from the adapter registered with +[Bugsee setWrapper:]
-        // instead; its SDK would read a wrapper_info option only when no adapter is registered.
-        if (isAndroid) {
-            result[ANDROID_WRAPPER_KEY] = androidWrapperInfo()
-        }
+        // No wrapper metadata: both SDKs get it from the adapter BugseeInternal registers with
+        // setWrapper (BugseeWrapperAdapter), which they prefer to the $$WRAPPER / wrapper_info option.
         return result
     }
-
-    // Hidden option of the Android SDK 7: {type, version, build, context}.
-    private fun androidWrapperInfo(): HashMap<String, Any> = hashMapOf(
-        "type" to BugseeWrapperInfo.TYPE,
-        "version" to BugseeWrapperInfo.version,
-        "build" to BugseeWrapperInfo.build,
-        "context" to hashMapOf("runtime" to BugseeWrapperInfo.runtime),
-    )
 
     private companion object {
         const val TAG = "BugseeLaunchOptions"

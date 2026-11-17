@@ -115,20 +115,11 @@ class BugseeLaunchOptionsTest {
     }
 
     @Test
-    fun `toMap includes wrapper info on Android only`() {
+    fun `toMap carries no wrapper metadata`() {
         val map = BugseeLaunchOptions().toMap()
 
-        if (isAndroid) {
-            // Hidden Android SDK 7 option {type, version, build, context}
-            val wrapperInfo = map[ANDROID_WRAPPER_KEY] as Map<*, *>
-            assertEquals("kmp", wrapperInfo["type"])
-            assertEquals(BuildKonfig.libraryVersion, wrapperInfo["version"])
-            assertEquals(BuildKonfig.buildChecksum, wrapperInfo["build"])
-            assertEquals(KotlinVersion.CURRENT.toString(), (wrapperInfo["context"] as Map<*, *>)["runtime"])
-        } else {
-            // iOS gets it from the adapter registered with +[Bugsee setWrapper:] (BugseeWrapperAdapterIosTest).
-            assertFalse(ANDROID_WRAPPER_KEY in map)
-        }
+        // Both SDKs get it from the adapter registered with setWrapper (BugseeWrapperAdapter tests).
+        assertFalse(ANDROID_WRAPPER_KEY in map)
         assertFalse("wrapper_info" in map)
     }
 
@@ -178,7 +169,7 @@ class BugseeLaunchOptionsTest {
         options.setCustomOption(ANDROID_WRAPPER_KEY, "fake")
 
         val map = options.toMap()
-        assertEquals(isAndroid, map[ANDROID_WRAPPER_KEY] is Map<*, *>)
+        assertFalse(ANDROID_WRAPPER_KEY in map)
         assertFalse("wrapper_info" in map)
     }
 
