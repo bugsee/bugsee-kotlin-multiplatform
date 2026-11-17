@@ -15,7 +15,7 @@ public class BugseeNSException private constructor(
 ) : NSException(name, reason, null) {
     public constructor(throwable: Throwable) : this(
         name = throwable.name,
-        reason = throwable.message,
+        reason = throwable.reasonWithCauses(),
         stackFrameAddresses = throwable.getStackTraceAddresses().map { address ->
             NSNumber(unsignedLongLong = address.toULong())
         },
@@ -29,3 +29,31 @@ public class BugseeNSException private constructor(
 
 private val Throwable.name: String
     get() = "KmpManagedException: " + (this::class.qualifiedName ?: this::class.simpleName ?: "Throwable")
+
+// Causes listed after the message, at most this many.
+private const val MAX_CAUSES = 10
+
+/**
+ * The message, then a "Caused by: <cause>" line for each cause, as Kotlin's `stackTraceToString`
+ * prints them. An NSException has no cause, and the iOS SDK reports only its name, reason and
+ * frames, so the causes go into the reason; the frames stay those of this throwable.
+ */
+private fun Throwable.reasonWithCauses(): String? {
+    val lines = mutableListOf<String>()
+    message?.let { lines += it }
+
+    val seen = mutableListOf<Throwable>(this)
+    var next = cause
+    while (next != null && seen.none { it === next } && seen.size <= MAX_CAUSES) {
+        lines += "Caused by: ${next.describe()}"
+        seen += next
+        next = next.cause
+    }
+
+    return if (lines.isEmpty()) null else lines.joinToString("\n")
+}
+
+// toString of an app's exception can throw; the report is built in the crash hook, so a failing
+// toString is replaced by the class name.
+private fun Throwable.describe(): String =
+    runCatching { toString() }.getOrElse { this::class.qualifiedName ?: this::class.simpleName ?: "Throwable" }
