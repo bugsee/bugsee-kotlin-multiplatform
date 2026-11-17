@@ -201,10 +201,11 @@ iOS 7.1.0) and follows the Android SDK 7 naming.
 - Some defaults change with SDK 7.
   - `maxDataSize` is 150 (was 50).
   - `detectAndReportExit` is on (`detectAppExit` was off).
-  - The report triggers are off: `reportingTriggerByShake` on both platforms, and on Android
-    `reportingTriggerByNotification` (0.1.x had `shakeToReport` and `notificationBarTrigger` on
-    on Android). On iOS `reportingTriggerByScreenshot` is off too (0.1.x had `screenshotToReport`
-    on). Turn on the triggers you want to keep.
+  - The report triggers are off by default. On Android `reportingTriggerByShake` and
+    `reportingTriggerByNotification` are off (0.1.x had `shakeToReport` and
+    `notificationBarTrigger` on). On iOS `reportingTriggerByScreenshot` is off (0.1.x had
+    `screenshotToReport` on), and `reportingTriggerByShake` is off as in 0.1.x (iOS SDK 7.0.x had
+    it on, 7.1.0 turned it off). Turn on the triggers you want to keep.
   - iOS: `detectAndReportEarlyCrash` and `captureVideoAdaptive` are on; iOS SDK 6 had neither.
   - iOS: `captureCrashHandlerType` is `MachAndBSD`. 0.1.x used BSD signal handlers only
     (`enableMachExceptions` was off).
