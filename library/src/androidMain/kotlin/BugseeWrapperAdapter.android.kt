@@ -11,9 +11,6 @@ import com.bugsee.library.contracts.internal.BugseeWrapper
  *
  * Only the metadata and the required data-request callback are implemented; the report handler,
  * lifecycle, channel and secure-rectangle methods keep the interface's no-op defaults.
- *
- * The SDK keeps one wrapper. Registering this one replaces a wrapper another Bugsee wrapper in the
- * same app (Flutter, React Native) may have registered, so an app uses one Bugsee wrapper.
  */
 internal class BugseeWrapperAdapter : BugseeWrapper {
     override fun getWrapperType(): String = BugseeWrapperInfo.TYPE
