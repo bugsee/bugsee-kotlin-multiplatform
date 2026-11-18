@@ -19,7 +19,8 @@ public actual class BugseeInternal {
     private companion object {
         private const val TAG = "BugseeInternal"
         private const val REPORT_NOT_CREATED =
-            "createReport: the SDK created no report (Bugsee is not launched); the provider is not called"
+            "createReport: the SDK created no report (Bugsee is not launched, or the report could not be " +
+                "prepared); the provider is not called"
     }
 
     // Registered before any launch, so every session carries the wrapper metadata (sdk.wrapper),

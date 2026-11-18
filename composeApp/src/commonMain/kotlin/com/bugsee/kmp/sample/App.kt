@@ -190,7 +190,7 @@ private fun DrawerContent(onAction: () -> Unit) {
                             Bugsee.upload(extendedReport)
                             setStatus("Extended report created and queued for upload")
                         },
-                        onNotCreated = { setStatus("No report: Bugsee is not launched") },
+                        onNotCreated = { setStatus("No report was created (is Bugsee launched?)") },
                     )
                 }
                 HorizontalDivider()

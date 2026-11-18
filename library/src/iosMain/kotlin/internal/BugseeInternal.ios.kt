@@ -333,8 +333,8 @@ public actual class BugseeInternal {
                 } else {
                     Logger.w(
                         "BugseeInternal",
-                        "createReport: the SDK created no report (Bugsee is not launched, or still launching); " +
-                            "the provider is not called"
+                        "createReport: the SDK created no report (Bugsee is not launched or still launching, " +
+                            "or the report could not be prepared); the provider is not called"
                     )
                     onNotCreated?.invoke()
                 }

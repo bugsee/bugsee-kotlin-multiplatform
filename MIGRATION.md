@@ -120,9 +120,9 @@
 
 ## Extended reports
 
-The SDKs 7 create no report while Bugsee is not launched, and iOS SDK 7 also while it is
-launching. `createReport(provider)` then does not call `provider` and logs a warning. To learn about
-it, use one of the new functions:
+The SDKs 7 create no report while Bugsee is not launched (iOS SDK 7 also while it is launching),
+or when they cannot prepare one. `createReport(provider)` then does not call `provider` and logs a
+warning. To learn about it, use one of the new functions:
 
 - `createReport(provider, onNotCreated)` calls `onNotCreated` instead of `provider`;
 - `createReportOrNull { report -> … }` passes `null` instead of a report.

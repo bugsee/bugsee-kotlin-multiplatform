@@ -178,7 +178,8 @@ class BugseeInternalIosSimpleTest {
     }
 
     // Before a launch the SDK creates no report: onNotCreated is called instead of the provider,
-    // asynchronously, so the main run loop is turned until a callback arrives.
+    // asynchronously, so the main run loop is turned until a callback arrives. The tests never
+    // launch the SDK (a relaunch before a launch is refused), so it is not launched here.
     @Test
     fun `createReport before launch calls onNotCreated`() {
         var provided = 0
