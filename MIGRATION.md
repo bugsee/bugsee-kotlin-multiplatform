@@ -50,8 +50,10 @@
   client: each request would be reported twice. With another engine, such as `CIO`, add
   `com.bugsee:bugsee-android-ktor-3` to the shared module's `androidMain` and install its plugin
   in the Android client, since Ktor plugins are set per client:
-  `HttpClient(CIO) { install(BugseeKtor3Plugin.Plugin) }` (`com.bugsee.library.ktor3`). On iOS
-  the `Darwin` engine is captured as any `NSURLSession` traffic.
+  `HttpClient(CIO) { install(BugseeKtor3Plugin.Plugin) }` (`com.bugsee.library.ktor3`). The
+  plugin is Android-only, so create that client in `androidMain` (for example behind an
+  `expect`/`actual` factory), not in `commonMain`. On iOS the `Darwin` engine is captured as any
+  `NSURLSession` traffic.
 
 ## Android behavior changes
 
