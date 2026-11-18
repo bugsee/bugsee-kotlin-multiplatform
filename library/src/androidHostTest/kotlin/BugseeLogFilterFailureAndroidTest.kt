@@ -7,6 +7,8 @@ import com.bugsee.library.contracts.options.LogLevel
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.contains
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.MockedStatic
@@ -69,6 +71,22 @@ class BugseeLogFilterFailureAndroidTest {
 
             sdk.verify({ com.bugsee.library.Bugsee.log(contains("first"), eq(LogLevel.Error)) }, times(1))
             sdk.verify({ com.bugsee.library.Bugsee.log(contains("second"), eq(LogLevel.Error)) }, times(1))
+        }
+    }
+
+    @Test
+    fun `the failure reaches logcat when Bugsee log throws`() {
+        mockStatic(com.bugsee.library.Bugsee::class.java).use { sdk ->
+            sdk.`when`<Unit> { com.bugsee.library.Bugsee.log(anyString(), any(LogLevel::class.java)) }
+                .thenThrow(IllegalStateException("log failed"))
+            val bugseeInternal = BugseeInternal()
+            bugseeInternal.setLogFilter { throw IllegalStateException("boom") }
+
+            runFilter(installedFilter(sdk))
+
+            val lines = ShadowLog.getLogsForTag("BugseeLogFilter")
+            assertEquals(1, lines.size)
+            assertTrue("boom" in lines.single().msg, lines.single().msg)
         }
     }
 }

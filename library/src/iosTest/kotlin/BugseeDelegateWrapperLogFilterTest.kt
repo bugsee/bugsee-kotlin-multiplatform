@@ -145,4 +145,40 @@ class BugseeDelegateWrapperLogFilterTest {
         assertTrue("first" in reports[0], reports[0])
         assertTrue("second" in reports[1], reports[1])
     }
+
+    // The filter and its reporter are replaced together.
+    @Test
+    fun `a filter replaced while it runs reports through its own reporter`() {
+        val (internal, wrapper) = newWrapper()
+        val reports = mutableListOf<String>()
+        internal.reportLogFilterFailureTo = { reports += it }
+        internal.setLogFilter { _ ->
+            internal.setLogFilter { _ -> throw RuntimeException("second") }
+            throw RuntimeException("first")
+        }
+
+        repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
+
+        assertEquals(2, reports.size)
+        assertTrue("first" in reports[0], reports[0])
+        assertTrue("second" in reports[1], reports[1])
+    }
+
+    @Test
+    fun `a throwing completion handler is not reported as a filter failure`() {
+        val (internal, wrapper) = newWrapper()
+        val reports = mutableListOf<String>()
+        internal.reportLogFilterFailureTo = { reports += it }
+        internal.setLogFilter { event ->
+            if (event?.message == "bad") throw RuntimeException("boom")
+            event
+        }
+
+        wrapper.bugseeFilterLog(makeNativeLog("good")) { throw IllegalStateException("completion") }
+        assertTrue(reports.isEmpty(), reports.toString())
+
+        wrapper.bugseeFilterLog(makeNativeLog("bad")) { }
+        assertEquals(1, reports.size)
+        assertTrue("boom" in reports.single(), reports.single())
+    }
 }
