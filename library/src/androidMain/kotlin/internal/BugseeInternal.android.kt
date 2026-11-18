@@ -284,12 +284,15 @@ public actual class BugseeInternal {
             return
         }
 
+        // Each filter reports its first failure once, and not through logcat from here: the SDK
+        // reads logcat back through this filter (see LogFilterFailureReporter).
+        val failures = LogFilterFailureReporter()
         BugseeSDK.setLogEventFilter(object : EventFilter<LogEvent> {
             override fun filter(event: LogEvent, callback: Callback1<LogEvent>) {
                 val result = try {
                     filter.invoke(BugseeLogEvent(event))?.underlyingEvent
                 } catch (e: Exception) {
-                    Logger.e(TAG, "exception during setLogFilter execution", e)
+                    failures.onFailure(e)
                     event
                 }
                 callback.run(result)

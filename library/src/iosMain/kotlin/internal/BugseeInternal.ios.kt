@@ -30,8 +30,23 @@ public typealias LogLevel = swiftPMImport.com.bugsee.library.BugseeLogLevel
 
 private const val TAG = "BugseeInternal"
 
+/**
+ * The log filter that is set, with the reporter of its failures: each filter reports its first
+ * failure once. They are replaced in one assignment, so the SDK thread that runs the filter while
+ * `setLogFilter` replaces it gets a filter with its own reporter.
+ */
+internal class LogFilterState(val filter: BugseeLogFilter, val failures: LogFilterFailureReporter)
+
 public actual class BugseeInternal {
-    public var logFilterHandler: BugseeLogFilter? = null
+    // Where a failure of the log filter is reported (replaced in tests).
+    internal var reportLogFilterFailureTo: (String) -> Unit = ::reportLogFilterFailure
+    internal var logFilterState: LogFilterState? = null
+
+    public var logFilterHandler: BugseeLogFilter?
+        get() = logFilterState?.filter
+        set(value) {
+            logFilterState = value?.let { LogFilterState(it, LogFilterFailureReporter(reportLogFilterFailureTo)) }
+        }
     public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
 
     // The report fields filters and the attachments provider run on the SDK's report handler,
