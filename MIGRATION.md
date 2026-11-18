@@ -42,9 +42,18 @@
 - **Android: network and Compose extensions are not added automatically in KMP modules.** The
   Bugsee Gradle plugin does not see dependencies declared in Kotlin Multiplatform source sets, so
   add the extensions you need to your app yourself (for example
-  `com.bugsee:bugsee-android-ktor-3`, `com.bugsee:bugsee-android-okhttp`,
-  `com.bugsee:bugsee-android-compose`). `bugsee-kotlin-multiplatform-protect` brings
-  `bugsee-android-compose` with it.
+  `com.bugsee:bugsee-android-okhttp`, `com.bugsee:bugsee-android-compose`).
+  `bugsee-kotlin-multiplatform-protect` brings `bugsee-android-compose` with it.
+- **Android: Ktor needs the Ktor extension only with an engine Bugsee does not capture.** The SDK
+  captures Ktor's `Android` engine through its `HttpURLConnection` capture, and the `OkHttp`
+  engine through `bugsee-android-okhttp` in the app. Do not install the Ktor extension on such a
+  client: each request would be reported twice. With another engine, such as `CIO`, add
+  `com.bugsee:bugsee-android-ktor-3` to the shared module's `androidMain` and install its plugin
+  in the Android client, since Ktor plugins are set per client:
+  `HttpClient(CIO) { install(BugseeKtor3Plugin.Plugin) }` (`com.bugsee.library.ktor3`). The
+  plugin is Android-only, so create that client in `androidMain` (for example behind an
+  `expect`/`actual` factory), not in `commonMain`. On iOS the `Darwin` engine is captured as any
+  `NSURLSession` traffic.
 
 ## Android behavior changes
 
