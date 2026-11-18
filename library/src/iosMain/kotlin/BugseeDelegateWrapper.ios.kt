@@ -2,7 +2,6 @@ package com.bugsee.kmp
 
 import swiftPMImport.com.bugsee.library.BugseeLogFilterDecisionBlock
 import com.bugsee.kmp.internal.BugseeInternal
-import com.bugsee.kmp.internal.Logger
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
@@ -20,25 +19,28 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         // Default to keeping the original log; flipped to filtered.impl (or null
         // to drop) if a filter is registered and runs successfully.
         var decision: swiftPMImport.com.bugsee.library.BugseeLogEvent? = log
+        // Captured together to avoid race conditions with setLogFilter.
+        val bugseeInternal = weakBugseeInternal.get()
+        val failures = bugseeInternal?.logFilterFailures
         try {
-            // Capture the filter handler to avoid race conditions
-            val filterHandler = weakBugseeInternal.get()?.logFilterHandler
+            val filterHandler = bugseeInternal?.logFilterHandler
             if (filterHandler != null) {
                 val filtered = filterHandler.invoke(BugseeLogEvent(log))
                 // null => drop the log; non-null => keep (mutations in `impl` propagate)
                 decision = filtered?.impl
             }
         } catch (e: Throwable) {
-            // Log the error but don't crash the app — fall through with the original log
-            Logger.e("BugseeDelegateWrapper", "bugseeFilterLog: caught exception: ${e.message}")
+            // Don't crash the app; fall through with the original log. Not to the console: this
+            // runs on the SDK thread that reads stderr (see LogFilterFailureReporter).
+            failures?.onFailure(e)
             decision = log
         }
         try {
             // Always call the completion handler to indicate filtering is done
             completionHandler?.invoke(decision)
         } catch (e: Throwable) {
-            // Don't let an exception cross the Obj-C boundary
-            Logger.e("BugseeDelegateWrapper", "bugseeFilterLog: completionHandler threw: ${e.message}")
+            // Don't let an exception cross the Obj-C boundary, and don't log it to the console.
+            failures?.onFailure(e)
         }
     }
 

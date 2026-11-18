@@ -32,6 +32,11 @@ private const val TAG = "BugseeInternal"
 
 public actual class BugseeInternal {
     public var logFilterHandler: BugseeLogFilter? = null
+
+    // Where a failure of the log filter is reported (replaced in tests), and the reporter of the
+    // filter that is set: each filter reports its first failure once.
+    internal var reportLogFilterFailureTo: (String) -> Unit = ::reportLogFilterFailure
+    internal var logFilterFailures: LogFilterFailureReporter = LogFilterFailureReporter(reportLogFilterFailureTo)
     public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
 
     // The report fields filters and the attachments provider run on the SDK's report handler,
@@ -265,6 +270,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun setLogFilter(filter: BugseeLogFilter?) {
+        logFilterFailures = LogFilterFailureReporter(reportLogFilterFailureTo)
         logFilterHandler = filter
     }
 

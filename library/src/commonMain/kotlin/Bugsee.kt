@@ -122,6 +122,15 @@ public object Bugsee {
         bugseeInternal.setNetworkEventFilter(filter)
     }
 
+    /**
+     * Sets the filter of the console lines Bugsee captures (logcat on Android, stdout and stderr on
+     * iOS), replacing the previous one; `null` removes it. Return the event, changed or not, to keep
+     * the line, or `null` to drop it. Lines logged with [log] are not filtered.
+     *
+     * Don't write to the console from the filter (`println`, `NSLog`, `android.util.Log`): Bugsee
+     * captures that line too and passes it to the filter again. If the filter throws, the line is
+     * kept, and the first failure of this filter is written once to the Bugsee log and the console.
+     */
     public fun setLogFilter(filter: BugseeLogFilter?) {
         bugseeInternal.setLogFilter(filter)
     }

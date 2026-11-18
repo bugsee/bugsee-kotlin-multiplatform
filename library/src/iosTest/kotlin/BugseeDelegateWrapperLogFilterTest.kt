@@ -110,4 +110,39 @@ class BugseeDelegateWrapperLogFilterTest {
         assertSame(native, captured, "On exception, completion must receive the original log")
         assertEquals("keep", captured?.text)
     }
+
+    // A failure logged to the console from here would come back to the same filter (#51).
+    @Test
+    fun `filter throws on every line - each line is kept and the failure is reported once`() {
+        val (internal, wrapper) = newWrapper()
+        val reports = mutableListOf<String>()
+        internal.reportLogFilterFailureTo = { reports += it }
+        internal.setLogFilter { _ -> throw RuntimeException("boom") }
+
+        repeat(3) { i ->
+            val native = makeNativeLog("line $i")
+            var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
+            wrapper.bugseeFilterLog(native) { event -> captured = event }
+            assertSame(native, captured, "Line $i must be kept")
+        }
+
+        assertEquals(1, reports.size)
+        assertTrue("boom" in reports.single(), reports.single())
+    }
+
+    @Test
+    fun `a new filter reports its own first failure`() {
+        val (internal, wrapper) = newWrapper()
+        val reports = mutableListOf<String>()
+        internal.reportLogFilterFailureTo = { reports += it }
+
+        internal.setLogFilter { _ -> throw RuntimeException("first") }
+        repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
+        internal.setLogFilter { _ -> throw RuntimeException("second") }
+        repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
+
+        assertEquals(2, reports.size)
+        assertTrue("first" in reports[0], reports[0])
+        assertTrue("second" in reports[1], reports[1])
+    }
 }
