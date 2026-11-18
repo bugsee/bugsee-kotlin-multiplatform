@@ -70,4 +70,18 @@ class BugseeFeedbackIosTest {
 
         adapter.onNewMessageSent("reply")
     }
+
+    // The failure is logged, and logging must not call a toString that throws outside a catch.
+    @Test
+    fun `an exception whose toString throws does not escape`() {
+        val adapter = FeedbackListenerAdapter(object : BugseeFeedbackListener {
+            override fun onNewMessageSent(message: String) = throw ToStringThrows()
+        })
+
+        adapter.onNewMessageSent("reply")
+    }
+
+    private class ToStringThrows : RuntimeException() {
+        override fun toString(): String = throw IllegalStateException("toString")
+    }
 }

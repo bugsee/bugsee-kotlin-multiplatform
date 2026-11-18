@@ -267,9 +267,11 @@ public actual class BugseeInternal {
                     return
                 }
 
+                // Throwable: the SDK drops the event when anything escapes, and an Error
+                // (TODO(), AssertionError) is not an Exception.
                 val result = try {
                     filter.invoke(BugseeNetworkEvent(event))?.underlyingEvent
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e(TAG, "exception during setNetworkEventFilter execution", e)
                     event
                 }
@@ -291,7 +293,7 @@ public actual class BugseeInternal {
             override fun filter(event: LogEvent, callback: Callback1<LogEvent>) {
                 val result = try {
                     filter.invoke(BugseeLogEvent(event))?.underlyingEvent
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     failures.onFailure(e)
                     event
                 }
@@ -310,9 +312,11 @@ public actual class BugseeInternal {
             override fun onEvent(event: String, payload: Any?) {
                 val converted = BugseeAndroidUtils.convertLifecycleEvent(event) ?: return
 
+                // Throwable: the SDK calls this on its own thread with no catch, so anything that
+                // escapes crashes the app.
                 try {
                     listener.invoke(converted)
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e(TAG, "exception during setLifecycleEventsListener execution", e)
                 }
             }
@@ -375,21 +379,33 @@ public actual class BugseeInternal {
         BugseeSDK.deleteCollectedDataOnDevice(
             true,
             true,
-            deletionEventListener?.let { listener -> Callback1<Boolean> { listener.invoke(it == true) } }
+            deletionEventListener?.let { listener ->
+                Callback1<Boolean> {
+                    try {
+                        listener.invoke(it == true)
+                    } catch (e: Throwable) {
+                        Logger.e(TAG, "deleteCollectedDataOnDevice: the listener threw", e)
+                    }
+                }
+            }
         )
     }
 
 
     // Extended report methods
     public actual fun createReport(provider: BugseeExtendedReportProvider, onNotCreated: (() -> Unit)?) {
+        // The SDK calls this on the main thread with no catch; a throw is logged, as on iOS.
         BugseeSDK.createReport(ReportCreationListener { report ->
-            if (report == null) {
-                Logger.w(TAG, REPORT_NOT_CREATED)
-                onNotCreated?.invoke()
-                return@ReportCreationListener
+            try {
+                if (report == null) {
+                    Logger.w(TAG, REPORT_NOT_CREATED)
+                    onNotCreated?.invoke()
+                } else {
+                    provider.invoke(BugseeExtendedReport(report))
+                }
+            } catch (e: Throwable) {
+                Logger.e(TAG, "createReport: a callback threw", e)
             }
-
-            provider.invoke(BugseeExtendedReport(report))
         })
     }
 
@@ -429,7 +445,7 @@ public actual class BugseeInternal {
                         filler.invoke(fields)
                         BugseeAndroidUtils.applyReportFieldsToNative(fields, original, report)
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Logger.e(TAG, "exception during report fields pre-filter execution", e)
                 } finally {
                     completionCallback.run()
@@ -440,21 +456,23 @@ public actual class BugseeInternal {
                 // The post-filter and the attachments provider were independent hooks in 6.x:
                 // a failure in one must not cancel the other.
                 try {
-                    reportFieldsFilter?.let { filter ->
-                        val original = BugseeAndroidUtils.convertReportFieldsFromNative(report)
-                        val fields = BugseeAndroidUtils.convertReportFieldsFromNative(report)
-                        BugseeAndroidUtils.applyReportFieldsToNative(filter.invoke(fields), original, report)
+                    try {
+                        reportFieldsFilter?.let { filter ->
+                            val original = BugseeAndroidUtils.convertReportFieldsFromNative(report)
+                            val fields = BugseeAndroidUtils.convertReportFieldsFromNative(report)
+                            BugseeAndroidUtils.applyReportFieldsToNative(filter.invoke(fields), original, report)
+                        }
+                    } catch (e: Throwable) {
+                        Logger.e(TAG, "exception during report fields post-filter execution", e)
                     }
-                } catch (e: Exception) {
-                    Logger.e(TAG, "exception during report fields post-filter execution", e)
-                }
 
-                try {
-                    attachmentsProvider?.invoke(BugseeAndroidUtils.convertReport(report))?.let { attachments ->
-                        BugseeAndroidUtils.addProviderAttachments(attachments, report)
+                    try {
+                        attachmentsProvider?.invoke(BugseeAndroidUtils.convertReport(report))?.let { attachments ->
+                            BugseeAndroidUtils.addProviderAttachments(attachments, report)
+                        }
+                    } catch (e: Throwable) {
+                        Logger.e(TAG, "exception during report attachments provider execution", e)
                     }
-                } catch (e: Exception) {
-                    Logger.e(TAG, "exception during report attachments provider execution", e)
                 } finally {
                     completionCallback.run()
                 }

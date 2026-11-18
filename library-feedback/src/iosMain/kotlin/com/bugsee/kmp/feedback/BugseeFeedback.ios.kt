@@ -63,7 +63,7 @@ internal class FeedbackListenerAdapter(
             call()
         } catch (e: Throwable) {
             // A Kotlin String is not an Objective-C object in a variadic call: no %@ arguments.
-            NSLog("ERROR: [BugseeFeedback] BugseeFeedbackListener threw: $e".replace("%", "%%"))
+            NSLog("ERROR: [BugseeFeedback] BugseeFeedbackListener threw: ${describeThrowable(e)}".replace("%", "%%"))
         }
     }
 }

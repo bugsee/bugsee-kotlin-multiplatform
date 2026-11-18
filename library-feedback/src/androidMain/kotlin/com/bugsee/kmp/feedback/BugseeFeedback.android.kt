@@ -79,7 +79,12 @@ internal class MainThreadFeedbackListener(
             try {
                 call(listener)
             } catch (e: Throwable) {
-                Log.e(TAG, "BugseeFeedbackListener threw", e)
+                // The stack trace calls the throwable's toString, which can throw.
+                try {
+                    Log.e(TAG, "BugseeFeedbackListener threw", e)
+                } catch (ignored: Throwable) {
+                    Log.e(TAG, "BugseeFeedbackListener threw ${describeThrowable(e)}")
+                }
             }
         }
     }

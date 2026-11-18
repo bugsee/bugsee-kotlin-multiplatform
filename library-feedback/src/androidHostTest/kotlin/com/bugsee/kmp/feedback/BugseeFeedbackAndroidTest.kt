@@ -10,6 +10,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLog
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -133,6 +136,28 @@ class BugseeFeedbackAndroidTest {
 
         adapter.onNewMessageSent("reply")
         shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    // Log.e prints the stack trace, which calls the throwable's toString. ShadowLog prints it only
+    // when it has a stream.
+    @Test
+    fun `an exception whose toString throws does not escape`() {
+        BugseeFeedback.setListener(object : BugseeFeedbackListener {
+            override fun onNewMessageSent(message: String) = throw ToStringThrows()
+        })
+        val adapter = assertNotNull(currentListenerAdapter)
+        val saved = ShadowLog.stream
+        ShadowLog.stream = PrintStream(ByteArrayOutputStream())
+        try {
+            adapter.onNewMessageSent("reply")
+            shadowOf(Looper.getMainLooper()).idle()
+        } finally {
+            ShadowLog.stream = saved
+        }
+    }
+
+    private class ToStringThrows : RuntimeException() {
+        override fun toString(): String = throw IllegalStateException("toString")
     }
 
     @Test
