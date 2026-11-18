@@ -10,6 +10,11 @@ import com.bugsee.kmp.BugseeNetworkFilter
 import com.bugsee.kmp.BugseeReportFieldsFiller
 import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.EventHandler
+import platform.Foundation.NSDate
+import platform.Foundation.NSRunLoop
+import platform.Foundation.dateWithTimeIntervalSinceNow
+import platform.Foundation.runUntilDate
+import platform.Foundation.timeIntervalSinceNow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -123,7 +128,7 @@ class BugseeInternalIosSimpleTest {
         val provider: BugseeExtendedReportProvider = { report ->
             assertNotNull(report)
         }
-        bugseeInternal.createReport(provider)
+        bugseeInternal.createReport(provider, null)
         assertTrue(true)
     }
 
@@ -170,5 +175,26 @@ class BugseeInternalIosSimpleTest {
         bugseeInternal.relaunch()
         bugseeInternal.relaunch(BugseeLaunchOptions())
         bugseeInternal.relaunch(mapOf<String, Any>())
+    }
+
+    // Before a launch the SDK creates no report: onNotCreated is called instead of the provider,
+    // asynchronously, so the main run loop is turned until a callback arrives.
+    @Test
+    fun `createReport before launch calls onNotCreated`() {
+        var provided = 0
+        var notCreated = 0
+
+        BugseeInternal().createReport({ provided++ }, { notCreated++ })
+        runMainLoopUntil { provided + notCreated > 0 }
+
+        assertEquals(0, provided)
+        assertEquals(1, notCreated)
+    }
+
+    private fun runMainLoopUntil(timeoutSeconds: Double = 5.0, done: () -> Boolean) {
+        val deadline = NSDate.dateWithTimeIntervalSinceNow(timeoutSeconds)
+        while (!done() && deadline.timeIntervalSinceNow > 0) {
+            NSRunLoop.mainRunLoop.runUntilDate(NSDate.dateWithTimeIntervalSinceNow(0.05))
+        }
     }
 }

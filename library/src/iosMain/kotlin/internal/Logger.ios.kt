@@ -15,6 +15,10 @@ internal actual object Logger {
         log("DEBUG: [$tag] $message")
     }
 
+    actual fun w(tag: String, message: String) {
+        log("WARNING: [$tag] $message")
+    }
+
     actual fun i(tag: String, message: String) {
         log("INFO: [$tag] $message")
     }

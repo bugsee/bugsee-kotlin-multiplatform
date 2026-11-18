@@ -292,7 +292,7 @@ class BugseeInternalAndroidSimpleTest {
         val provider: BugseeExtendedReportProvider = { report ->
             assertNotNull(report, "Extended report should not be null")
         }
-        bugseeInternal.createReport(provider)
+        bugseeInternal.createReport(provider, null)
         
         assertTrue(true, "Extended report methods should complete successfully")
     }

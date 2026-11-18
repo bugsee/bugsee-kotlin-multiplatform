@@ -18,6 +18,8 @@ public actual class BugseeInternal {
 
     private companion object {
         private const val TAG = "BugseeInternal"
+        private const val REPORT_NOT_CREATED =
+            "createReport: the SDK created no report (Bugsee is not launched); the provider is not called"
     }
 
     // Registered before any launch, so every session carries the wrapper metadata (sdk.wrapper),
@@ -375,10 +377,11 @@ public actual class BugseeInternal {
 
 
     // Extended report methods
-    public actual fun createReport(provider: BugseeExtendedReportProvider) {
+    public actual fun createReport(provider: BugseeExtendedReportProvider, onNotCreated: (() -> Unit)?) {
         BugseeSDK.createReport(ReportCreationListener { report ->
             if (report == null) {
-                Logger.d(TAG, "createReport: native SDK returned null, provider not invoked")
+                Logger.w(TAG, REPORT_NOT_CREATED)
+                onNotCreated?.invoke()
                 return@ReportCreationListener
             }
 

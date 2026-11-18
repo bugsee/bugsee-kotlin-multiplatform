@@ -190,8 +190,32 @@ public object Bugsee {
     }
 
     // Extended report methods
+    /**
+     * Creates a report from the current session and passes it to [provider], which can change it
+     * and send it with [upload].
+     *
+     * The SDK creates no report while Bugsee is not launched (on iOS also while it is launching):
+     * then [provider] is not called and a warning is logged. Use the overload with `onNotCreated`
+     * or [createReportOrNull] to learn about it.
+     */
     public fun createReport(provider: BugseeExtendedReportProvider) {
-        bugseeInternal.createReport(provider)
+        bugseeInternal.createReport(provider, null)
+    }
+
+    /**
+     * Like [createReport], and calls [onNotCreated] instead of [provider] when the SDK creates no
+     * report: while Bugsee is not launched, or on iOS while it is launching.
+     */
+    public fun createReport(provider: BugseeExtendedReportProvider, onNotCreated: () -> Unit) {
+        bugseeInternal.createReport(provider, onNotCreated)
+    }
+
+    /**
+     * Like [createReport] with a single callback: [provider] gets the report, or `null` when the SDK
+     * creates none (while Bugsee is not launched, or on iOS while it is launching).
+     */
+    public fun createReportOrNull(provider: EventHandler<BugseeExtendedReport?>) {
+        bugseeInternal.createReport(provider = { provider(it) }, onNotCreated = { provider(null) })
     }
 
     public fun upload(report: BugseeExtendedReport) {
