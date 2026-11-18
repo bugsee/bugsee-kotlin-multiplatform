@@ -110,7 +110,7 @@ public expect class BugseeInternal() {
     public fun isLaunched(): Boolean
 
     // Extended report methods
-    public fun createReport(provider: BugseeExtendedReportProvider)
+    public fun createReport(provider: BugseeExtendedReportProvider, onNotCreated: (() -> Unit)?)
 
     public fun upload(report: BugseeExtendedReport)
 

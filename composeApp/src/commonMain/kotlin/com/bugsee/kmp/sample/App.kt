@@ -184,16 +184,14 @@ private fun DrawerContent(onAction: () -> Unit) {
                 DrawerButton("Show Report Dialog") { Bugsee.showReportDialog(); onAction() }
                 DrawerButton("Show Filled Report Dialog") { Bugsee.showReportDialog("Test Summary", "Test Description", BugseeSeverity.Medium, listOf("qa")); onAction() }
                 DrawerButton("Send Extended Report") {
-                    // Without a running Bugsee no report is created and the callback is not called.
-                    if (!Bugsee.isLaunched()) {
-                        setStatus("Bugsee is not launched: no report is created")
-                        return@DrawerButton
-                    }
                     setStatus("Creating a report...")
-                    Bugsee.createReport { extendedReport ->
-                        Bugsee.upload(extendedReport)
-                        setStatus("Extended report created and queued for upload")
-                    }
+                    Bugsee.createReport(
+                        provider = { extendedReport ->
+                            Bugsee.upload(extendedReport)
+                            setStatus("Extended report created and queued for upload")
+                        },
+                        onNotCreated = { setStatus("No report was created (is Bugsee launched?)") },
+                    )
                 }
                 HorizontalDivider()
 

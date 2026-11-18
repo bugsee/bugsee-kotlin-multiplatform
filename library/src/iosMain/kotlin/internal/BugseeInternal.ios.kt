@@ -325,16 +325,21 @@ public actual class BugseeInternal {
     }
 
     // Extended report methods
-    public actual fun createReport(provider: BugseeExtendedReportProvider) {
+    public actual fun createReport(provider: BugseeExtendedReportProvider, onNotCreated: (() -> Unit)?) {
         BugseeSDK.createReportWithCompletion { nativeReport ->
             try {
                 if (nativeReport != null) {
                     provider.invoke(BugseeExtendedReport(nativeReport))
                 } else {
-                    Logger.d("BugseeInternal", "createReport: native SDK returned null, provider not invoked")
+                    Logger.w(
+                        "BugseeInternal",
+                        "createReport: the SDK created no report (Bugsee is not launched or still launching, " +
+                            "or the report could not be prepared); the provider is not called"
+                    )
+                    onNotCreated?.invoke()
                 }
             } catch (e: Throwable) {
-                Logger.e("BugseeInternal", "createReport: provider threw: ${e.message}")
+                Logger.e("BugseeInternal", "createReport: a callback threw: ${e.message}")
             }
         }
     }

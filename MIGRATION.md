@@ -118,6 +118,15 @@
   `swiftPMImport.com.bugsee.library`, and `com.bugsee.kmp.internal.ExceptionLoggingOptions` is
   removed. This matters only for code that calls the native SDK directly.
 
+## Extended reports
+
+The SDKs 7 create no report while Bugsee is not launched (iOS SDK 7 also while it is launching),
+or when they cannot prepare one. `createReport(provider)` then does not call `provider` and logs a
+warning. To learn about it, use one of the new functions:
+
+- `createReport(provider, onNotCreated)` calls `onNotCreated` instead of `provider`;
+- `createReportOrNull { report -> … }` passes `null` instead of a report.
+
 ## User identifier
 
 `setEmail` / `getEmail` / `clearEmail` are removed: the native SDKs 7 replaced the email with a
