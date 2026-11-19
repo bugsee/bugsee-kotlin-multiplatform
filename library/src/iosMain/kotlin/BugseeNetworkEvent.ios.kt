@@ -1,5 +1,6 @@
 package com.bugsee.kmp
 
+import com.bugsee.kmp.internal.snapshotForNative
 import kotlinx.cinterop.BetaInteropApi
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
@@ -51,7 +52,8 @@ public actual class BugseeNetworkEvent (internal val impl: swiftPMImport.com.bug
             return impl.headers as? Map<String, Any>
         }
         set(value) {
+            // The event keeps the headers by reference until it is written: see snapshotForNative.
             @Suppress("UNCHECKED_CAST")
-            impl.headers = value as? Map<Any?, *>
+            impl.headers = value?.let { snapshotForNative(it) } as? Map<Any?, *>
         }
 }
