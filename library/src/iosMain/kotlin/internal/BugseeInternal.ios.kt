@@ -156,7 +156,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun trace(traceName: String, value: Any) {
-        BugseeSDK.trace(traceName, value)
+        BugseeSDK.trace(traceName, snapshotForCapture(value))
     }
 
     // Event methods
@@ -166,7 +166,7 @@ public actual class BugseeInternal {
 
     public actual fun event(eventName: String, params: Map<String, Any>?) {
         @Suppress("UNCHECKED_CAST")
-        BugseeSDK.event(eventName, params as Map<Any?, *>?)
+        BugseeSDK.event(eventName, params?.let { snapshotForCapture(it) } as Map<Any?, *>?)
     }
 
     // Report dialog methods
@@ -184,11 +184,12 @@ public actual class BugseeInternal {
         severity: BugseeSeverity,
         labels: List<String>?
     ) {
+        // A copy: the SDK reads the labels only when the report has been opened, later, on main.
         BugseeSDK.showReportDialogWithSummary(
             summary,
             description,
             severity.getLevelLong(),
-            labels
+            labels?.toList()
         )
     }
 
