@@ -40,6 +40,8 @@ class NativeValuesIosTest {
 
         assertEquals("text", snapshotForNative("text"))
         assertEquals(42L, snapshotForNative(42L))
+        assertEquals(3u, snapshotForNative(3u))
+        assertEquals(3uL, snapshotForNative(3uL))
         assertEquals(true, snapshotForNative(true))
         assertSame(date, snapshotForNative(date))
         assertSame(other, snapshotForNative(other))
@@ -55,6 +57,15 @@ class NativeValuesIosTest {
 
         assertEquals(mapOf("cart" to "Cart(items=[apple])", "count" to 1, "at" to date), copy)
         assertSame(date, (copy as Map<*, *>)["at"])
+    }
+
+    // What the SDK recorded before: unsigned numbers reach Objective-C as NSNumber and are written
+    // as numbers; a Char reaches it as a Kotlin object, written as its description.
+    @Test
+    fun `unsigned numbers stay numbers and a Char is taken as its text`() {
+        val copy = snapshotForCapture(mapOf("qty" to 3u, "big" to 3uL, "small" to 3.toUByte(), "short" to 3.toUShort(), "grade" to 'A'))
+
+        assertEquals(mapOf("qty" to 3u, "big" to 3uL, "small" to 3.toUByte(), "short" to 3.toUShort(), "grade" to "A"), copy)
     }
 
     @Test

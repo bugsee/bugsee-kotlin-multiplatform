@@ -19,9 +19,13 @@ import platform.Foundation.NSURL
  * Lists, sets and maps are copied all the way down, and nothing else holds the copies. Strings,
  * numbers, booleans and the Foundation values the SDK serializes itself (dates, data, URLs, NSNull,
  * errors, exceptions) are kept. Any other object goes through [other], which keeps it by default.
+ *
+ * The copy is made on the caller's thread. Like any other read of the collection, it must not run
+ * while another thread changes the collection: the copy would throw to the caller.
  */
 internal fun snapshotForNative(value: Any, other: (Any) -> Any = { it }): Any = when (value) {
-    is String, is Number, is Boolean -> value
+    // Unsigned numbers are not kotlin.Number, but reach Objective-C as NSNumber, as the signed ones do.
+    is String, is Number, is Boolean, is UByte, is UShort, is UInt, is ULong -> value
     is List<*> -> value.map { it?.let { item -> snapshotForNative(item, other) } }
     is Set<*> -> value.mapTo(LinkedHashSet(value.size)) { it?.let { item -> snapshotForNative(item, other) } }
     is Map<*, *> -> value.entries.associate { (key, item) ->
