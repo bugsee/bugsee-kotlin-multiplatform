@@ -156,7 +156,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun trace(traceName: String, value: Any) {
-        BugseeSDK.trace(traceName, snapshotForCapture(value))
+        BugseeSDK.trace(traceName, traceValue(value))
     }
 
     // Event methods
@@ -166,7 +166,7 @@ public actual class BugseeInternal {
 
     public actual fun event(eventName: String, params: Map<String, Any>?) {
         @Suppress("UNCHECKED_CAST")
-        BugseeSDK.event(eventName, params?.let { snapshotForCapture(it) } as Map<Any?, *>?)
+        BugseeSDK.event(eventName, params?.let { eventParams(it) } as Map<Any?, *>?)
     }
 
     // Report dialog methods
@@ -311,7 +311,8 @@ public actual class BugseeInternal {
 
     // Attribute methods
     public actual fun setAttribute(name: String, value: Any) {
-        BugseeSDK.setAttribute(name, value)
+        val sdkValue = attributeValue(name, value) ?: return
+        BugseeSDK.setAttribute(name, sdkValue)
     }
 
     public actual fun clearAttribute(name: String) {

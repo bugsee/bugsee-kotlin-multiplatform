@@ -41,6 +41,13 @@ public expect class BugseeExtendedReport {
     public var summary: String?
     public var description: String?
 
+    /**
+     * Sets the report attribute [name] to [value]: a String, a Boolean, a number, or a list, set or
+     * map with String keys of such values, at any depth; a set is stored as a list. A value that is,
+     * or holds, anything else is not set, and an error is logged. Collections are copied.
+     *
+     * On iOS the SDK writes a Boolean into the report as `1` or `0`.
+     */
     public fun setAttribute(name: String, value: Any)
     public fun getAttribute(name: String): Any?
     public fun clearAttribute(name: String)

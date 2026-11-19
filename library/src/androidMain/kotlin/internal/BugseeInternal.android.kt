@@ -95,7 +95,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun trace(traceName: String, value: Any) {
-        BugseeSDK.trace(traceName, value)
+        BugseeSDK.trace(traceName, traceValue(value))
     }
 
 
@@ -110,7 +110,7 @@ public actual class BugseeInternal {
             return
         }
 
-        BugseeSDK.event(eventName, HashMap(params))
+        BugseeSDK.event(eventName, eventParams(params))
     }
 
 
@@ -343,12 +343,10 @@ public actual class BugseeInternal {
 
 
     // Attribute methods
+    // attributeValue returns a String or a boxed number or Boolean, all Serializable.
     public actual fun setAttribute(name: String, value: Any) {
-        if (value is Serializable) {
-            BugseeSDK.setAttribute(name, value)
-        } else {
-            Logger.e(TAG, "setAttribute: value for '$name' is not Serializable (${value::class.simpleName}) — ignoring")
-        }
+        val sdkValue = attributeValue(name, value) ?: return
+        BugseeSDK.setAttribute(name, sdkValue as Serializable)
     }
 
     public actual fun clearAttribute(name: String) {

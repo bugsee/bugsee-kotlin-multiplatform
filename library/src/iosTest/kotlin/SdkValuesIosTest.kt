@@ -1,0 +1,75 @@
+package com.bugsee.kmp
+
+import com.bugsee.kmp.internal.BugseeInternal
+import com.bugsee.kmp.internal.ExtendedReport
+import com.bugsee.kmp.internal.traceValue
+import platform.Foundation.NSDate
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import swiftPMImport.com.bugsee.library.BugseeNetworkEvent as NativeNetworkEvent
+
+/**
+ * The common value rule (#54) on iOS. The SDK keeps values by reference and reads them later on its
+ * own threads, while Kotlin/Native would hand it the app's collection itself (#53).
+ */
+class SdkValuesIosTest {
+
+    @Test
+    fun `a Foundation value in a trace value is kept`() {
+        val date = NSDate()
+
+        assertSame(date, (traceValue(listOf(date)) as List<*>).single())
+    }
+
+    @Test
+    fun `a global attribute does not take a list`() {
+        val internal = BugseeInternal()
+        try {
+            internal.clearAttribute(KEY)
+            internal.setAttribute(KEY, listOf("a"))
+
+            assertNull(internal.getAttribute(KEY))
+        } finally {
+            internal.clearAttribute(KEY)
+        }
+    }
+
+    @Test
+    fun `a report attribute keeps the value that was set`() {
+        val report = BugseeExtendedReport(ExtendedReport())
+        val labels = mutableListOf("a")
+
+        report.setAttribute("labels", labels)
+        labels += "b"
+
+        assertEquals(listOf("a"), report.getAttribute("labels"))
+    }
+
+    @Test
+    fun `a report attribute holding a Kotlin object is not set`() {
+        val report = BugseeExtendedReport(ExtendedReport())
+
+        report.setAttribute("plans", listOf(BugseeFrameRate.High))
+
+        assertNull(report.getAttribute("plans"))
+    }
+
+    @Test
+    fun `network headers keep the value that was set`() {
+        val event = BugseeNetworkEvent(NativeNetworkEvent())
+        val cookies = mutableListOf("a=1")
+        val headers = mutableMapOf<String, Any>("Set-Cookie" to cookies)
+
+        event.headers = headers
+        cookies += "b=2"
+        headers["X-Added"] = "1"
+
+        assertEquals(mapOf("Set-Cookie" to listOf("a=1")), event.headers)
+    }
+
+    private companion object {
+        const val KEY = "sdk_values_test"
+    }
+}

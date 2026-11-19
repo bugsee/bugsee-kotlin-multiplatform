@@ -154,6 +154,19 @@ class BugseeLaunchOptionsTest {
     }
 
     @Test
+    fun `a custom option that is not a string boolean or number is dropped`() {
+        val options = BugseeLaunchOptions(mapOf("customEnum" to BugseeFrameRate.High, "customList" to listOf(1), "custom" to "value"))
+        options.setCustomOption("customObject", Any())
+
+        val map = options.toMap()
+
+        assertFalse("customEnum" in map)
+        assertFalse("customList" in map)
+        assertFalse("customObject" in map)
+        assertEquals("value", map["custom"])
+    }
+
+    @Test
     fun `a custom option with a known key sets the property`() {
         val options = BugseeLaunchOptions()
         options.setCustomOption(BugseeOptions.Duration, 30)

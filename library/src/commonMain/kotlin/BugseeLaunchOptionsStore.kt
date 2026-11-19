@@ -1,6 +1,7 @@
 package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.customOptionValue
 
 /**
  * Storage behind the generated [BugseeLaunchOptions].
@@ -22,7 +23,9 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
         val type = BugseeOptionsSpec.types[key]
         if (type == null) {
-            if (value != null) customOptions[key] = value
+            // Strings, Booleans and numbers only. The iOS SDK applies some keys it knows under older
+            // names to typed properties, and writes every option into the session as JSON.
+            if (value != null) customOptionValue(key, value)?.let { customOptions[key] = it }
             return
         }
 
