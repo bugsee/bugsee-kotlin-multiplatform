@@ -184,11 +184,12 @@ public actual class BugseeInternal {
         severity: BugseeSeverity,
         labels: List<String>?
     ) {
+        // A copy: the SDK reads the labels only when the report has been opened, later, on main.
         BugseeSDK.showReportDialogWithSummary(
             summary,
             description,
             severity.getLevelLong(),
-            labels
+            labels?.toList()
         )
     }
 
