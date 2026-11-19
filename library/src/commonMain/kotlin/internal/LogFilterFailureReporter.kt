@@ -25,7 +25,7 @@ internal class LogFilterFailureReporter(
         if (!reported.compareAndSet(false, true)) return
         try {
             report(
-                "Bugsee: the log filter threw ${describe(error)}; the line was kept. " +
+                "Bugsee: the log filter threw ${describeThrowable(error)}; the line was kept. " +
                     "Further failures of this filter are not reported."
             )
         } catch (ignored: Throwable) {
@@ -33,14 +33,6 @@ internal class LogFilterFailureReporter(
         }
     }
 }
-
-// An app's exception can throw from toString.
-private fun describe(error: Throwable): String =
-    try {
-        error.toString()
-    } catch (ignored: Throwable) {
-        error::class.simpleName ?: "Throwable"
-    }
 
 /** Writes [message] to the Bugsee log and to the console, without logging from the filter's thread. */
 internal expect fun reportLogFilterFailure(message: String)

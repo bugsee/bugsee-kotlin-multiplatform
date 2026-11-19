@@ -2,6 +2,7 @@ package com.bugsee.kmp
 
 import swiftPMImport.com.bugsee.library.BugseeLogFilterDecisionBlock
 import com.bugsee.kmp.internal.BugseeInternal
+import com.bugsee.kmp.internal.describeThrowable
 import platform.darwin.NSObject
 import kotlin.native.ref.WeakReference
 
@@ -42,6 +43,8 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         }
     }
 
+    // Throwable: a Kotlin throwable that leaves a method called from Objective-C terminates the
+    // app, and an Error (TODO(), AssertionError) is not an Exception.
     override fun bugseeLifecycleEvent(eventType: swiftPMImport.com.bugsee.library.BugseeLifecycleEventType) {
         try {
             val bugseeInternal = weakBugseeInternal.get()
@@ -50,17 +53,17 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                 val lifecycleEventHandler = bugseeInternal.lifecycleEventHandler
                 val kmpEventType = BugseeIOSUtils.convertLifecycleEvent(eventType)
                 if (lifecycleEventHandler != null && kmpEventType != null) {
-                    try {
-                        lifecycleEventHandler.invoke(kmpEventType)
-                    } catch (e: Exception) {
-                        // Log the error but don't crash the app
-                        Bugsee.log("BugseeDelegateWrapper: exception during lifecycleEventHandler invoke: ${e.message}", BugseeLogLevel.Warning)
-                    }
+                    lifecycleEventHandler.invoke(kmpEventType)
                 }
             }
-        } catch (e: Exception) {
-            // Ensure we don't crash the native SDK
-            Bugsee.log("BugseeDelegateWrapper: bugseeLifecycleEvent: caught exception: ${e.message}", BugseeLogLevel.Warning)
+        } catch (e: Throwable) {
+            try {
+                Bugsee.log(
+                    "BugseeDelegateWrapper: the lifecycle events listener threw ${describeThrowable(e)}",
+                    BugseeLogLevel.Warning
+                )
+            } catch (ignored: Throwable) {
+            }
         }
     }
 }

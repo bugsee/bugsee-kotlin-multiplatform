@@ -42,21 +42,23 @@ internal class BugseeReportHandlerWrapper(bugseeInternal: BugseeInternal) : NSOb
         // The post-filter and the attachments provider were independent hooks in 0.1.x:
         // a failure in one must not cancel the other.
         try {
-            bugseeInternal?.reportFieldsFilter?.let { filter ->
-                val original = BugseeIOSUtils.convertReportFieldsFromNative(report)
-                val fields = BugseeIOSUtils.convertReportFieldsFromNative(report)
-                BugseeIOSUtils.applyReportFieldsToNative(filter.invoke(fields), original, report)
+            try {
+                bugseeInternal?.reportFieldsFilter?.let { filter ->
+                    val original = BugseeIOSUtils.convertReportFieldsFromNative(report)
+                    val fields = BugseeIOSUtils.convertReportFieldsFromNative(report)
+                    BugseeIOSUtils.applyReportFieldsToNative(filter.invoke(fields), original, report)
+                }
+            } catch (e: Throwable) {
+                Logger.e(TAG, "exception during report fields post-filter execution", e)
             }
-        } catch (e: Throwable) {
-            Logger.e(TAG, "exception during report fields post-filter execution", e)
-        }
 
-        try {
-            bugseeInternal?.attachmentsProviderHandler?.invoke(BugseeIOSUtils.convertReport(report))?.let { attachments ->
-                BugseeIOSUtils.addProviderAttachments(attachments, report)
+            try {
+                bugseeInternal?.attachmentsProviderHandler?.invoke(BugseeIOSUtils.convertReport(report))?.let { attachments ->
+                    BugseeIOSUtils.addProviderAttachments(attachments, report)
+                }
+            } catch (e: Throwable) {
+                Logger.e(TAG, "exception during report attachments provider execution", e)
             }
-        } catch (e: Throwable) {
-            Logger.e(TAG, "exception during report attachments provider execution", e)
         } finally {
             complete(completion)
         }

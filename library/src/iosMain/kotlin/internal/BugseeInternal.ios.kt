@@ -265,16 +265,19 @@ public actual class BugseeInternal {
                     decision = filtered?.impl
                 }
             } catch (e: Throwable) {
-                com.bugsee.kmp.Bugsee.log(
-                    "BugseeInternal: exception during networkFilterHandler invoke: ${e.message}",
-                    BugseeLogLevel.Warning
-                )
                 decision = nativeEvent
+                try {
+                    com.bugsee.kmp.Bugsee.log(
+                        "BugseeInternal: exception during networkFilterHandler invoke: ${describeThrowable(e)}",
+                        BugseeLogLevel.Warning
+                    )
+                } catch (ignored: Throwable) {
+                }
             }
             try {
                 completionHandler?.invoke(decision)
             } catch (e: Throwable) {
-                Logger.e("BugseeInternal", "networkFilter completionHandler threw: ${e.message}")
+                Logger.e("BugseeInternal", "networkFilter completionHandler threw", e)
             }
         }
     }
@@ -334,7 +337,7 @@ public actual class BugseeInternal {
             try {
                 deletionEventListener?.invoke(success)
             } catch (e: Throwable) {
-                Logger.e("BugseeInternal", "deleteCollectedDataOnDevice: listener threw: ${e.message}")
+                Logger.e("BugseeInternal", "deleteCollectedDataOnDevice: the listener threw", e)
             }
         }
     }
@@ -354,7 +357,7 @@ public actual class BugseeInternal {
                     onNotCreated?.invoke()
                 }
             } catch (e: Throwable) {
-                Logger.e("BugseeInternal", "createReport: a callback threw: ${e.message}")
+                Logger.e("BugseeInternal", "createReport: a callback threw", e)
             }
         }
     }

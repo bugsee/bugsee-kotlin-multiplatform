@@ -5,7 +5,13 @@ import platform.Foundation.NSLog
 internal actual object Logger {
     actual fun e(tag: String, message: String, throwable: Throwable?) {
         if (throwable != null) {
-            log("ERROR: [$tag] $message. Throwable: $throwable CAUSE ${throwable.cause}")
+            // Called from catch blocks: formatting an app's throwable must not throw.
+            val cause = try {
+                throwable.cause
+            } catch (ignored: Throwable) {
+                null
+            }
+            log("ERROR: [$tag] $message. Throwable: ${describeThrowable(throwable)} CAUSE ${cause?.let(::describeThrowable)}")
         } else {
             log("ERROR: [$tag] $message")
         }

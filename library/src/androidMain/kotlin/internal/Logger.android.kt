@@ -5,7 +5,13 @@ import android.util.Log
 internal actual object Logger {
     actual fun e(tag: String, message: String, throwable: Throwable?) {
         if (throwable != null) {
-            Log.e(tag, message, throwable)
+            // Called from catch blocks: the stack trace of an app's throwable calls its toString,
+            // which can throw.
+            try {
+                Log.e(tag, message, throwable)
+            } catch (ignored: Throwable) {
+                Log.e(tag, "$message: ${describeThrowable(throwable)}")
+            }
         } else {
             Log.e(tag, message)
         }
