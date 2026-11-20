@@ -69,7 +69,7 @@ class SdkValuesAndroidTest {
     }
 
     @Test
-    fun `a report attribute is passed as a list and a value of another type is dropped`() {
+    fun `a report attribute is passed as a list and a value of another type as its text`() {
         val report = mock(Report::class.java)
         val extendedReport = BugseeExtendedReport(report)
 
@@ -77,7 +77,7 @@ class SdkValuesAndroidTest {
         extendedReport.setAttribute("cart", Cart(mutableListOf("apple")))
 
         verify(report).setAttribute("tags", arrayListOf("a"))
-        verify(report, never()).setAttribute(eq("cart"), any())
+        verify(report).setAttribute("cart", "Cart(items=[apple])")
     }
 
     private data class Cart(val items: MutableList<String>)

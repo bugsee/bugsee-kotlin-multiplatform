@@ -95,7 +95,7 @@ public actual class BugseeInternal {
     }
 
     public actual fun trace(traceName: String, value: Any) {
-        BugseeSDK.trace(traceName, traceValue(value))
+        BugseeSDK.trace(traceName, sdkValue(value))
     }
 
 

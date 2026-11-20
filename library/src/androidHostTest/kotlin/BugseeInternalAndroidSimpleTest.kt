@@ -608,12 +608,13 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
-    fun `test setAttribute ignores non-Serializable value`() {
+    fun `test setAttribute passes a non-Serializable value as its text`() {
         val mockNativeReport = mock(Report::class.java)
         val report = BugseeExtendedReport(mockNativeReport)
+        val value = Any()
 
-        report.setAttribute("key", Any())
-        verify(mockNativeReport, never()).setAttribute(anyString(), any(Serializable::class.java))
+        report.setAttribute("key", value)
+        verify(mockNativeReport).setAttribute("key", value.toString())
     }
 
     @Test

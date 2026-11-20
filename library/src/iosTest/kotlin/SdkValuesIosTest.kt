@@ -2,7 +2,7 @@ package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.BugseeInternal
 import com.bugsee.kmp.internal.ExtendedReport
-import com.bugsee.kmp.internal.traceValue
+import com.bugsee.kmp.internal.sdkValue
 import platform.Foundation.NSDate
 import platform.Foundation.NSURL
 import kotlin.test.Test
@@ -21,12 +21,12 @@ class SdkValuesIosTest {
     fun `a Foundation value in a trace value is kept`() {
         val url = NSURL(string = "https://example.com")
 
-        assertSame(url, (traceValue(listOf(url)) as List<*>).single())
+        assertSame(url, (sdkValue(listOf(url)) as List<*>).single())
     }
 
     @Test
     fun `an NSDate is an ISO 8601 string in UTC to the millisecond`() {
-        assertEquals("2001-01-01T00:00:00.250Z", traceValue(NSDate(timeIntervalSinceReferenceDate = 0.2505)))
+        assertEquals("2001-01-01T00:00:00.250Z", sdkValue(NSDate(timeIntervalSinceReferenceDate = 0.2505)))
         assertEquals(listOf("2001-01-01T00:00:00Z"), BugseeExtendedReport(ExtendedReport()).run {
             setAttribute("at", listOf(NSDate(timeIntervalSinceReferenceDate = 0.0)))
             getAttribute("at")
@@ -58,12 +58,12 @@ class SdkValuesIosTest {
     }
 
     @Test
-    fun `a report attribute holding a Kotlin object is not set`() {
+    fun `a report attribute holding a Kotlin object holds its text`() {
         val report = BugseeExtendedReport(ExtendedReport())
 
         report.setAttribute("plans", listOf(BugseeFrameRate.High))
 
-        assertNull(report.getAttribute("plans"))
+        assertEquals(listOf("High"), report.getAttribute("plans"))
     }
 
     @Test

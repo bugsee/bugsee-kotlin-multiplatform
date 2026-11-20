@@ -48,7 +48,7 @@ class SdkValuesTest {
         val map = mutableMapOf<String, Any>("numbers" to numbers, "names" to names)
         val list = mutableListOf<Any?>(map, "text", null)
 
-        val copy = traceValue(list)
+        val copy = sdkValue(list)
         numbers += 3
         names += "c"
         map["added"] = "x"
@@ -63,7 +63,7 @@ class SdkValuesTest {
         val bytes = byteArrayOf(1, 2)
         val strings = arrayOf("a", null)
 
-        val copy = traceValue(
+        val copy = sdkValue(
             mapOf(
                 "bytes" to bytes,
                 "ints" to intArrayOf(10, 20),
@@ -95,15 +95,14 @@ class SdkValuesTest {
     fun `a date is an ISO 8601 string in UTC as an Instant is`() {
         assertEquals("1970-01-01T00:00:00Z", isoDate(0))
         assertEquals("2001-01-01T00:00:00.250Z", isoDate(978_307_200_250))
-        assertEquals(isoDate(978_307_200_250), traceValue(Instant.fromEpochMilliseconds(978_307_200_250)))
-        assertEquals(listOf("2001-01-01T00:00:00.250Z"), reportAttributeValue("a", listOf(Instant.fromEpochMilliseconds(978_307_200_250))))
+        assertEquals(isoDate(978_307_200_250), sdkValue(Instant.fromEpochMilliseconds(978_307_200_250)))
     }
 
     @Test
-    fun `in a trace value another type and a map key that is not a string become their text`() {
+    fun `another type and a map key that is not a string become their text`() {
         val cart = Cart(mutableListOf("apple"))
 
-        val copy = traceValue(mapOf("cart" to cart, "plan" to Plan.Pro, "grade" to 'A', "codes" to mapOf(1 to "one", null to "none")))
+        val copy = sdkValue(mapOf("cart" to cart, "plan" to Plan.Pro, "grade" to 'A', "codes" to mapOf(1 to "one", null to "none")))
         cart.items += "pear"
 
         assertEquals(mapOf("cart" to "Cart(items=[apple])", "plan" to "Pro", "grade" to "A", "codes" to mapOf("1" to "one", "null" to "none")), copy)
@@ -111,7 +110,7 @@ class SdkValuesTest {
 
     @Test
     fun `a toString that throws is replaced by the class name`() {
-        assertEquals(listOf("ToStringThrows"), traceValue(listOf(ToStringThrows())))
+        assertEquals(listOf("ToStringThrows"), sdkValue(listOf(ToStringThrows())))
     }
 
     @Test
@@ -119,19 +118,6 @@ class SdkValuesTest {
         val params = linkedMapOf<String, Any>("z" to 1, "a" to 2, "m" to 3)
 
         assertEquals(listOf("z", "a", "m"), eventParams(params).keys.toList())
-    }
-
-    @Test
-    fun `a report attribute keeps collections and drops a value that is or holds another type`() {
-        assertEquals(
-            mapOf("tags" to listOf("a", null), "count" to 2),
-            reportAttributeValue("a", mapOf("tags" to linkedSetOf("a", null), "count" to 2.toByte())),
-        )
-        assertEquals(listOf(1, 2), reportAttributeValue("a", intArrayOf(1, 2)))
-        assertNull(reportAttributeValue("a", Plan.Pro))
-        assertNull(reportAttributeValue("a", charArrayOf('x')))
-        assertNull(reportAttributeValue("a", listOf("a", Any())))
-        assertNull(reportAttributeValue("a", mapOf("nested" to mapOf(1 to "one"))))
     }
 
     @Test

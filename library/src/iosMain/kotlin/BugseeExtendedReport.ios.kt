@@ -2,7 +2,7 @@ package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.ExtendedReport
 import com.bugsee.kmp.internal.Logger
-import com.bugsee.kmp.internal.reportAttributeValue
+import com.bugsee.kmp.internal.sdkValue
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -65,8 +65,7 @@ public actual class BugseeExtendedReport internal constructor(
         }
 
     public actual fun setAttribute(name: String, value: Any) {
-        val sdkValue = reportAttributeValue(name, value) ?: return
-        underlyingReport.setAttribute(name, withValue = sdkValue)
+        underlyingReport.setAttribute(name, withValue = sdkValue(value))
     }
 
     public actual fun getAttribute(name: String): Any? {
