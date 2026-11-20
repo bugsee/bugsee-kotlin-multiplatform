@@ -86,7 +86,6 @@
 - `logException(ex, options)` uses only `exceptionDomain` and `rules.skipFrames` on Android.
   `labels`, `includeVideo = false` and custom merging rules have no Android SDK 7 equivalent and
   are ignored.
-- `setAttribute` (global and on a report) ignores values that are not `java.io.Serializable`.
 - Network event header values are stored as strings.
 - A report fields post-filter now uses the `BugseeReportFields` it returns.
 - The internal `endpoint` / `debug` custom options are now `com.bugsee.option.$$ENDPOINT` /
@@ -126,6 +125,28 @@
 - The Kotlin bindings of the native SDK moved from the package `cocoapods.Bugsee` to
   `swiftPMImport.com.bugsee.library`, and `com.bugsee.kmp.internal.ExceptionLoggingOptions` is
   removed. This matters only for code that calls the native SDK directly.
+
+## Attribute, trace and event values
+
+0.1.x handed these values to the native SDK unchanged, so which types were kept depended on the SDK
+and the platform. 0.2.0 converts them the same way on both platforms before the SDK gets them:
+
+- `setAttribute` takes a String, a Boolean or a number. A value of another type, a collection
+  included, is not set, and an error is logged. Byte, Short, UByte and UShort values are stored as
+  Int, UInt and ULong values as Long.
+- `trace` values, `event` params and report attributes (`BugseeExtendedReport.setAttribute`) take
+  any value:
+  - arrays and collections are recorded as lists, and maps as maps, copied during the call;
+  - a date is recorded as an ISO 8601 string in UTC, such as `2026-01-31T09:30:00.250Z`: a
+    `kotlin.time.Instant`, a `java.util.Date` on Android, an `NSDate` on iOS;
+  - on Android a `BigDecimal` or a `BigInteger` is recorded as an exact number;
+  - any other value, such as an enum or a data class, and a map key that is not a String, are
+    recorded as their `toString()`, taken during the call.
+- A custom launch option (`setCustomOption`, or an unknown key in the `Map` overload of `launch`)
+  that is not a String, a Boolean or a number is dropped, and an error is logged.
+- On Android the SDK stores a Double attribute as a Float. On iOS the SDK records a Boolean in a
+  trace value, an event param or a report as `1` or `0`, and `getAttribute` returns a Boolean
+  attribute as a Byte, `1` or `0`.
 
 ## Extended reports
 
