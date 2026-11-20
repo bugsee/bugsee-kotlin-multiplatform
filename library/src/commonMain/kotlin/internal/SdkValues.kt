@@ -1,5 +1,7 @@
 package com.bugsee.kmp.internal
 
+import kotlin.time.Instant
+
 /*
  * The values the wrapper hands to the native SDKs, under one rule on both platforms. Each SDK keeps
  * only some types and drops or changes the others without telling the app, and the two SDKs differ.
@@ -9,10 +11,16 @@ package com.bugsee.kmp.internal
  * ULong as Long: the Android SDK keeps an Int attribute but drops a Byte or a Short.
  *
  * Global attributes and custom launch options take scalars only: the Android SDK stores nothing
- * else as an attribute. Trace values, event params and report attributes also take lists, sets and
- * maps with String keys of such values, at any depth, with null elements. A set is passed as a list.
- * The collections are copied, so the SDK never holds the app's collection: the iOS SDK reads values
- * later on its own threads, and Kotlin/Native would hand it the app's collection itself.
+ * else as an attribute. Trace values, event params and report attributes also take arrays,
+ * collections and maps with String keys of such values, at any depth, with null elements. Arrays and
+ * collections are passed as lists: the iOS SDK writes a Kotlin array as text, and the Android SDK
+ * drops a collection that is not Serializable. They are copied, so the SDK never holds the app's
+ * collection: the SDKs write values later on their own threads, and Kotlin/Native would hand the iOS
+ * SDK the app's collection itself.
+ *
+ * A date, a kotlin.time.Instant or a date of the platform, is passed as an ISO 8601 string in UTC,
+ * as Instant writes itself: the iOS SDK would write an NSDate as seconds since 1970 and an Instant as
+ * null in a report attribute, the Android SDK a Date as its toString() in the device time zone.
  *
  * The copy is made on the caller's thread. Like any other read of the collection, it must not run
  * while another thread changes the collection: the copy would throw to the caller.
@@ -56,11 +64,13 @@ internal fun eventParams(params: Map<String, Any>): LinkedHashMap<String, Any?> 
 internal fun copiedValue(value: Any): Any = convert(value, Other.Keep)
 
 /**
- * A value of a platform type that the SDK writes itself in trace values, event params and report
- * attributes, kept as it is: on iOS a Foundation date, data, URL or `NSNull`. `null` for any other
- * value.
+ * A value of a platform type in trace values, event params and report attributes: a date as
+ * [isoDate], or a value the SDK writes well, kept as it is. `null` for any other value.
  */
 internal expect fun platformValue(value: Any): Any?
+
+/** A date as an ISO 8601 string in UTC, such as `2026-01-31T09:30:00.250Z`, as kotlin.time.Instant writes it. */
+internal fun isoDate(epochMilliseconds: Long): String = Instant.fromEpochMilliseconds(epochMilliseconds).toString()
 
 /** What happens to a value of another type. */
 private enum class Other {
@@ -79,18 +89,18 @@ private class Rejected(val reason: String)
 
 private fun convert(value: Any, other: Other): Any {
     sdkScalar(value)?.let { return it }
+    if (value is Instant) return value.toString()
     platformValue(value)?.let { return it }
-    return when (value) {
-        is List<*>, is Set<*> -> {
-            val items = value as Collection<*>
-            val result = ArrayList<Any?>(items.size)
-            for (item in items) {
-                val converted = item?.let { convert(it, other) }
-                if (converted is Rejected) return converted
-                result.add(converted)
-            }
-            result
+    elements(value)?.let { items ->
+        val result = ArrayList<Any?>(items.size)
+        for (item in items) {
+            val converted = item?.let { convert(it, other) }
+            if (converted is Rejected) return converted
+            result.add(converted)
         }
+        return result
+    }
+    return when (value) {
         is Map<*, *> -> {
             val result = LinkedHashMap<Any?, Any?>(value.size)
             for ((key, item) in value) {
@@ -107,10 +117,30 @@ private fun convert(value: Any, other: Other): Any {
         }
         else -> when (other) {
             Other.Describe -> describe(value)
-            Other.Reject -> Rejected("a value of type ${typeName(value)} is not a String, Boolean, number, list, set or map")
+            Other.Reject -> Rejected("a value of type ${typeName(value)} is not a String, Boolean, number, array, collection or map")
             Other.Keep -> value
         }
     }
+}
+
+/** The elements of an array or a collection, which is passed as a list; `null` for any other value. */
+@OptIn(ExperimentalUnsignedTypes::class)
+private fun elements(value: Any): Collection<*>? = when (value) {
+    is Collection<*> -> value
+    is Array<*> -> value.asList()
+    is ByteArray -> value.asList()
+    is ShortArray -> value.asList()
+    is IntArray -> value.asList()
+    is LongArray -> value.asList()
+    is FloatArray -> value.asList()
+    is DoubleArray -> value.asList()
+    is BooleanArray -> value.asList()
+    is CharArray -> value.asList()
+    is UByteArray -> value.asList()
+    is UShortArray -> value.asList()
+    is UIntArray -> value.asList()
+    is ULongArray -> value.asList()
+    else -> null
 }
 
 private fun sdkScalar(value: Any): Any? = when (value) {
@@ -136,6 +166,7 @@ private fun describe(value: Any): String =
 private fun typeName(value: Any): String = when (value) {
     is List<*> -> "List"
     is Set<*> -> "Set"
+    is Collection<*> -> "Collection"
     is Map<*, *> -> "Map"
     else -> value::class.simpleName ?: "(anonymous)"
 }

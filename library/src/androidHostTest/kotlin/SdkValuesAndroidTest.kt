@@ -13,6 +13,9 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.sql.Timestamp
 
 /** What the Android actuals hand to the SDK under the common value rule (#54). */
 @RunWith(RobolectricTestRunner::class)
@@ -36,6 +39,21 @@ class SdkValuesAndroidTest {
             BugseeInternal().trace("cart", Cart(mutableListOf("apple")))
 
             sdk.verify { Bugsee.trace("cart", "Cart(items=[apple])") }
+        }
+    }
+
+    @Test
+    fun `trace passes an array as a list a BigDecimal as it is and a Date as an ISO string`() {
+        mockStatic(Bugsee::class.java).use { sdk ->
+            BugseeInternal().trace("bytes", byteArrayOf(1, 2, 3))
+            BugseeInternal().trace("price", BigDecimal("1.50"))
+            BugseeInternal().trace("count", BigInteger("123456789012345678901234567890"))
+            BugseeInternal().trace("at", Timestamp(978_307_200_250))
+
+            sdk.verify { Bugsee.trace("bytes", arrayListOf(1, 2, 3)) }
+            sdk.verify { Bugsee.trace("price", BigDecimal("1.50")) }
+            sdk.verify { Bugsee.trace("count", BigInteger("123456789012345678901234567890")) }
+            sdk.verify { Bugsee.trace("at", "2001-01-01T00:00:00.250Z") }
         }
     }
 

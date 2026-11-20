@@ -43,12 +43,17 @@ public object Bugsee {
     }
 
     /**
-     * Records [value] as the trace [traceName]. The value is a String, a Boolean, a number, or a list,
-     * set or map with String keys of such values, at any depth; a set is recorded as a list. Any other
-     * value, and a map key that is not a String, is recorded as its `toString()`, taken during the
-     * call. Collections are copied during the call, so changing them later does not change the trace.
+     * Records [value] as the trace [traceName]. The value is a String, a Boolean, a number, or an
+     * array, a collection or a map with String keys of such values, at any depth; arrays and
+     * collections are recorded as lists. Any other value, and a map key that is not a String, is
+     * recorded as its `toString()`, taken during the call. Arrays and collections are copied during
+     * the call, so changing them later does not change the trace.
      *
-     * On iOS the SDK records a Boolean as `1` or `0`.
+     * A date is recorded as an ISO 8601 string in UTC, such as `2026-01-31T09:30:00.250Z`: a
+     * `kotlin.time.Instant` as its `toString()`, a `java.util.Date` on Android and an `NSDate` on iOS
+     * to the millisecond. On Android a `BigDecimal` or a `BigInteger` is recorded as an exact number.
+     * On iOS `NSData`, `NSURL` and `NSNull` are recorded as the SDK writes them, and the SDK records a
+     * Boolean as `1` or `0`.
      */
     public fun trace(traceName: String, value: Any) {
         bugseeInternal.trace(traceName, value)

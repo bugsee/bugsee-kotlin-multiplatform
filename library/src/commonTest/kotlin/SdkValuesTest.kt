@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.time.Instant
 
 /** One rule on both platforms for the values the wrapper hands to the SDKs (#54). */
 class SdkValuesTest {
@@ -57,6 +58,48 @@ class SdkValuesTest {
     }
 
     @Test
+    @OptIn(ExperimentalUnsignedTypes::class)
+    fun `arrays and other collections are passed as lists and copied`() {
+        val bytes = byteArrayOf(1, 2)
+        val strings = arrayOf("a", null)
+
+        val copy = traceValue(
+            mapOf(
+                "bytes" to bytes,
+                "ints" to intArrayOf(10, 20),
+                "strings" to strings,
+                "flags" to booleanArrayOf(true),
+                "chars" to charArrayOf('x'),
+                "unsigned" to ubyteArrayOf(200u),
+                "values" to mapOf("k" to 1).values,
+            ),
+        )
+        bytes[0] = 9
+        strings[0] = "changed"
+
+        assertEquals(
+            mapOf(
+                "bytes" to listOf(1, 2),
+                "ints" to listOf(10, 20),
+                "strings" to listOf("a", null),
+                "flags" to listOf(true),
+                "chars" to listOf("x"),
+                "unsigned" to listOf(200),
+                "values" to listOf(1),
+            ),
+            copy,
+        )
+    }
+
+    @Test
+    fun `a date is an ISO 8601 string in UTC as an Instant is`() {
+        assertEquals("1970-01-01T00:00:00Z", isoDate(0))
+        assertEquals("2001-01-01T00:00:00.250Z", isoDate(978_307_200_250))
+        assertEquals(isoDate(978_307_200_250), traceValue(Instant.fromEpochMilliseconds(978_307_200_250)))
+        assertEquals(listOf("2001-01-01T00:00:00.250Z"), reportAttributeValue("a", listOf(Instant.fromEpochMilliseconds(978_307_200_250))))
+    }
+
+    @Test
     fun `in a trace value another type and a map key that is not a string become their text`() {
         val cart = Cart(mutableListOf("apple"))
 
@@ -84,7 +127,9 @@ class SdkValuesTest {
             mapOf("tags" to listOf("a", null), "count" to 2),
             reportAttributeValue("a", mapOf("tags" to linkedSetOf("a", null), "count" to 2.toByte())),
         )
+        assertEquals(listOf(1, 2), reportAttributeValue("a", intArrayOf(1, 2)))
         assertNull(reportAttributeValue("a", Plan.Pro))
+        assertNull(reportAttributeValue("a", charArrayOf('x')))
         assertNull(reportAttributeValue("a", listOf("a", Any())))
         assertNull(reportAttributeValue("a", mapOf("nested" to mapOf(1 to "one"))))
     }

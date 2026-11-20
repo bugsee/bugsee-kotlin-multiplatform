@@ -42,9 +42,11 @@ public expect class BugseeExtendedReport {
     public var description: String?
 
     /**
-     * Sets the report attribute [name] to [value]: a String, a Boolean, a number, or a list, set or
-     * map with String keys of such values, at any depth; a set is stored as a list. A value that is,
-     * or holds, anything else is not set, and an error is logged. Collections are copied.
+     * Sets the report attribute [name] to [value]: a String, a Boolean, a number, or an array, a
+     * collection or a map with String keys of such values, at any depth; arrays and collections are
+     * stored as lists. Dates and the other platform values are stored as [Bugsee.trace] records them.
+     * A value that is, or holds, anything else is not set, and an error is logged. Arrays and
+     * collections are copied.
      *
      * On iOS the SDK writes a Boolean into the report as `1` or `0`.
      */
