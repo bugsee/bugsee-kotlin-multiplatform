@@ -41,6 +41,13 @@ public expect class BugseeExtendedReport {
     public var summary: String?
     public var description: String?
 
+    /**
+     * Sets the report attribute [name] to [value], stored as [Bugsee.trace] records a value: arrays
+     * and collections as lists, dates as ISO 8601 strings, and any other value that is not a String,
+     * a Boolean, a number or a map as its `toString()`. Arrays and collections are copied.
+     *
+     * On iOS the SDK writes a Boolean into the report as `1` or `0`.
+     */
     public fun setAttribute(name: String, value: Any)
     public fun getAttribute(name: String): Any?
     public fun clearAttribute(name: String)

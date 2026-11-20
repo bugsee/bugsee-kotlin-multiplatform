@@ -3,6 +3,7 @@ package com.bugsee.kmp
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.sdkValue
 import com.bugsee.library.contracts.reporting.Report
 import java.io.Serializable
 
@@ -55,12 +56,10 @@ public actual class BugseeExtendedReport internal constructor(
             underlyingReport.description = value
         }
 
+    // Every value sdkValue returns on Android is Serializable: a String, a boxed number or Boolean, a
+    // BigDecimal or a BigInteger, an ArrayList or a LinkedHashMap.
     public actual fun setAttribute(name: String, value: Any) {
-        if (value is Serializable) {
-            underlyingReport.setAttribute(name, value)
-        } else {
-            Logger.e(TAG, "setAttribute: value for '$name' is not Serializable (${value::class.simpleName}) — ignoring")
-        }
+        underlyingReport.setAttribute(name, sdkValue(value) as Serializable)
     }
 
     public actual fun getAttribute(name: String): Any? {

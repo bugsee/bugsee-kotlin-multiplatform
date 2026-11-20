@@ -2,7 +2,7 @@ package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.ExtendedReport
 import com.bugsee.kmp.internal.Logger
-import com.bugsee.kmp.internal.snapshotForNative
+import com.bugsee.kmp.internal.sdkValue
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -64,9 +64,8 @@ public actual class BugseeExtendedReport internal constructor(
             underlyingReport.setDescription(value)
         }
 
-    // The report keeps the value by reference until it is written: see snapshotForNative.
     public actual fun setAttribute(name: String, value: Any) {
-        underlyingReport.setAttribute(name, withValue = snapshotForNative(value))
+        underlyingReport.setAttribute(name, withValue = sdkValue(value))
     }
 
     public actual fun getAttribute(name: String): Any? {

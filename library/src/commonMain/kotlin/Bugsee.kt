@@ -42,6 +42,19 @@ public object Bugsee {
         bugseeInternal.log(message, level)
     }
 
+    /**
+     * Records [value] as the trace [traceName]. The value is a String, a Boolean, a number, or an
+     * array, a collection or a map with String keys of such values, at any depth; arrays and
+     * collections are recorded as lists. Any other value, and a map key that is not a String, is
+     * recorded as its `toString()`, taken during the call. Arrays and collections are copied during
+     * the call, so changing them later does not change the trace.
+     *
+     * A date is recorded as an ISO 8601 string in UTC, such as `2026-01-31T09:30:00.250Z`: a
+     * `kotlin.time.Instant` as its `toString()`, a `java.util.Date` on Android and an `NSDate` on iOS
+     * to the millisecond. On Android a `BigDecimal` or a `BigInteger` is recorded as an exact number.
+     * On iOS `NSData`, `NSURL` and `NSNull` are recorded as the SDK writes them, and the SDK records a
+     * Boolean as `1` or `0`.
+     */
     public fun trace(traceName: String, value: Any) {
         bugseeInternal.trace(traceName, value)
     }
@@ -51,6 +64,7 @@ public object Bugsee {
         bugseeInternal.event(eventName)
     }
 
+    /** Records the event [eventName] with [params], whose values are recorded as [trace] records a value. */
     public fun event(eventName: String, params: Map<String, Any>?) {
         bugseeInternal.event(eventName, params)
     }
@@ -167,6 +181,14 @@ public object Bugsee {
     }
 
     // Attribute methods
+    /**
+     * Sets the attribute [name] to [value], a String, a Boolean or a number. A value of any other type,
+     * including a collection, is not set, and an error is logged.
+     *
+     * Byte, Short, UByte and UShort values are stored as Int, UInt and ULong values as Long; a ULong
+     * above `Long.MAX_VALUE` is not set. On Android the SDK stores a Double as a Float. On iOS
+     * [getAttribute] returns a Boolean as a Byte, `1` or `0`.
+     */
     public fun setAttribute(name: String, value: Any) {
         bugseeInternal.setAttribute(name, value)
     }
