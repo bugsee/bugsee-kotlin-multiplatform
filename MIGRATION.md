@@ -134,6 +134,8 @@ and the platform. 0.2.0 converts them the same way on both platforms before the 
 - `setAttribute` takes a String, a Boolean or a number. A value of another type, a collection
   included, is not set, and an error is logged. Byte, Short, UByte and UShort values are stored as
   Int, UInt and ULong values as Long.
+- On Android a `Set<String>` attribute is not set either, although Android SDK 7 stores one: the
+  rule is the same on both platforms.
 - `trace` values, `event` params and report attributes (`BugseeExtendedReport.setAttribute`) take
   any value:
   - arrays and collections are recorded as lists, and maps as maps, copied during the call;
@@ -141,7 +143,9 @@ and the platform. 0.2.0 converts them the same way on both platforms before the 
     `kotlin.time.Instant`, a `java.util.Date` on Android, an `NSDate` on iOS;
   - on Android a `BigDecimal` or a `BigInteger` is recorded as an exact number;
   - any other value, such as an enum or a data class, and a map key that is not a String, are
-    recorded as their `toString()`, taken during the call.
+    recorded as their `toString()`, taken during the call;
+  - on Android an enum is recorded as its name, as on iOS: Android SDK 7 records an enum passed to
+    it as its ordinal.
 - A custom launch option (`setCustomOption`, or an unknown key in the `Map` overload of `launch`)
   that is not a String, a Boolean or a number is dropped, and an error is logged.
 - On Android the SDK stores a Double attribute as a Float. On iOS the SDK records a Boolean in a
