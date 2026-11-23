@@ -136,7 +136,7 @@ public object Bugsee {
     /**
      * Sets the filter of the network events Bugsee captures, replacing the previous one; `null`
      * removes it. Return the event, changed or not, to keep it, or `null` to drop it. If the filter
-     * throws, the event is kept.
+     * throws, the event is kept as it is at that moment.
      *
      * **A network filter turns off the SDK's built-in redaction of network events**
      * ([BugseeLaunchOptions.captureNetworkUseDefaultSanitizer]). While a filter is set, the
@@ -150,6 +150,8 @@ public object Bugsee {
      *     event
      * }
      * ```
+     * Call the sanitizer first: if the filter throws before calling it, the event is recorded
+     * unredacted.
      */
     public fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         bugseeInternal.setNetworkEventFilter(filter)
