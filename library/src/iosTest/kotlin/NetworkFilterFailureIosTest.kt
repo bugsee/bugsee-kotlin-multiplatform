@@ -42,7 +42,52 @@ class NetworkFilterFailureIosTest {
         repeat(3) { assertNull(networkFilterDecision(filter, failures, nativeEvent())) }
 
         assertEquals(1, reports.size)
-        assertTrue("the network filter threw" in reports.single() && "boom" in reports.single(), reports.single())
+        assertTrue("the network filter threw kotlin.IllegalStateException" in reports.single(), reports.single())
+        assertTrue("boom" !in reports.single(), reports.single())
+    }
+
+    @Test
+    fun `the installed block passes the decision to the SDK`() {
+        val block = BugseeInternal().networkFilterBlock { event -> event?.apply { url = "https://example.com/" } }
+        val native = nativeEvent()
+        var answered = false
+        var decision: NativeNetworkEvent? = null
+
+        block!!.invoke(native) { answered = true; decision = it }
+
+        assertTrue(answered)
+        assertSame(native, decision)
+        assertEquals("https://example.com/", decision?.url)
+    }
+
+    @Test
+    fun `each installed filter reports its own first failure`() {
+        val internal = BugseeInternal()
+        internal.reportFilterFailureTo = { reports += it }
+        val first = internal.networkFilterBlock { throw IllegalStateException("first") }
+        val second = internal.networkFilterBlock { throw IllegalArgumentException("second") }
+        val decisions = mutableListOf<NativeNetworkEvent?>()
+
+        repeat(2) {
+            first!!.invoke(nativeEvent()) { decisions += it }
+            second!!.invoke(nativeEvent()) { decisions += it }
+        }
+
+        assertEquals(listOf<NativeNetworkEvent?>(null, null, null, null), decisions)
+        assertEquals(2, reports.size)
+        assertTrue("IllegalStateException" in reports[0], reports[0])
+        assertTrue("IllegalArgumentException" in reports[1], reports[1])
+    }
+
+    @Test
+    fun `a throwing completion handler is not reported as a filter failure`() {
+        val internal = BugseeInternal()
+        internal.reportFilterFailureTo = { reports += it }
+        val block = internal.networkFilterBlock { it }
+
+        block!!.invoke(nativeEvent()) { throw IllegalStateException("completion") }
+
+        assertTrue(reports.isEmpty(), reports.toString())
     }
 
     @Test

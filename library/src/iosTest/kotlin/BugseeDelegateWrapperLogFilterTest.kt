@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
  *   - filter returning null must drop the log (completion handler receives nil)
  *   - filter returning a (possibly mutated) event must keep it
  *   - filter returning a different wrapper instance must use that wrapper's native impl
- *   - a throwing filter must fall through to the original log without crashing
+ *   - a throwing filter must drop the log without crashing, and report its first failure once
  *
  * [BugseeDelegateWrapper] is `internal` and [BugseeLogEvent.impl] is also
  * `internal`, both of which are visible from this test source set.
@@ -124,7 +124,7 @@ class BugseeDelegateWrapperLogFilterTest {
         val (internal, wrapper) = newWrapper()
         val reports = mutableListOf<String>()
         internal.reportFilterFailureTo = { reports += it }
-        internal.setLogFilter { _ -> throw RuntimeException("boom") }
+        internal.setLogFilter { _ -> throw IllegalStateException("boom") }
 
         repeat(3) { i ->
             var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = makeNativeLog("sentinel")
@@ -133,7 +133,7 @@ class BugseeDelegateWrapperLogFilterTest {
         }
 
         assertEquals(1, reports.size)
-        assertTrue("boom" in reports.single(), reports.single())
+        assertTrue("IllegalStateException" in reports.single() && "boom" !in reports.single(), reports.single())
     }
 
     @Test
@@ -142,14 +142,14 @@ class BugseeDelegateWrapperLogFilterTest {
         val reports = mutableListOf<String>()
         internal.reportFilterFailureTo = { reports += it }
 
-        internal.setLogFilter { _ -> throw RuntimeException("first") }
+        internal.setLogFilter { _ -> throw IllegalStateException("first") }
         repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
-        internal.setLogFilter { _ -> throw RuntimeException("second") }
+        internal.setLogFilter { _ -> throw IllegalArgumentException("second") }
         repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
 
         assertEquals(2, reports.size)
-        assertTrue("first" in reports[0], reports[0])
-        assertTrue("second" in reports[1], reports[1])
+        assertTrue("IllegalStateException" in reports[0], reports[0])
+        assertTrue("IllegalArgumentException" in reports[1], reports[1])
     }
 
     // The filter and its reporter are replaced together.
@@ -159,15 +159,15 @@ class BugseeDelegateWrapperLogFilterTest {
         val reports = mutableListOf<String>()
         internal.reportFilterFailureTo = { reports += it }
         internal.setLogFilter { _ ->
-            internal.setLogFilter { _ -> throw RuntimeException("second") }
-            throw RuntimeException("first")
+            internal.setLogFilter { _ -> throw IllegalArgumentException("second") }
+            throw IllegalStateException("first")
         }
 
         repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
 
         assertEquals(2, reports.size)
-        assertTrue("first" in reports[0], reports[0])
-        assertTrue("second" in reports[1], reports[1])
+        assertTrue("IllegalStateException" in reports[0], reports[0])
+        assertTrue("IllegalArgumentException" in reports[1], reports[1])
     }
 
     @Test
@@ -176,7 +176,7 @@ class BugseeDelegateWrapperLogFilterTest {
         val reports = mutableListOf<String>()
         internal.reportFilterFailureTo = { reports += it }
         internal.setLogFilter { event ->
-            if (event?.message == "bad") throw RuntimeException("boom")
+            if (event?.message == "bad") throw IllegalStateException("boom")
             event
         }
 
@@ -185,6 +185,6 @@ class BugseeDelegateWrapperLogFilterTest {
 
         wrapper.bugseeFilterLog(makeNativeLog("bad")) { }
         assertEquals(1, reports.size)
-        assertTrue("boom" in reports.single(), reports.single())
+        assertTrue("IllegalStateException" in reports.single(), reports.single())
     }
 }

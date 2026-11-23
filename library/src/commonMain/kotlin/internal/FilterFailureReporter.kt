@@ -16,8 +16,12 @@ internal enum class SdkFilter(val title: String, val item: String) {
  * filter was given is dropped, as both SDKs drop an event whose filter fails: a filter that
  * redacts must not let through what it failed to redact.
  *
- * Once, because a filter that throws throws on every event. For the log filter it is also the only
- * safe way: both SDKs pass the app's console output through it, logcat on Android, and on iOS
+ * Only the exception's class is reported, as both SDKs do: its message is the app's text and may
+ * quote the event the filter was redacting (a JSON parser's error quotes the body it could not
+ * parse), and the report goes to the Bugsee log, which no filter sees.
+ *
+ * Once, so a filter that throws on many events does not flood the log. For the log filter it is
+ * also the only safe way: both SDKs pass the app's console output through it, logcat on Android, and on iOS
  * stdout/stderr, read by a single SDK thread that also calls the filter. A failure written to the
  * console from inside the filter comes back to the same filter, so a filter that always throws
  * would run without end; on iOS that write can also block on the pipe only that thread drains,
@@ -35,7 +39,7 @@ internal class FilterFailureReporter(
         if (!reported.compareAndSet(false, true)) return
         try {
             report(
-                "Bugsee: the ${filter.title} threw ${describeThrowable(error)}; the ${filter.item} was dropped. " +
+                "Bugsee: the ${filter.title} threw ${throwableClassName(error)}; the ${filter.item} was dropped. " +
                     "Further failures of this filter are not reported."
             )
         } catch (ignored: Throwable) {
@@ -46,3 +50,7 @@ internal class FilterFailureReporter(
 
 /** Writes [message] to the Bugsee log and to the console, without logging from the filter's thread. */
 internal expect fun reportFilterFailure(message: String)
+
+/** The class of [error], without its message. */
+internal fun throwableClassName(error: Throwable): String =
+    error::class.qualifiedName ?: error::class.simpleName ?: "Throwable"

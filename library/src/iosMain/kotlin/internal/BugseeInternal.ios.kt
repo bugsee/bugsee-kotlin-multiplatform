@@ -277,12 +277,21 @@ public actual class BugseeInternal {
             BugseeSDK.setNetworkEventFilter(null)
             return
         }
+        BugseeSDK.setNetworkEventFilter(networkFilterBlock(filter))
+    }
+
+    /**
+     * The block given to the SDK as the network filter: [filter]'s decision (see
+     * [networkFilterDecision]), with a reporter of this filter's own failures.
+     */
+    internal fun networkFilterBlock(filter: BugseeNetworkFilter): swiftPMImport.com.bugsee.library.BugseeNetworkEventFilterBlock {
         val failures = FilterFailureReporter(SdkFilter.Network, reportFilterFailureTo)
-        BugseeSDK.setNetworkEventFilter { nativeEvent, completionHandler ->
+        return { nativeEvent, completionHandler ->
             val decision = networkFilterDecision(filter, failures, nativeEvent)
             try {
                 completionHandler?.invoke(decision)
             } catch (e: Throwable) {
+                // The SDK's callback, not the app's filter, so it is not reported as a filter failure.
                 Logger.e("BugseeInternal", "networkFilter completionHandler threw", e)
             }
         }

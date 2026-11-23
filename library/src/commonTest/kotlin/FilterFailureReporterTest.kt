@@ -14,7 +14,19 @@ class FilterFailureReporterTest {
         repeat(3) { reporter.onFailure(IllegalStateException("boom $it")) }
 
         assertEquals(1, messages.size)
-        assertTrue("IllegalStateException: boom 0" in messages.single(), messages.single())
+        assertTrue("IllegalStateException" in messages.single(), messages.single())
+    }
+
+    // The message is the app's text and may quote the event, as a JSON parser's error quotes the body.
+    @Test
+    fun `the report gives the exception's class and not its message`() {
+        val messages = mutableListOf<String>()
+
+        FilterFailureReporter(SdkFilter.Network) { messages += it }
+            .onFailure(IllegalArgumentException("""Value {"password":"hunter2" cannot be converted"""))
+
+        assertTrue("IllegalArgumentException" in messages.single(), messages.single())
+        assertTrue("hunter2" !in messages.single() && "password" !in messages.single(), messages.single())
     }
 
     @Test
@@ -29,7 +41,7 @@ class FilterFailureReporterTest {
     }
 
     @Test
-    fun `an exception whose toString throws is described by its class name`() {
+    fun `an exception whose toString throws is reported by its class name`() {
         val messages = mutableListOf<String>()
 
         FilterFailureReporter(SdkFilter.Log) { messages += it }.onFailure(ToStringThrows())

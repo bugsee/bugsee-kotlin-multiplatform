@@ -15,6 +15,7 @@ import org.mockito.ArgumentMatchers.eq
 import org.mockito.MockedStatic
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockStatic
+import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
@@ -73,7 +74,8 @@ class BugseeFilterFailureAndroidTest {
 
             repeat(3) { runLogFilter(filter) }
 
-            sdk.verify({ com.bugsee.library.Bugsee.log(contains("boom"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("IllegalStateException"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("boom"), any(LogLevel::class.java)) }, never())
             assertEquals(1, ShadowLog.getLogsForTag("BugseeFilter").size)
             assertTrue(ShadowLog.getLogsForTag("BugseeInternal").none { "setLogFilter" in it.msg })
         }
@@ -85,11 +87,11 @@ class BugseeFilterFailureAndroidTest {
             val bugseeInternal = BugseeInternal()
             bugseeInternal.setLogFilter { throw IllegalStateException("first") }
             repeat(2) { runLogFilter(installedLogFilter(sdk)) }
-            bugseeInternal.setLogFilter { throw IllegalStateException("second") }
+            bugseeInternal.setLogFilter { throw IllegalArgumentException("second") }
             repeat(2) { runLogFilter(installedLogFilter(sdk, installs = 2)) }
 
-            sdk.verify({ com.bugsee.library.Bugsee.log(contains("first"), eq(LogLevel.Error)) }, times(1))
-            sdk.verify({ com.bugsee.library.Bugsee.log(contains("second"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("IllegalStateException"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("IllegalArgumentException"), eq(LogLevel.Error)) }, times(1))
         }
     }
 
@@ -105,7 +107,7 @@ class BugseeFilterFailureAndroidTest {
 
             val lines = ShadowLog.getLogsForTag("BugseeFilter")
             assertEquals(1, lines.size)
-            assertTrue("boom" in lines.single().msg, lines.single().msg)
+            assertTrue("IllegalStateException" in lines.single().msg, lines.single().msg)
         }
     }
 
@@ -113,15 +115,17 @@ class BugseeFilterFailureAndroidTest {
     fun `network filter throws on every event - each event is dropped and the failure is reported once`() {
         mockStatic(com.bugsee.library.Bugsee::class.java).use { sdk ->
             val bugseeInternal = BugseeInternal()
-            bugseeInternal.setNetworkEventFilter { throw IllegalStateException("boom") }
+            // A parser's message can quote the event the filter was redacting.
+            bugseeInternal.setNetworkEventFilter { throw IllegalStateException("token=deeptest-secret") }
             val filter = installedNetworkFilter(sdk)
 
             repeat(3) { runNetworkFilter(filter) }
 
-            sdk.verify({ com.bugsee.library.Bugsee.log(contains("the network filter threw"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("the network filter threw java.lang.IllegalStateException"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("deeptest-secret"), any(LogLevel::class.java)) }, never())
             val lines = ShadowLog.getLogsForTag("BugseeFilter")
             assertEquals(1, lines.size)
-            assertTrue("the event was dropped" in lines.single().msg, lines.single().msg)
+            assertTrue("the event was dropped" in lines.single().msg && "deeptest-secret" !in lines.single().msg, lines.single().msg)
         }
     }
 
@@ -131,11 +135,11 @@ class BugseeFilterFailureAndroidTest {
             val bugseeInternal = BugseeInternal()
             bugseeInternal.setNetworkEventFilter { throw IllegalStateException("first") }
             repeat(2) { runNetworkFilter(installedNetworkFilter(sdk)) }
-            bugseeInternal.setNetworkEventFilter { throw IllegalStateException("second") }
+            bugseeInternal.setNetworkEventFilter { throw IllegalArgumentException("second") }
             repeat(2) { runNetworkFilter(installedNetworkFilter(sdk, installs = 2)) }
 
-            sdk.verify({ com.bugsee.library.Bugsee.log(contains("first"), eq(LogLevel.Error)) }, times(1))
-            sdk.verify({ com.bugsee.library.Bugsee.log(contains("second"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("IllegalStateException"), eq(LogLevel.Error)) }, times(1))
+            sdk.verify({ com.bugsee.library.Bugsee.log(contains("IllegalArgumentException"), eq(LogLevel.Error)) }, times(1))
         }
     }
 }
