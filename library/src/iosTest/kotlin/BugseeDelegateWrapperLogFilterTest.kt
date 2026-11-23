@@ -98,32 +98,38 @@ class BugseeDelegateWrapperLogFilterTest {
         assertEquals("replacement", captured?.text)
     }
 
+    // The SDK drops a line whose filter fails, and so does the wrapper (#56).
     @Test
-    fun `filter throws - completion falls through to original log`() {
+    fun `filter throws - completion receives null to drop log`() {
         val (internal, wrapper) = newWrapper()
-        internal.logFilterHandler = { _ -> throw RuntimeException("boom") }
+        internal.logFilterHandler = { event ->
+            event?.message = "half-redacted"
+            throw RuntimeException("boom")
+        }
 
-        val native = makeNativeLog("keep")
-        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
-        wrapper.bugseeFilterLog(native) { event -> captured = event }
+        var called = false
+        var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = makeNativeLog("sentinel")
+        wrapper.bugseeFilterLog(makeNativeLog("secret")) { event ->
+            called = true
+            captured = event
+        }
 
-        assertSame(native, captured, "On exception, completion must receive the original log")
-        assertEquals("keep", captured?.text)
+        assertTrue(called, "Completion handler must still be invoked when the filter throws")
+        assertNull(captured, "On exception, completion must receive null")
     }
 
     // A failure logged to the console from here would come back to the same filter (#51).
     @Test
-    fun `filter throws on every line - each line is kept and the failure is reported once`() {
+    fun `filter throws on every line - each line is dropped and the failure is reported once`() {
         val (internal, wrapper) = newWrapper()
         val reports = mutableListOf<String>()
-        internal.reportLogFilterFailureTo = { reports += it }
+        internal.reportFilterFailureTo = { reports += it }
         internal.setLogFilter { _ -> throw RuntimeException("boom") }
 
         repeat(3) { i ->
-            val native = makeNativeLog("line $i")
-            var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = null
-            wrapper.bugseeFilterLog(native) { event -> captured = event }
-            assertSame(native, captured, "Line $i must be kept")
+            var captured: swiftPMImport.com.bugsee.library.BugseeLogEvent? = makeNativeLog("sentinel")
+            wrapper.bugseeFilterLog(makeNativeLog("line $i")) { event -> captured = event }
+            assertNull(captured, "Line $i must be dropped")
         }
 
         assertEquals(1, reports.size)
@@ -134,7 +140,7 @@ class BugseeDelegateWrapperLogFilterTest {
     fun `a new filter reports its own first failure`() {
         val (internal, wrapper) = newWrapper()
         val reports = mutableListOf<String>()
-        internal.reportLogFilterFailureTo = { reports += it }
+        internal.reportFilterFailureTo = { reports += it }
 
         internal.setLogFilter { _ -> throw RuntimeException("first") }
         repeat(2) { wrapper.bugseeFilterLog(makeNativeLog()) { } }
@@ -151,7 +157,7 @@ class BugseeDelegateWrapperLogFilterTest {
     fun `a filter replaced while it runs reports through its own reporter`() {
         val (internal, wrapper) = newWrapper()
         val reports = mutableListOf<String>()
-        internal.reportLogFilterFailureTo = { reports += it }
+        internal.reportFilterFailureTo = { reports += it }
         internal.setLogFilter { _ ->
             internal.setLogFilter { _ -> throw RuntimeException("second") }
             throw RuntimeException("first")
@@ -168,7 +174,7 @@ class BugseeDelegateWrapperLogFilterTest {
     fun `a throwing completion handler is not reported as a filter failure`() {
         val (internal, wrapper) = newWrapper()
         val reports = mutableListOf<String>()
-        internal.reportLogFilterFailureTo = { reports += it }
+        internal.reportFilterFailureTo = { reports += it }
         internal.setLogFilter { event ->
             if (event?.message == "bad") throw RuntimeException("boom")
             event

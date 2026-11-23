@@ -37,17 +37,37 @@ private const val TAG = "BugseeInternal"
  * failure once. They are replaced in one assignment, so the SDK thread that runs the filter while
  * `setLogFilter` replaces it gets a filter with its own reporter.
  */
-internal class LogFilterState(val filter: BugseeLogFilter, val failures: LogFilterFailureReporter)
+internal class LogFilterState(val filter: BugseeLogFilter, val failures: FilterFailureReporter)
+
+/**
+ * The decision the network filter gives the SDK for [nativeEvent]: the event the filter returns,
+ * changed in place or not, or `null` to drop it. A filter that throws drops the event, as the SDK
+ * does, and reports its first failure through [failures].
+ */
+internal fun networkFilterDecision(
+    filter: BugseeNetworkFilter,
+    failures: FilterFailureReporter,
+    nativeEvent: swiftPMImport.com.bugsee.library.BugseeNetworkEvent?,
+): swiftPMImport.com.bugsee.library.BugseeNetworkEvent? {
+    if (nativeEvent == null) return null
+    // Throwable: a Kotlin throwable that leaves the block terminates the app.
+    return try {
+        filter.invoke(com.bugsee.kmp.BugseeNetworkEvent(impl = nativeEvent))?.impl
+    } catch (e: Throwable) {
+        failures.onFailure(e)
+        null
+    }
+}
 
 public actual class BugseeInternal {
-    // Where a failure of the log filter is reported (replaced in tests).
-    internal var reportLogFilterFailureTo: (String) -> Unit = ::reportLogFilterFailure
+    // Where a failure of the log or network filter is reported (replaced in tests).
+    internal var reportFilterFailureTo: (String) -> Unit = ::reportFilterFailure
     internal var logFilterState: LogFilterState? = null
 
     public var logFilterHandler: BugseeLogFilter?
         get() = logFilterState?.filter
         set(value) {
-            logFilterState = value?.let { LogFilterState(it, LogFilterFailureReporter(reportLogFilterFailureTo)) }
+            logFilterState = value?.let { LogFilterState(it, FilterFailureReporter(SdkFilter.Log, reportFilterFailureTo)) }
         }
     public var lifecycleEventHandler: BugseeLifecycleEventListener? = null
 
@@ -257,26 +277,9 @@ public actual class BugseeInternal {
             BugseeSDK.setNetworkEventFilter(null)
             return
         }
+        val failures = FilterFailureReporter(SdkFilter.Network, reportFilterFailureTo)
         BugseeSDK.setNetworkEventFilter { nativeEvent, completionHandler ->
-            // Default to keeping the original event; flipped to filtered.impl
-            // (or null to drop) if the filter runs successfully.
-            var decision: swiftPMImport.com.bugsee.library.BugseeNetworkEvent? = nativeEvent
-            try {
-                if (nativeEvent != null) {
-                    val filtered = filter.invoke(com.bugsee.kmp.BugseeNetworkEvent(impl = nativeEvent))
-                    // null => drop; non-null => keep (mutations in `impl` propagate)
-                    decision = filtered?.impl
-                }
-            } catch (e: Throwable) {
-                decision = nativeEvent
-                try {
-                    com.bugsee.kmp.Bugsee.log(
-                        "BugseeInternal: exception during networkFilterHandler invoke: ${describeThrowable(e)}",
-                        BugseeLogLevel.Warning
-                    )
-                } catch (ignored: Throwable) {
-                }
-            }
+            val decision = networkFilterDecision(filter, failures, nativeEvent)
             try {
                 completionHandler?.invoke(decision)
             } catch (e: Throwable) {

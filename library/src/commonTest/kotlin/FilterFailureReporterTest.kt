@@ -4,12 +4,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class LogFilterFailureReporterTest {
+class FilterFailureReporterTest {
 
     @Test
     fun `reports only the first failure`() {
         val messages = mutableListOf<String>()
-        val reporter = LogFilterFailureReporter { messages += it }
+        val reporter = FilterFailureReporter(SdkFilter.Log) { messages += it }
 
         repeat(3) { reporter.onFailure(IllegalStateException("boom $it")) }
 
@@ -18,17 +18,28 @@ class LogFilterFailureReporterTest {
     }
 
     @Test
+    fun `the report names the filter and what was dropped`() {
+        val messages = mutableListOf<String>()
+
+        FilterFailureReporter(SdkFilter.Log) { messages += it }.onFailure(IllegalStateException("boom"))
+        FilterFailureReporter(SdkFilter.Network) { messages += it }.onFailure(IllegalStateException("boom"))
+
+        assertTrue("the log filter threw" in messages[0] && "the line was dropped" in messages[0], messages[0])
+        assertTrue("the network filter threw" in messages[1] && "the event was dropped" in messages[1], messages[1])
+    }
+
+    @Test
     fun `an exception whose toString throws is described by its class name`() {
         val messages = mutableListOf<String>()
 
-        LogFilterFailureReporter { messages += it }.onFailure(ToStringThrows())
+        FilterFailureReporter(SdkFilter.Log) { messages += it }.onFailure(ToStringThrows())
 
         assertTrue("ToStringThrows" in messages.single(), messages.single())
     }
 
     @Test
     fun `a failing report does not escape`() {
-        val reporter = LogFilterFailureReporter { throw IllegalStateException("report failed") }
+        val reporter = FilterFailureReporter(SdkFilter.Network) { throw IllegalStateException("report failed") }
 
         reporter.onFailure(IllegalStateException("boom"))
         reporter.onFailure(IllegalStateException("boom again"))
