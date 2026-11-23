@@ -10,6 +10,7 @@ import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
 import com.bugsee.kmp.BugseeLogLevel
 import com.bugsee.kmp.BugseeNetworkFilter
+import com.bugsee.kmp.BugseeNetworkSanitizer
 import com.bugsee.kmp.BugseeReportFieldsFiller
 import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.BugseeSecureRectangle
@@ -79,6 +80,8 @@ public expect class BugseeInternal() {
 
     // Filter and listener methods
     public fun setNetworkEventFilter(filter: BugseeNetworkFilter?)
+
+    public val defaultNetworkSanitizer: BugseeNetworkSanitizer
 
     public fun setLogFilter(filter: BugseeLogFilter?)
 

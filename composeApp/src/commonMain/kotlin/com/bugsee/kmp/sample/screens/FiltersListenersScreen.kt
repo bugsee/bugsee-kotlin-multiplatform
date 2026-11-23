@@ -35,9 +35,9 @@ fun FiltersListenersScreen(
         HorizontalDivider()
         HandlerToggle("Network Filter", SampleHandler.NetworkFilter, handlersOn, onTurn)
         Note(
-            "A network filter replaces the SDK's built-in redaction. This one masks the Authorization " +
-                "and Cookie headers (Advanced Network Tests sends an Authorization header) and logs " +
-                "each event to the console."
+            "A network filter turns off the SDK's built-in redaction. This one keeps it with " +
+                "Bugsee.defaultNetworkSanitizer (Advanced Network Tests sends an Authorization header) " +
+                "and logs each event to the console."
         )
 
         HorizontalDivider()

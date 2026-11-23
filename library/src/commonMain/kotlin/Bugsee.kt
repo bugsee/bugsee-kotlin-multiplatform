@@ -132,9 +132,43 @@ public object Bugsee {
     }
 
     // Filter and listener methods
+
+    /**
+     * Sets the filter of the network events Bugsee captures, replacing the previous one; `null`
+     * removes it. Return the event, changed or not, to keep it, or `null` to drop it. If the filter
+     * throws, the event is kept as it is at that moment.
+     *
+     * **A network filter turns off the SDK's built-in redaction of network events**
+     * ([BugseeLaunchOptions.captureNetworkUseDefaultSanitizer]). While a filter is set, the
+     * `Authorization` and `Cookie` headers, `token` query values and `password` body fields are
+     * recorded as they are, unless the filter redacts them. To keep the built-in redaction, run
+     * [defaultNetworkSanitizer] in the filter, then your own changes:
+     * ```
+     * Bugsee.setNetworkEventFilter { event ->
+     *     event?.let { Bugsee.defaultNetworkSanitizer.sanitize(it) }
+     *     // your own redaction
+     *     event
+     * }
+     * ```
+     * Call the sanitizer first: if the filter throws before calling it, the event is recorded
+     * unredacted.
+     */
     public fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         bugseeInternal.setNetworkEventFilter(filter)
     }
+
+    /**
+     * The SDK's built-in network sanitizer: the redaction of captured network events while no
+     * network filter is set and [BugseeLaunchOptions.captureNetworkUseDefaultSanitizer] is on. It
+     * redacts the values of known sensitive keys in the URL query, in headers (`Authorization`,
+     * `Cookie` and the like) and in JSON bodies. On Android it also removes `user:password@` from
+     * the URL and redacts the error texts.
+     *
+     * Call it from the network filter to keep that redaction (see [setNetworkEventFilter]). The
+     * sanitizer does not depend on the SDK state, so it works before [launch] and after [stop].
+     */
+    public val defaultNetworkSanitizer: BugseeNetworkSanitizer
+        get() = bugseeInternal.defaultNetworkSanitizer
 
     /**
      * Sets the filter of the console lines Bugsee captures (logcat on Android, stdout and stderr on

@@ -11,10 +11,6 @@ private const val PRE_FILTER_PREFIX = "{ KMP :"
 private const val POST_FILTER_SUFFIX = ": KMP }"
 private const val PRE_FILTER_LABEL = "KMP:"
 
-// Headers the network filter masks. A network filter replaces the SDK's built-in redaction, so a
-// filter that keeps events has to redact secrets itself.
-private val redactedHeaders = setOf("authorization", "cookie")
-
 /**
  * The filters, listeners and providers of the Filters & Listeners and Report Filters screens.
  *
@@ -43,11 +39,10 @@ enum class SampleHandler {
             )
 
             NetworkFilter -> Bugsee.setNetworkEventFilter(
+                // A network filter turns off the SDK's built-in redaction; this one keeps it.
                 if (on) { event ->
                     event?.apply {
-                        headers = headers?.mapValues { (name, value) ->
-                            if (name.lowercase() in redactedHeaders) "[redacted by the sample]" else value
-                        }
+                        Bugsee.defaultNetworkSanitizer.sanitize(this)
                         AppLogger.d(TAG, "Network filter: $method $url")
                     }
                 } else null
