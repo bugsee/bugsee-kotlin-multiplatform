@@ -123,6 +123,7 @@
     "BugseeCrashHandlerType": "BugseeCrashHandlerType"
   },
   "docs": {
-    "com.bugsee.option.capture.crash-signals": "A bit set of [BugseeCrashSignals]: combine the constants with `or`. The default `128` is\n[BugseeCrashSignals.Default], which lets the SDK choose."
+    "com.bugsee.option.capture.crash-signals": "A bit set of [BugseeCrashSignals]: combine the constants with `or`. The default `128` is\n[BugseeCrashSignals.Default], which lets the SDK choose.",
+    "com.bugsee.option.capture.network.default-sanitizer": "The SDK's built-in redaction of network events, [Bugsee.defaultNetworkSanitizer]. It runs only\nwhile no network filter is set: a filter set with [Bugsee.setNetworkEventFilter] turns it off\nwhatever this option says, and keeps it by calling [Bugsee.defaultNetworkSanitizer] itself."
   }
 }

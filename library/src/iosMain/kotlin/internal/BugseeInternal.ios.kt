@@ -15,7 +15,9 @@ import com.bugsee.kmp.BugseeLaunchOptions
 import com.bugsee.kmp.BugseeLifecycleEventListener
 import com.bugsee.kmp.BugseeLogFilter
 import com.bugsee.kmp.BugseeLogLevel
+import com.bugsee.kmp.BugseeNetworkEvent
 import com.bugsee.kmp.BugseeNetworkFilter
+import com.bugsee.kmp.BugseeNetworkSanitizer
 import com.bugsee.kmp.BugseeReportFieldsFiller
 import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.BugseeSeverity
@@ -283,6 +285,8 @@ public actual class BugseeInternal {
         }
     }
 
+    public actual val defaultNetworkSanitizer: BugseeNetworkSanitizer = DefaultNetworkSanitizer
+
     public actual fun setLogFilter(filter: BugseeLogFilter?) {
         logFilterHandler = filter
     }
@@ -414,3 +418,11 @@ public actual class BugseeInternal {
 /** The KMP unhandled-exception hook follows [BugseeLaunchOptions.detectAndReportCrash] (default on). */
 internal fun shouldInstallUnhandledExceptionHook(options: BugseeLaunchOptions?): Boolean =
     options?.detectAndReportCrash ?: true
+
+// The SDK's sanitizer is a stateless singleton that works in any SDK state; it is looked up on each
+// call, as the SDK's own filter example does.
+private object DefaultNetworkSanitizer : BugseeNetworkSanitizer {
+    override fun sanitize(event: BugseeNetworkEvent) {
+        BugseeSDK.defaultNetworkSanitizer().sanitize(event.impl)
+    }
+}

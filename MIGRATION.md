@@ -152,6 +152,22 @@ and the platform. 0.2.0 converts them the same way on both platforms before the 
   trace value, an event param or a report as `1` or `0`, and `getAttribute` returns a Boolean
   attribute as a Byte, `1` or `0`.
 
+## Network filter and redaction
+
+The SDKs 7 redact captured network events: the `Authorization` and `Cookie` headers, `token` query
+values, `password` body fields and the like (`captureNetworkUseDefaultSanitizer`, on by default).
+They do it only while no network filter is set: a filter set with `setNetworkEventFilter` turns
+this redaction off, and the events it keeps are recorded as the filter returns them. To keep the
+redaction, call the new `Bugsee.defaultNetworkSanitizer` in the filter:
+
+```kotlin
+Bugsee.setNetworkEventFilter { event ->
+    event?.let { Bugsee.defaultNetworkSanitizer.sanitize(it) }
+    // your own redaction
+    event
+}
+```
+
 ## Extended reports
 
 The SDKs 7 create no report while Bugsee is not launched (iOS SDK 7 also while it is launching),

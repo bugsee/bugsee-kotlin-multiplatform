@@ -280,6 +280,8 @@ public actual class BugseeInternal {
         })
     }
 
+    public actual val defaultNetworkSanitizer: BugseeNetworkSanitizer = DefaultNetworkSanitizer
+
     public actual fun setLogFilter(filter: BugseeLogFilter?) {
         if (filter == null) {
             BugseeSDK.setLogEventFilter(null)
@@ -482,5 +484,13 @@ public actual class BugseeInternal {
     // View hierarchy management
     public actual fun captureViewHierarchy() {
         BugseeSDK.captureViewHierarchy()
+    }
+}
+
+// The SDK's sanitizer is a stateless singleton that works in any SDK state; it is looked up on each
+// call, as the SDK's own filter example does.
+private object DefaultNetworkSanitizer : BugseeNetworkSanitizer {
+    override fun sanitize(event: BugseeNetworkEvent) {
+        BugseeSDK.getDefaultNetworkSanitizer().sanitize(event.underlyingEvent)
     }
 }

@@ -70,8 +70,8 @@ fun AdvancedNetworkScreen(onBackClick: () -> Unit) {
             }
         }
 
-        // The Authorization header is a fake secret for the redaction: the SDK's built-in one, or
-        // the network filter of Filters & Listeners, which replaces it.
+        // The Authorization header is a fake secret for the SDK's built-in redaction, which the
+        // network filter of Filters & Listeners keeps.
         TestButton("POST with JSON Body and Authorization") {
             runRequest { client ->
                 val response = client.post("https://httpbin.org/post") {
