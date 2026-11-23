@@ -136,7 +136,8 @@ public object Bugsee {
     /**
      * Sets the filter of the network events Bugsee captures, replacing the previous one; `null`
      * removes it. Return the event, changed or not, to keep it, or `null` to drop it. If the filter
-     * throws, the event is kept as it is at that moment.
+     * throws, the event is dropped, as the SDKs do, and the first failure of this filter is written
+     * once to the Bugsee log and the console, with the exception's class only.
      *
      * **A network filter turns off the SDK's built-in redaction of network events**
      * ([BugseeLaunchOptions.captureNetworkUseDefaultSanitizer]). While a filter is set, the
@@ -150,8 +151,6 @@ public object Bugsee {
      *     event
      * }
      * ```
-     * Call the sanitizer first: if the filter throws before calling it, the event is recorded
-     * unredacted.
      */
     public fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         bugseeInternal.setNetworkEventFilter(filter)
@@ -177,7 +176,8 @@ public object Bugsee {
      *
      * Don't write to the console from the filter (`println`, `NSLog`, `android.util.Log`): Bugsee
      * captures that line too and passes it to the filter again. If the filter throws, the line is
-     * kept, and the first failure of this filter is written once to the Bugsee log and the console.
+     * dropped, as the SDKs do, and the first failure of this filter is written once to the Bugsee
+     * log and the console, with the exception's class only.
      */
     public fun setLogFilter(filter: BugseeLogFilter?) {
         bugseeInternal.setLogFilter(filter)

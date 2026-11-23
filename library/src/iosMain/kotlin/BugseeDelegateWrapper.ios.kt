@@ -17,8 +17,8 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
         log: swiftPMImport.com.bugsee.library.BugseeLogEvent,
         completionHandler: BugseeLogFilterDecisionBlock
     ) {
-        // Default to keeping the original log; flipped to filtered.impl (or null
-        // to drop) if a filter is registered and runs successfully.
+        // The original log when no filter is registered; otherwise what the filter returns
+        // (null drops the log), and null when the filter throws, as the SDK drops it.
         var decision: swiftPMImport.com.bugsee.library.BugseeLogEvent? = log
         // Read once: the filter and its reporter, replaced together by setLogFilter.
         val state = weakBugseeInternal.get()?.logFilterState
@@ -28,10 +28,10 @@ internal class BugseeDelegateWrapper(bugseeInternal: BugseeInternal) : NSObject(
                 // null => drop the log; non-null => keep (mutations in `impl` propagate)
                 decision = filtered?.impl
             } catch (e: Throwable) {
-                // Don't crash the app; fall through with the original log. Not to the console:
-                // this runs on the SDK thread that reads stderr (see LogFilterFailureReporter).
+                // Don't crash the app; drop the log. Not to the console: this runs on the SDK
+                // thread that reads stderr (see FilterFailureReporter).
                 state.failures.onFailure(e)
-                decision = log
+                decision = null
             }
         }
         try {

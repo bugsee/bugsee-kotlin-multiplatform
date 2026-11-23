@@ -251,13 +251,15 @@ public actual class BugseeInternal {
 
     // Filter and listener methods
     // 7.x filters are callback-based: callback.run(event) keeps the (mutated) event,
-    // callback.run(null) drops it. On a filter exception the original event is kept.
+    // callback.run(null) drops it. A filter that throws drops the event, as the SDK does, and
+    // reports its first failure once (FilterFailureReporter).
     public actual fun setNetworkEventFilter(filter: BugseeNetworkFilter?) {
         if (filter == null) {
             BugseeSDK.setNetworkEventFilter(null)
             return
         }
 
+        val failures = FilterFailureReporter(SdkFilter.Network)
         BugseeSDK.setNetworkEventFilter(object : EventFilter<NetworkEvent> {
             override fun filter(event: NetworkEvent, callback: Callback1<NetworkEvent>) {
                 // Timing updates have no 0.1.x stage; don't let a filter written for
@@ -267,13 +269,12 @@ public actual class BugseeInternal {
                     return
                 }
 
-                // Throwable: the SDK drops the event when anything escapes, and an Error
-                // (TODO(), AssertionError) is not an Exception.
+                // Throwable: an Error (TODO(), AssertionError) is not an Exception.
                 val result = try {
                     filter.invoke(BugseeNetworkEvent(event))?.underlyingEvent
                 } catch (e: Throwable) {
-                    Logger.e(TAG, "exception during setNetworkEventFilter execution", e)
-                    event
+                    failures.onFailure(e)
+                    null
                 }
                 callback.run(result)
             }
@@ -288,16 +289,17 @@ public actual class BugseeInternal {
             return
         }
 
-        // Each filter reports its first failure once, and not through logcat from here: the SDK
-        // reads logcat back through this filter (see LogFilterFailureReporter).
-        val failures = LogFilterFailureReporter()
+        // A filter that throws drops the line, as the SDK does. Each filter reports its first
+        // failure once, and not through logcat from here: the SDK reads logcat back through this
+        // filter (see FilterFailureReporter).
+        val failures = FilterFailureReporter(SdkFilter.Log)
         BugseeSDK.setLogEventFilter(object : EventFilter<LogEvent> {
             override fun filter(event: LogEvent, callback: Callback1<LogEvent>) {
                 val result = try {
                     filter.invoke(BugseeLogEvent(event))?.underlyingEvent
                 } catch (e: Throwable) {
                     failures.onFailure(e)
-                    event
+                    null
                 }
                 callback.run(result)
             }

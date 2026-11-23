@@ -62,7 +62,7 @@ class BugseeCallbackErrorsAndroidTest {
 
     @Suppress("UNCHECKED_CAST")
     @Test
-    fun `an Error in the network filter keeps the event`() = withSdk { sdk ->
+    fun `an Error in the network filter drops the event`() = withSdk { sdk ->
         BugseeInternal().setNetworkEventFilter { TODO("filter") }
         val filter = captured<EventFilter<*>> { captor ->
             sdk.verify { com.bugsee.library.Bugsee.setNetworkEventFilter(captor.capture() as EventFilter<NetworkEvent>?) }
@@ -72,12 +72,12 @@ class BugseeCallbackErrorsAndroidTest {
 
         filter.filter(event, callback)
 
-        verify(callback).run(event)
+        verify(callback).run(null)
     }
 
     @Suppress("UNCHECKED_CAST")
     @Test
-    fun `an Error in the log filter keeps the line`() = withSdk { sdk ->
+    fun `an Error in the log filter drops the line`() = withSdk { sdk ->
         BugseeInternal().setLogFilter { TODO("filter") }
         val filter = captured<EventFilter<*>> { captor ->
             sdk.verify { com.bugsee.library.Bugsee.setLogEventFilter(captor.capture() as EventFilter<LogEvent>?) }
@@ -87,7 +87,7 @@ class BugseeCallbackErrorsAndroidTest {
 
         filter.filter(event, callback)
 
-        verify(callback).run(event)
+        verify(callback).run(null)
     }
 
     @Test

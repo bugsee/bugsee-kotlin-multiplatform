@@ -168,6 +168,14 @@ Bugsee.setNetworkEventFilter { event ->
 }
 ```
 
+## Filters that throw
+
+0.1.x recorded the event when the log or network filter threw an exception. 0.2.0 drops it, as the
+SDKs 7 drop an event whose filter fails: a filter that throws partway may have redacted only part of
+the event. The first failure of each filter is written once to the Bugsee log and the console,
+with the exception's class only: its message may quote the event. Later failures of that filter
+are not reported.
+
 ## Extended reports
 
 The SDKs 7 create no report while Bugsee is not launched (iOS SDK 7 also while it is launching),
