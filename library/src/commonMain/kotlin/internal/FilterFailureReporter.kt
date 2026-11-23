@@ -21,13 +21,13 @@ internal enum class SdkFilter(val title: String, val item: String) {
  * parse), and the report goes to the Bugsee log, which no filter sees.
  *
  * Once, so a filter that throws on many events does not flood the log. For the log filter it is
- * also the only safe way: both SDKs pass the app's console output through it, logcat on Android, and on iOS
- * stdout/stderr, read by a single SDK thread that also calls the filter. A failure written to the
- * console from inside the filter comes back to the same filter, so a filter that always throws
- * would run without end; on iOS that write can also block on the pipe only that thread drains,
- * which stops every console writer, the main thread included. So the failure goes through
- * [report]: the platform writes it to the Bugsee log, which neither SDK passes through the log
- * filter, and to the console without blocking the filter's thread.
+ * also the only safe way: both SDKs pass the app's console output through it, logcat on Android,
+ * and on iOS stdout/stderr, read by a single SDK thread that also calls the filter. A failure
+ * written to the console from inside the filter comes back to the same filter, so a filter that
+ * always throws would run without end; on iOS that write can also block on the pipe only that
+ * thread drains, which stops every console writer, the main thread included. So the failure goes
+ * through [report]: the platform writes it to the Bugsee log, which neither SDK passes through the
+ * log filter, and to the console without blocking the filter's thread.
  */
 internal class FilterFailureReporter(
     private val filter: SdkFilter,
