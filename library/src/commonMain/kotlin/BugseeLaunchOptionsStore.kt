@@ -1,6 +1,8 @@
 package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.Platform
+import com.bugsee.kmp.internal.PlatformInfo
 import com.bugsee.kmp.internal.customOptionValue
 import com.bugsee.kmp.internal.legacyLaunchOptionKeys
 import com.bugsee.kmp.internal.legacyLaunchOptionMessage
@@ -15,10 +17,10 @@ import com.bugsee.kmp.internal.legacyLaunchOptionMessage
  * 0.2.0 ([legacyLaunchOptionKeys]) are ignored with an error that names the option to use instead.
  */
 internal class BugseeLaunchOptionsStore(
-    private val isAndroid: Boolean,
     private val logError: (String) -> Unit = { Logger.e(TAG, it) },
     private val logWarning: (String) -> Unit = { Logger.w(TAG, it) },
 ) {
+    private val isAndroid = PlatformInfo.getPlatformType() == Platform.ANDROID
     private val defaults = BugseeOptionsSpec.defaults(isAndroid)
     private val values = HashMap<String, Any>(defaults)
     private val customOptions = HashMap<String, Any>()
