@@ -63,6 +63,9 @@
   context itself there, as the native SDK does, and a launch that still fails logs a warning. An
   app that calls `launch` from `Application.onCreate` and runs other processes now gets Bugsee in
   each of them; check the process name before calling `launch` to keep it to the main process.
+  Where the provider has not run, attachments given as `file://` or `content://` URIs (including
+  `file:///android_asset/`) and `appearance.notificationTitleResId` cannot be read: they are
+  skipped with an error in the log.
 - `BugseeProtect` marks its content with the SDK's `Modifier.bugseeSecure()` (from
   `bugsee-android-compose`) instead of registering an overlay view with `addSecureView`. Android
   SDK 7 erases views registered with `addSecureView` on `stop()`, so an overlay view would no

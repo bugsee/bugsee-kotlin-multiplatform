@@ -124,6 +124,11 @@ internal class BugseeAndroidUtils {
             }
 
             val filePath = attachment.filePath.orEmpty()
+            // Read through the context; as a file path the SDK would reject it with no hint why.
+            if ((filePath.startsWith("content://") || filePath.startsWith("file://")) && applicationContext == null) {
+                Logger.e(TAG, "addAttachment: cannot read '$filePath' for attachment '${attachment.name}': $NO_KMP_CONTEXT")
+                return
+            }
             val bytes: ByteArray? = try {
                 when {
                     filePath.startsWith("file:///android_asset/") -> {

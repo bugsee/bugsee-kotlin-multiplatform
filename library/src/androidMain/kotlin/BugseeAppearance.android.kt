@@ -122,8 +122,13 @@ public actual class BugseeAppearance internal constructor(
                 return
             }
 
+            val context = applicationContext
+            if (context == null) {
+                Logger.e(TAG, "notificationTitleResId: cannot resolve string resource $value: $NO_KMP_CONTEXT")
+                return
+            }
             val title = try {
-                applicationContext?.getString(value)
+                context.getString(value)
             } catch (e: Exception) {
                 Logger.e(TAG, "notificationTitleResId: cannot resolve string resource $value", e)
                 null

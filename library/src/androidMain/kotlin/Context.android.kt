@@ -11,6 +11,10 @@ import android.net.Uri
 // Set by BugseeContextProvider; tests reset it to run without the provider.
 internal var applicationContext: Context? = null
 
+/** Why [applicationContext] is null, for the logs of what needs it. */
+internal const val NO_KMP_CONTEXT =
+    "the KMP context provider has not run in this process (it runs in the app's main process only, if the app keeps it)"
+
 /**
  * A ContentProvider that does NOT store or provide any data for read or write operations.
  *
