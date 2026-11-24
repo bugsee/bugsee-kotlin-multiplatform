@@ -11,6 +11,7 @@ import org.mockito.Mockito.mockStatic
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLog
 import java.io.Serializable
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -53,6 +54,19 @@ class BugseeLaunchAndroidTest {
         // The wrapper metadata comes from the registered BugseeWrapperAdapter, not an option.
         assertTrue("com.bugsee.option.\$\$WRAPPER" !in map)
         assertTrue("wrapper_info" !in map)
+    }
+
+    @Test
+    fun `raw map launch ignores keys from before 0_2_0`() {
+        val map = launchAndCapture { it.launch("token", mapOf("VideoEnabled" to false, "MaxRecordingTime" to 120)) }
+
+        assertTrue("VideoEnabled" !in map)
+        assertTrue("MaxRecordingTime" !in map)
+        assertEquals(true, map[BugseeOptions.CaptureVideo])
+        assertEquals(60, map[BugseeOptions.Duration])
+        val errors = ShadowLog.getLogsForTag("BugseeLaunchOptions").map { it.msg }
+        assertTrue(errors.any { "'VideoEnabled'" in it && "BugseeOptions.CaptureVideo" in it }, errors.toString())
+        assertTrue(errors.any { "'MaxRecordingTime'" in it && "BugseeOptions.Duration" in it }, errors.toString())
     }
 
     @Suppress("UNCHECKED_CAST")
