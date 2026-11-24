@@ -1,7 +1,11 @@
 package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.Platform
+import com.bugsee.kmp.internal.PlatformInfo
 import com.bugsee.kmp.internal.customOptionValue
+import com.bugsee.kmp.internal.legacyLaunchOptionKeys
+import com.bugsee.kmp.internal.legacyLaunchOptionMessage
 
 /**
  * Storage behind the generated [BugseeLaunchOptions].
@@ -9,9 +13,14 @@ import com.bugsee.kmp.internal.customOptionValue
  * Options start at the native defaults of the current platform ([BugseeOptionsSpec.defaults]).
  * Values are converted to the option's type when stored, so what the getters return is what
  * the native SDK receives. [toMap] sends every option the current platform knows plus the custom
- * options; options of the other platform are kept for the getters but never sent.
+ * options; options of the other platform are kept for the getters but never sent. Keys from before
+ * 0.2.0 ([legacyLaunchOptionKeys]) are ignored with an error that names the option to use instead.
  */
-internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
+internal class BugseeLaunchOptionsStore(
+    private val logError: (String) -> Unit = { Logger.e(TAG, it) },
+    private val logWarning: (String) -> Unit = { Logger.w(TAG, it) },
+) {
+    private val isAndroid = PlatformInfo.getPlatformType() == Platform.ANDROID
     private val defaults = BugseeOptionsSpec.defaults(isAndroid)
     private val values = HashMap<String, Any>(defaults)
     private val customOptions = HashMap<String, Any>()
@@ -21,11 +30,15 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
             return // the wrapper metadata comes from BugseeWrapperAdapter only
         }
 
+        val legacy = legacyLaunchOptionKeys[key]
+        if (legacy != null) {
+            logError(legacyLaunchOptionMessage(key, legacy, isAndroid))
+            return
+        }
+
         val type = BugseeOptionsSpec.types[key]
         if (type == null) {
-            // Strings, Booleans and numbers only. The iOS SDK applies some keys it knows under older
-            // names to typed properties, and writes every option into the session as JSON.
-            if (value != null) customOptionValue(key, value)?.let { customOptions[key] = it }
+            if (value != null) putCustom(key, value)
             return
         }
 
@@ -37,7 +50,7 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
         val coerced = type.coerce(value, isAndroid)
         if (coerced == null) {
-            Logger.e(TAG, "Ignoring launch option $key: ${value::class.simpleName} value '$value' does not fit the option on this platform")
+            logError("Ignoring launch option $key: ${value::class.simpleName} value '$value' does not fit the option on this platform")
             return
         }
         values[key] = coerced
@@ -45,6 +58,15 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
     fun putAll(options: Map<String, Any>) {
         options.forEach { (key, value) -> put(key, value) }
+    }
+
+    private fun putCustom(key: String, value: Any) {
+        // Strings, Booleans and numbers only: the iOS SDK writes every option into the session as JSON.
+        customOptions[key] = customOptionValue(key, value) ?: return
+        if (!key.startsWith(OPTION_KEY_PREFIX)) {
+            // Android SDK 7 drops a key it has no option for (OptionsContainerImpl.java:59-63).
+            logWarning("Launch option '$key' is not a Bugsee option key ($OPTION_KEY_PREFIX*); it is passed to the native SDK as is")
+        }
     }
 
     fun boolean(key: String, fallback: Boolean): Boolean = valueOf(key) as? Boolean ?: fallback
@@ -77,6 +99,7 @@ internal class BugseeLaunchOptionsStore(private val isAndroid: Boolean) {
 
     private companion object {
         const val TAG = "BugseeLaunchOptions"
+        const val OPTION_KEY_PREFIX = "com.bugsee.option."
         // The legacy iOS key; not sent, and not accepted from the app either.
         const val WRAPPER_INFO_KEY = "wrapper_info"
         const val ANDROID_WRAPPER_KEY = "com.bugsee.option.\$\$WRAPPER"

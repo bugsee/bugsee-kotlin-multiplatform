@@ -15,11 +15,10 @@ class IOSPlatform: Platform {
     override val token: String? = SampleConfig.iosToken.ifBlank { null }
     override val tokenProperty: String = "bugsee.sample.ios.token"
 
-    // The iOS SDK maps these keys to its internal endpoint and debug options. Its endpoint is the
-    // API base plus /v2.
+    // The internal iOS SDK 7 key, as on Android; the SDK appends /v2 to the API base. iOS SDK 7.1.0
+    // takes no launch option for its debug logging: it ignores the older "debug" key.
     override val endpointLaunchOptions: Map<String, Any> = buildMap {
-        SampleConfig.endpoint.ifBlank { null }?.let { put("endpoint", "$it/v2") }
-        put("debug", true)
+        SampleConfig.endpoint.ifBlank { null }?.let { put("com.bugsee.option.\$\$ENDPOINT", it) }
     }
 
     override val tempDir: String = NSTemporaryDirectory()

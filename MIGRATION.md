@@ -266,8 +266,21 @@ iOS 7.1.0) and follows the Android SDK 7 naming.
   not support (`BugseeFrameRate.Raw` on iOS), is ignored with an error in the log, and the option
   keeps its previous value.
 - The `Map` overloads of `launch` and `relaunch` go through `BugseeLaunchOptions` on both platforms,
-  so they also get the defaults and the type checks. Keys that are not options are passed through
-  unchanged.
+  so they also get the defaults and the type checks.
+- **The keys of 0.1.x and SDK 6 are no longer read.** In 0.1.x the `BugseeLaunchOptions(Map)`
+  constructor and iOS `launch(token, Map)` translated the 0.1.x keys (`VideoEnabled`,
+  `MaxRecordingTime`, ...), while Android `launch(token, Map)`, Android `relaunch(Map)` and iOS
+  `relaunch(Map)` passed the map to SDK 6, which read its own keys (`LogLevel`,
+  `DetectAppLaunchCrash`, ...). In 0.2.0 these keys are ignored on both platforms, with an error in
+  the log that names the `BugseeOptions` constant to use instead, such as
+  `BugseeOptions.CaptureVideo`, when SDK 7 has one. This applies to the keys of the 0.1.x raw map,
+  the keys that `BugseeLaunchOptions`, `BugseeLaunchOptionsAndroid` and `BugseeLaunchOptionsIos`
+  sent, the Android SDK 6 keys, and the iOS SDK 6 keys that iOS SDK 7 still reads under their old
+  names (`BuildType`, `SanitizeNetworkData`, ...), except `endpoint`. A constant has the name of the
+  property in the table below with a capital first letter: `captureVideo` is
+  `BugseeOptions.CaptureVideo`.
+- Any other key is passed to the SDK unchanged. A key that does not start with
+  `com.bugsee.option.` gets a warning in the log: Android SDK 7 ignores it.
 - Some defaults change with SDK 7.
   - `maxDataSize` is 150 (was 50).
   - `detectAndReportExit` is on (`detectAppExit` was off).
