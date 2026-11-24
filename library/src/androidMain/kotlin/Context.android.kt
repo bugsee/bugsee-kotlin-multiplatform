@@ -8,14 +8,15 @@ import android.net.Uri
 
 // public actual typealias Context = Context
 
+// Set by BugseeContextProvider; tests reset it to run without the provider.
 internal var applicationContext: Context? = null
-    private set
 
 /**
  * A ContentProvider that does NOT store or provide any data for read or write operations.
  *
  * It's only purpose is to retrieve and store the application context in an internal top-level
- * variable [applicationContext]. The context is used for [Bugsee.launch].
+ * variable [applicationContext]. The context is used for [Bugsee.launch]. Like any provider declared
+ * without `android:process`, it runs in the app's main process only.
  */
 internal class BugseeContextProvider : ContentProvider() {
     override fun onCreate(): Boolean {
