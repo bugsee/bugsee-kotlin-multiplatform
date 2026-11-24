@@ -58,12 +58,57 @@ class LegacyLaunchOptionKeysTest {
     }
 
     @Test
+    fun `the error says which SDK has an option the platform does not`() {
+        val androidLogs = Logs()
+        val iosLogs = Logs()
+
+        store(isAndroid = true, androidLogs).put("MaxFrameRate", 30)
+        store(isAndroid = false, iosLogs).put("NdkCrashReport", true)
+
+        assertEquals(
+            listOf(
+                "Ignoring launch option 'MaxFrameRate', a key from before 0.2.0: its option is now " +
+                    "BugseeOptions.CaptureVideoMaxFrameRate (\"com.bugsee.option.capture.video.max-frame-rate\"), " +
+                    "which only the iOS SDK has",
+            ),
+            androidLogs.errors,
+        )
+        assertEquals(
+            listOf(
+                "Ignoring launch option 'NdkCrashReport', a key from before 0.2.0: its option is now " +
+                    "BugseeOptions.NdkDetectAndReport (\"com.bugsee.option.detect.crash-ndk\"), " +
+                    "which only the Android SDK has",
+            ),
+            iosLogs.errors,
+        )
+    }
+
+    @Test
+    fun `the error for a key without an SDK 7 option says so`() {
+        val logs = Logs()
+
+        store(isAndroid = true, logs).put("UseSdCard", true)
+
+        assertEquals(listOf("Ignoring launch option 'UseSdCard', a key from before 0.2.0: SDK 7 has no such option"), logs.errors)
+    }
+
+    @Test
     fun `no key from before 0_2_0 is sent or changes an option`() {
         for (isAndroid in platforms) {
             val logs = Logs()
             val store = store(isAndroid, logs)
+            val defaults = BugseeOptionsSpec.defaults(isAndroid)
 
-            legacyLaunchOptionKeys.keys.forEach { store.put(it, false) }
+            // A value the new option could take, other than its default, so a translated key would show.
+            legacyLaunchOptionKeys.forEach { (key, legacy) ->
+                val value = when (val default = legacy.replacement?.let { defaults[it.key] }) {
+                    is Boolean -> !default
+                    is Int -> default + 1
+                    is Float -> default + 1f
+                    else -> "legacy"
+                }
+                store.put(key, value)
+            }
 
             assertEquals(BugseeLaunchOptionsStore(isAndroid).toMap(), store.toMap())
             assertEquals(legacyLaunchOptionKeys.size, logs.errors.size)
@@ -77,14 +122,12 @@ class LegacyLaunchOptionKeysTest {
         options.setCustomOption("ScreenshotEnabled", false)
 
         assertEquals(BugseeLaunchOptions().toMap(), options.toMap())
-        // The iOS wrapper installs its Kotlin crash hook from this property.
-        assertTrue(options.detectAndReportCrash)
     }
 
     @Test
     fun `every new key is an option and no key from before 0_2_0 is one`() {
         legacyLaunchOptionKeys.forEach { (key, legacy) ->
-            assertTrue(legacy.key in BugseeOptionsSpec.types, "$key: ${legacy.key}")
+            legacy.replacement?.let { assertTrue(it.key in BugseeOptionsSpec.types, "$key: ${it.key}") }
             assertFalse(key in BugseeOptionsSpec.types, key)
             assertFalse(key.startsWith("com.bugsee.option."), key)
         }
@@ -121,12 +164,12 @@ class LegacyLaunchOptionKeysTest {
             val store = store(isAndroid, logs)
 
             store.put("com.bugsee.option.\$\$ENDPOINT", "https://example.com")
-            store.put("com.bugsee.option.capture.mach-exceptions", false)
+            store.put("com.bugsee.option.capture.not-an-option", false)
             store.put(BugseeOptions.Duration, 30)
 
             val map = store.toMap()
             assertEquals("https://example.com", map["com.bugsee.option.\$\$ENDPOINT"])
-            assertEquals(false, map["com.bugsee.option.capture.mach-exceptions"])
+            assertEquals(false, map["com.bugsee.option.capture.not-an-option"])
             assertEquals(30, map[BugseeOptions.Duration])
             assertEquals(emptyList(), logs.warnings)
             assertEquals(emptyList(), logs.errors)

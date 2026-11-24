@@ -10,7 +10,8 @@ class LegacyLaunchOptionKeysAndroidTest {
     @Test
     fun `each new key is named by its BugseeOptions constant`() {
         legacyLaunchOptionKeys.forEach { (key, legacy) ->
-            assertEquals(legacy.key, BugseeOptions::class.java.getField(legacy.name).get(null), key)
+            val replacement = legacy.replacement ?: return@forEach
+            assertEquals(replacement.key, BugseeOptions::class.java.getField(replacement.name).get(null), key)
         }
     }
 }

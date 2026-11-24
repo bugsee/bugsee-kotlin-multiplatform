@@ -12,7 +12,7 @@ import com.bugsee.kmp.internal.legacyLaunchOptionMessage
  * Values are converted to the option's type when stored, so what the getters return is what
  * the native SDK receives. [toMap] sends every option the current platform knows plus the custom
  * options; options of the other platform are kept for the getters but never sent. Keys from before
- * 0.2.0 ([legacyLaunchOptionKeys]) are ignored with an error that names the new key.
+ * 0.2.0 ([legacyLaunchOptionKeys]) are ignored with an error that names the option to use instead.
  */
 internal class BugseeLaunchOptionsStore(
     private val isAndroid: Boolean,
@@ -30,7 +30,7 @@ internal class BugseeLaunchOptionsStore(
 
         val legacy = legacyLaunchOptionKeys[key]
         if (legacy != null) {
-            logError(legacyLaunchOptionMessage(key, legacy))
+            logError(legacyLaunchOptionMessage(key, legacy, isAndroid))
             return
         }
 
