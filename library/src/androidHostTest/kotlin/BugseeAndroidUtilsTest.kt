@@ -19,6 +19,7 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLog
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -224,6 +225,26 @@ class BugseeAndroidUtilsTest {
 
         verify(nativeReport).addAttachment(data, "test.txt", null)
         verify(nativeReport, never()).addAttachment(org.mockito.ArgumentMatchers.any(File::class.java), anyString(), isNull(), anyBoolean())
+    }
+
+    // #58: launch works where BugseeContextProvider did not run; a URI attachment cannot be read there.
+    @Test
+    fun `addAttachmentToReport - a URI without the KMP context is skipped with an error`() {
+        val saved = applicationContext
+        applicationContext = null
+        try {
+            val uris = listOf("file:///android_asset/a.txt", "content://com.example/a.txt", "file:///data/a.txt")
+            val nativeReport = mockNativeReport()
+
+            uris.forEach { BugseeAndroidUtils.addAttachmentToReport(BugseeAttachment.create("a.txt", it), nativeReport) }
+
+            verify(nativeReport, never()).addAttachment(org.mockito.ArgumentMatchers.any(File::class.java), anyString(), isNull(), anyBoolean())
+            verify(nativeReport, never()).addAttachment(org.mockito.ArgumentMatchers.any(ByteArray::class.java), anyString(), isNull())
+            val errors = ShadowLog.getLogsForTag("BugseeAndroidUtils").map { it.msg }.filter { "context provider" in it }
+            assertEquals(uris.map { "addAttachment: cannot read '$it' for attachment 'a.txt': $NO_KMP_CONTEXT" }, errors)
+        } finally {
+            applicationContext = saved
+        }
     }
 
     // --- addProviderAttachments ---

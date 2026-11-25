@@ -18,6 +18,10 @@ public actual class BugseeInternal {
 
     private companion object {
         private const val TAG = "BugseeInternal"
+        private const val LAUNCH_WITHOUT_CONTEXT_FAILED =
+            "launch: Bugsee was not launched. The KMP context provider has not run in this process (it runs " +
+                "in the app's main process only, if the app keeps it), so the SDK looked for the application " +
+                "context itself; the \"Bugsee\" logcat tag says why the launch failed"
         private const val REPORT_NOT_CREATED =
             "createReport: the SDK created no report (Bugsee is not launched, or the report could not be " +
                 "prepared); the provider is not called"
@@ -55,12 +59,22 @@ public actual class BugseeInternal {
     }
 
     public actual fun launch(apiKey: String, options: BugseeLaunchOptions?) {
-        val context = applicationContext ?: run {
-            Logger.d(TAG, "Bugsee KMP: cannot launch() — applicationContext is not gathered")
+        val map = BugseeAndroidUtils.toSerializableMap(options?.toMap(), "launch")
+        val context = applicationContext
+        if (context != null) {
+            BugseeSDK.launch(context, apiKey, map)
             return
         }
 
-        BugseeSDK.launch(context, apiKey, BugseeAndroidUtils.toSerializableMap(options?.toMap(), "launch"))
+        // BugseeContextProvider runs in the app's main process only, and an app can remove it. The
+        // SDK then finds the context itself, as for launch(apiKey): from its own init provider, or
+        // through reflection in another process (BugseeInternal.java:237-245). A launch it refuses for
+        // want of a context is logged at info level only (:242-243), so a failure is a warning here.
+        BugseeSDK.launch(null, apiKey, map, Callback1 { launched ->
+            if (launched != true) {
+                Logger.w(TAG, LAUNCH_WITHOUT_CONTEXT_FAILED)
+            }
+        })
     }
 
     public actual fun stop() {

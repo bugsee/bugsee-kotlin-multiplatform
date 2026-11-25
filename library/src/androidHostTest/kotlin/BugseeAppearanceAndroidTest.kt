@@ -105,6 +105,24 @@ class BugseeAppearanceAndroidTest {
         verify(native).setString("Notification::Title", null)
     }
 
+    // #58: launch works where BugseeContextProvider did not run; a string resource cannot be read there.
+    @Test
+    fun `notificationTitleResId without the KMP context is skipped with an error`() {
+        val saved = applicationContext
+        applicationContext = null
+        try {
+            appearance.notificationTitleResId = android.R.string.ok
+
+            verify(native, never()).setString(org.mockito.ArgumentMatchers.eq("Notification::Title"), org.mockito.ArgumentMatchers.any())
+            assertEquals(
+                listOf("notificationTitleResId: cannot resolve string resource ${android.R.string.ok}: $NO_KMP_CONTEXT"),
+                logs().filter { it.type == Log.ERROR }.map { it.msg },
+            )
+        } finally {
+            applicationContext = saved
+        }
+    }
+
     @Test
     fun `clearing notificationTitleResId keeps a title set directly`() {
         Robolectric.setupContentProvider(BugseeContextProvider::class.java)
