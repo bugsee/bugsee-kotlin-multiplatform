@@ -21,12 +21,15 @@ fun ExtendedReportsScreen(onBackClick: () -> Unit) {
                     status = "No report was created (is Bugsee launched?)"
                     return@createReportOrNull
                 }
-                report.screenshot = createTestPng()
                 report.summary = "Test PNG from KMP"
                 report.addLabel("png-test")
                 report.setAttribute("kmp", "attr-kmp")
-                Bugsee.upload(report)
-                status = "Report \"Test PNG from KMP\" queued for upload"
+                // Upload once the screenshot is stored: on Android a report uploaded earlier can
+                // be sent without it.
+                report.setScreenshotAsync(createTestPng()) {
+                    Bugsee.upload(report)
+                    status = "Report \"Test PNG from KMP\" queued for upload"
+                }
             }
         }
 

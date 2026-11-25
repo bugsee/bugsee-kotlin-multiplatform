@@ -24,12 +24,38 @@ public expect class BugseeExtendedReport {
      *
      * Unsupported types are logged and ignored.
      *
+     * On Android the setter decodes the bytes, then encodes the image and writes it to disk on
+     * the calling thread, which takes over 100 ms for a screen-sized image. The callbacks of
+     * [Bugsee.createReport] run on the main thread there, so use [setScreenshotAsync] in them.
+     *
      * **Getter** returns the platform-native image object
      * (`Bitmap` on Android, `UIImage` on iOS), or `null`. On Android it returns only an image
-     * assigned through this property: Android SDK 7 exposes the captured screenshot
-     * asynchronously, so it is not available here.
+     * assigned through this property or [setScreenshotAsync]: Android SDK 7 exposes the captured
+     * screenshot asynchronously, so it is not available here.
      */
     public var screenshot: Any?
+
+    /**
+     * Sets the screenshot like [screenshot] without blocking the calling thread, and calls
+     * [onSet] on the main thread once it is stored.
+     *
+     * Upload the report from [onSet], not right after this call: on Android a report passed to
+     * [Bugsee.upload] before the screenshot is stored can be sent without it.
+     *
+     * ```
+     * Bugsee.createReport { report ->
+     *     report.setScreenshotAsync(pngBytes) { Bugsee.upload(report) }
+     * }
+     * ```
+     *
+     * Values are the ones [screenshot] accepts. As with [screenshot], `null` changes nothing, and an
+     * unsupported value or bytes that are not an image change nothing and are logged; [onSet] is
+     * called in every case. Calls are applied in the order they are made.
+     *
+     * On Android the bytes are decoded on a background thread, and the SDK encodes and writes the
+     * image on its own. On iOS the image is set at once, as [screenshot] does, which is cheap there.
+     */
+    public fun setScreenshotAsync(screenshot: Any?, onSet: () -> Unit)
 
     /**
      * Whether the screenshot has been modified since the report was created.
