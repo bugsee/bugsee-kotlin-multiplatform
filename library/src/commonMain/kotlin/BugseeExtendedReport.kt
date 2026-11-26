@@ -84,6 +84,19 @@ public expect class BugseeExtendedReport {
     public fun getAttribute(name: String): Any?
     public fun clearAttribute(name: String)
 
+    /**
+     * Adds [attachment] to the report.
+     *
+     * On Android the call is synchronous: it stores the attachment in the report on the calling
+     * thread, and the time it takes grows with the attachment's size.
+     * - [BugseeAttachment.data] is written to a file.
+     * - A `content://`, `file://` or `file:///android_asset/` path is read into memory whole,
+     *   then written to a file.
+     * - Any other path is copied as a file.
+     *
+     * The callbacks of [Bugsee.createReport] run on the main thread there, so do not add a large
+     * attachment on that thread.
+     */
     public fun addAttachment(attachment: BugseeAttachment)
 
     public fun addLabel(label: String)
