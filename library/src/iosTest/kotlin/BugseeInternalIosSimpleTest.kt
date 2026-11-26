@@ -12,9 +12,13 @@ import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.EventHandler
 import platform.Foundation.NSDate
 import platform.Foundation.NSRunLoop
+import platform.Foundation.NSThread
 import platform.Foundation.dateWithTimeIntervalSinceNow
 import platform.Foundation.runUntilDate
 import platform.Foundation.timeIntervalSinceNow
+import platform.darwin.DISPATCH_QUEUE_PRIORITY_DEFAULT
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_global_queue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -177,19 +181,39 @@ class BugseeInternalIosSimpleTest {
         bugseeInternal.relaunch(mapOf<String, Any>())
     }
 
-    // Before a launch the SDK creates no report: onNotCreated is called instead of the provider,
-    // asynchronously, so the main run loop is turned until a callback arrives. The tests never
-    // launch the SDK (a relaunch before a launch is refused), so it is not launched here.
+    // Before a launch the SDK creates no report and calls back at once, on the calling thread. The
+    // wrapper moves that call to the main queue (#62): onNotCreated is called instead of the provider,
+    // on the main thread, after createReport returns. The tests never launch the SDK (a relaunch
+    // before a launch is refused), so it is not launched here.
     @Test
-    fun `createReport before launch calls onNotCreated`() {
+    fun `createReport before launch calls onNotCreated on the main thread after it returns`() {
+        assertTrue(NSThread.isMainThread, "the test runs on the main thread")
         var provided = 0
         var notCreated = 0
+        var onMain = false
 
-        BugseeInternal().createReport({ provided++ }, { notCreated++ })
+        BugseeInternal().createReport({ provided++ }, { notCreated++; onMain = NSThread.isMainThread })
+
+        assertEquals(0, notCreated, "onNotCreated must not run before createReport returns")
         runMainLoopUntil { provided + notCreated > 0 }
-
         assertEquals(0, provided)
         assertEquals(1, notCreated)
+        assertTrue(onMain)
+    }
+
+    @Test
+    fun `createReport called off the main thread before launch calls onNotCreated on the main thread`() {
+        val bugseeInternal = BugseeInternal()
+        var notCreated = 0
+        var onMain = false
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+            bugseeInternal.createReport({}, { notCreated++; onMain = NSThread.isMainThread })
+        }
+
+        runMainLoopUntil { notCreated > 0 }
+        assertEquals(1, notCreated)
+        assertTrue(onMain)
     }
 
     private fun runMainLoopUntil(timeoutSeconds: Double = 5.0, done: () -> Boolean) {
