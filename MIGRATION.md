@@ -194,6 +194,20 @@ warning. To learn about it, use one of the new functions:
 - `createReport(provider, onNotCreated)` calls `onNotCreated` instead of `provider`;
 - `createReportOrNull { report -> … }` passes `null` instead of a report.
 
+`BugseeExtendedReport.setScreenshotAsync(screenshot, onSet)` is new. On Android the `screenshot`
+setter decodes the bytes, then encodes the image and writes it on the calling thread, which takes
+over 100 ms for a screen-sized image, and the `createReport` callbacks run on the main thread
+there. Use `setScreenshotAsync` in them, and upload the report from `onSet`:
+
+```kotlin
+Bugsee.createReport { report ->
+    report.setScreenshotAsync(pngBytes) { Bugsee.upload(report) }
+}
+```
+
+Until `onSet` runs, do not change the value you passed (a `Bitmap` or the `ByteArray`), and do not
+set the `screenshot` property of the same report.
+
 ## User identifier
 
 `setEmail` / `getEmail` / `clearEmail` are removed: the native SDKs 7 replaced the email with a

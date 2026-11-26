@@ -506,6 +506,21 @@ class BugseeInternalAndroidSimpleTest {
     }
 
     @Test
+    fun `test screenshot getter keeps the previous Bitmap when the SDK throws`() {
+        val mockNativeReport = mock(Report::class.java)
+        val report = BugseeExtendedReport(mockNativeReport)
+        val first = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+        val second = Bitmap.createBitmap(11, 11, Bitmap.Config.ARGB_8888)
+        org.mockito.Mockito.doThrow(IllegalStateException("sdk")).`when`(mockNativeReport)
+            .setScreenshot(org.mockito.ArgumentMatchers.same(second))
+
+        report.screenshot = first
+        report.screenshot = second
+
+        assertSame(first, report.screenshot, "the report did not take the second Bitmap")
+    }
+
+    @Test
     fun `test screenshot setter accepts ByteArray`() {
         val mockNativeReport = mock(Report::class.java)
         val report = BugseeExtendedReport(mockNativeReport)

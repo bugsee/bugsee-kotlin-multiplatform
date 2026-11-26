@@ -9,6 +9,8 @@ import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.UIKit.UIImage
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
 public actual class BugseeExtendedReport internal constructor(
     internal val underlyingReport: ExtendedReport
@@ -48,6 +50,19 @@ public actual class BugseeExtendedReport internal constructor(
                 Logger.e(TAG, "screenshot setter: failed to process value", e)
             }
         }
+
+    public actual fun setScreenshotAsync(screenshot: Any?, onSet: () -> Unit) {
+        // Cheap on iOS: the SDK keeps the UIImage and encodes it when the report is uploaded
+        // (-[BugseeExtendedReport setScreenshot:]).
+        this.screenshot = screenshot
+        dispatch_async(dispatch_get_main_queue()) {
+            try {
+                onSet()
+            } catch (e: Throwable) {
+                Logger.e(TAG, "setScreenshotAsync: onSet threw", e)
+            }
+        }
+    }
 
     public actual val screenshotChanged: Boolean
         get() = underlyingReport.isScreenshotChanged
