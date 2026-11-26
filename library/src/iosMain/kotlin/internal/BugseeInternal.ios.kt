@@ -23,7 +23,12 @@ import com.bugsee.kmp.BugseeReportFieldsFilter
 import com.bugsee.kmp.BugseeSeverity
 import com.bugsee.kmp.EventHandler
 import com.bugsee.kmp.nsexception.*
+import platform.Foundation.NSThread
 import platform.UIKit.UIView
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 private typealias BugseeSDK = swiftPMImport.com.bugsee.library.Bugsee
 
@@ -361,8 +366,9 @@ public actual class BugseeInternal {
     }
 
     // Extended report methods
+    @OptIn(ExperimentalAtomicApi::class)
     public actual fun createReport(provider: BugseeExtendedReportProvider, onNotCreated: (() -> Unit)?) {
-        BugseeSDK.createReportWithCompletion { nativeReport ->
+        fun deliver(nativeReport: ExtendedReport?) {
             try {
                 if (nativeReport != null) {
                     provider.invoke(BugseeExtendedReport(nativeReport))
@@ -378,6 +384,20 @@ public actual class BugseeInternal {
                 Logger.e("BugseeInternal", "createReport: a callback threw", e)
             }
         }
+
+        // The SDK calls back on the main thread, except while Bugsee is not launched: then it calls
+        // completion(nil) at once, on the calling thread, before this returns (Bugsee.m,
+        // createReportWithCompletion:). That call is moved to the main queue, so the callbacks
+        // always run on the main thread after this returns, as on Android.
+        val returned = AtomicBoolean(false)
+        BugseeSDK.createReportWithCompletion { nativeReport ->
+            if (returned.load() && NSThread.isMainThread) {
+                deliver(nativeReport)
+            } else {
+                dispatch_async(dispatch_get_main_queue()) { deliver(nativeReport) }
+            }
+        }
+        returned.store(true)
     }
 
     // Report fields filter

@@ -257,8 +257,8 @@ public object Bugsee {
     // Extended report methods
     /**
      * Creates a report from the current session and passes it to [provider], which can change it
-     * and send it with [upload]. On Android the callbacks run on the main thread, on iOS on a
-     * background thread.
+     * and send it with [upload]. On both platforms the callbacks run on the main thread, always after
+     * this call returns.
      *
      * The SDK creates no report while Bugsee is not launched (on iOS also while it is launching),
      * or when it cannot prepare one: then [provider] is not called and a warning is logged. Use the
