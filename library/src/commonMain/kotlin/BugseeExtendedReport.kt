@@ -50,10 +50,16 @@ public expect class BugseeExtendedReport {
      *
      * Values are the ones [screenshot] accepts. As with [screenshot], `null` changes nothing, and an
      * unsupported value or bytes that are not an image change nothing and are logged; [onSet] is
-     * called in every case. Calls are applied in the order they are made.
+     * called in every case. Calls of this function are applied in the order they are made.
      *
      * On Android the bytes are decoded on a background thread, and the SDK encodes and writes the
      * image on its own. On iOS the image is set at once, as [screenshot] does, which is cheap there.
+     *
+     * On Android the value is read after this call returns, so until [onSet] runs:
+     * - do not change it: do not recycle or draw on a `Bitmap`, or write into the `ByteArray`. The
+     *   report can otherwise get the changed image, or no screenshot at all for a recycled `Bitmap`;
+     * - do not set [screenshot] on the same report: a call of this function that is still pending
+     *   can replace the value set there.
      */
     public fun setScreenshotAsync(screenshot: Any?, onSet: () -> Unit)
 

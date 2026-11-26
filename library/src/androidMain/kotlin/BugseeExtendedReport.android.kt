@@ -43,8 +43,9 @@ public actual class BugseeExtendedReport internal constructor(
                     else -> null
                 }
                 if (bitmap != null) {
-                    assignedScreenshot = bitmap
+                    // Assigned once the SDK took it: the getter never returns an image the report lacks.
                     underlyingReport.setScreenshot(bitmap)
+                    assignedScreenshot = bitmap
                 } else if (value != null) {
                     Logger.d(TAG, "screenshot setter: unsupported type ${value::class.simpleName}, expected Bitmap or ByteArray")
                 }
@@ -74,12 +75,16 @@ public actual class BugseeExtendedReport internal constructor(
                 mainHandler.post { callOnSet(onSet) }
                 return@execute
             }
+            // Assigned before the SDK call, so that onSet already sees it, and put back if the SDK
+            // throws: the getter never returns an image the report lacks.
+            val previous = assignedScreenshot
             try {
                 assignedScreenshot = bitmap
                 // Called off a Looper thread, the SDK posts the completion to the main thread once
                 // the image is written (IssueReportScreenshot.java:150-155).
                 underlyingReport.setScreenshotAsync(bitmap) { callOnSet(onSet) }
             } catch (e: Throwable) {
+                assignedScreenshot = previous
                 Logger.e(TAG, "setScreenshotAsync: the SDK failed to set the screenshot", e)
                 mainHandler.post { callOnSet(onSet) }
             }

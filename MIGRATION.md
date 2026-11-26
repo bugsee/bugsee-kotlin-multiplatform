@@ -205,6 +205,9 @@ Bugsee.createReport { report ->
 }
 ```
 
+Until `onSet` runs, do not change the value you passed (a `Bitmap` or the `ByteArray`), and do not
+set the `screenshot` property of the same report.
+
 ## User identifier
 
 `setEmail` / `getEmail` / `clearEmail` are removed: the native SDKs 7 replaced the email with a

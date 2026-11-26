@@ -133,6 +133,22 @@ class BugseeScreenshotAsyncAndroidTest {
     }
 
     @Test
+    fun `the getter keeps the previous screenshot when the SDK throws`() {
+        val first = Bitmap.createBitmap(6, 6, Bitmap.Config.ARGB_8888)
+        val second = Bitmap.createBitmap(7, 7, Bitmap.Config.ARGB_8888)
+        doThrow(IllegalStateException("sdk")).`when`(native)
+            .setScreenshotAsync(org.mockito.ArgumentMatchers.same(second), any(Runnable::class.java))
+
+        report.setScreenshotAsync(first) { onSetCalls++ }
+        nativeCompletion(first).run()
+        report.setScreenshotAsync(second) { onSetCalls++ }
+
+        idleMainUntil { onSetCalls == 2 }
+        assertEquals(2, onSetCalls)
+        assertSame(first, report.screenshot)
+    }
+
+    @Test
     fun `an onSet that throws is logged`() {
         report.setScreenshotAsync(Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888)) { error("app") }
 
