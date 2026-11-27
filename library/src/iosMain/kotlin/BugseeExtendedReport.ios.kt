@@ -93,7 +93,7 @@ public actual class BugseeExtendedReport internal constructor(
     }
 
     public actual fun addAttachment(attachment: BugseeAttachment) {
-        val nativeAttachment = BugseeIOSUtils.convertAttachment(attachment)
+        val nativeAttachment = BugseeIOSUtils.convertAttachment(attachment) ?: return
         underlyingReport.setAttachment(nativeAttachment)
     }
 
