@@ -1,20 +1,29 @@
 package com.bugsee.kmp
 
+import android.content.Context
+import android.content.res.AssetFileDescriptor
 import android.graphics.Rect
 import android.net.Uri
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.MAX_ATTACHMENT_BYTES
+import com.bugsee.kmp.internal.fitsAttachmentSizeLimit
 import com.bugsee.library.contracts.exchange.NetworkEvent
 import com.bugsee.library.contracts.lifecycle.LifecycleEvents
 import com.bugsee.library.contracts.options.IssueSeverity
 import com.bugsee.library.contracts.options.IssueType
 import com.bugsee.library.contracts.options.LogLevel
 import com.bugsee.library.contracts.reporting.Report
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InputStream
 import java.io.Serializable
 
 internal class BugseeAndroidUtils {
     internal companion object {
         private const val TAG = "BugseeAndroidUtils"
+        private const val ASSET_URI_PREFIX = "file:///android_asset/"
 
         fun convertIssueType(issueType: IssueType?): BugseeReportType {
             return when (issueType) {
@@ -113,45 +122,99 @@ internal class BugseeAndroidUtils {
         /**
          * Adds [attachment] to the native [report]. `file:///android_asset/`, `content://` and
          * `file://` URIs are read into memory first; plain paths are copied by the native SDK.
+         *
+         * An attachment over [MAX_ATTACHMENT_BYTES] is not added, with a warning. The size of a URI
+         * or an asset is read before its content when it is known, and its content is never read
+         * past the limit.
          */
         fun addAttachmentToReport(attachment: BugseeAttachment, report: Report) {
+            val name = attachment.name
             val data = attachment.data
             if (data != null) {
-                if (report.addAttachment(data, attachment.name, null) == null) {
-                    Logger.e(TAG, "addAttachment: native SDK rejected in-memory attachment '${attachment.name}'")
+                if (!fitsAttachmentSizeLimit(TAG, name, data.size.toLong())) return
+                if (report.addAttachment(data, name, null) == null) {
+                    Logger.e(TAG, "addAttachment: native SDK rejected in-memory attachment '$name'")
                 }
                 return
             }
 
             val filePath = attachment.filePath.orEmpty()
-            // Read through the context; as a file path the SDK would reject it with no hint why.
-            if ((filePath.startsWith("content://") || filePath.startsWith("file://")) && applicationContext == null) {
-                Logger.e(TAG, "addAttachment: cannot read '$filePath' for attachment '${attachment.name}': $NO_KMP_CONTEXT")
-                return
-            }
-            val bytes: ByteArray? = try {
-                when {
-                    filePath.startsWith("file:///android_asset/") -> {
-                        val assetPath = filePath.removePrefix("file:///android_asset/")
-                        applicationContext?.assets?.open(assetPath)?.use { it.readBytes() }
-                    }
-                    filePath.startsWith("content://") || filePath.startsWith("file://") -> {
-                        applicationContext?.contentResolver?.openInputStream(Uri.parse(filePath))?.use { it.readBytes() }
-                    }
-                    else -> null
+            val isAsset = filePath.startsWith(ASSET_URI_PREFIX)
+            val isUri = !isAsset && (filePath.startsWith("content://") || filePath.startsWith("file://"))
+            val added = if (isAsset || isUri) {
+                // Read through the context; as a file path the SDK would reject it with no hint why.
+                val context = applicationContext
+                if (context == null) {
+                    Logger.e(TAG, "addAttachment: cannot read '$filePath' for attachment '$name': $NO_KMP_CONTEXT")
+                    return
                 }
-            } catch (e: Exception) {
-                Logger.e(TAG, "addAttachment: failed to read '$filePath'", e)
-                null
-            }
-
-            val added = if (bytes != null) {
-                report.addAttachment(bytes, attachment.name, null)
+                val read = try {
+                    if (isAsset) {
+                        readAsset(context, filePath.removePrefix(ASSET_URI_PREFIX), name)
+                    } else {
+                        readUri(context, Uri.parse(filePath), name)
+                    }
+                } catch (e: Exception) {
+                    Logger.e(TAG, "addAttachment: failed to read '$filePath'", e)
+                    return
+                }
+                val bytes = read ?: return
+                report.addAttachment(bytes, name, null)
             } else {
-                report.addAttachment(File(filePath), attachment.name, null, false)
+                val file = File(filePath)
+                if (!fitsAttachmentSizeLimit(TAG, name, file.length())) return
+                report.addAttachment(file, name, null, false)
             }
             if (added == null) {
-                Logger.e(TAG, "addAttachment: native SDK rejected attachment '${attachment.name}' ($filePath)")
+                Logger.e(TAG, "addAttachment: native SDK rejected attachment '$name' ($filePath)")
+            }
+        }
+
+        /** The content of the asset, or `null` when it is over the limit (logged). */
+        private fun readAsset(context: Context, assetPath: String, name: String): ByteArray? {
+            // openFd works only for an asset stored uncompressed; otherwise the size is not known.
+            val size = try {
+                context.assets.openFd(assetPath).use { it.length }
+            } catch (e: IOException) {
+                AssetFileDescriptor.UNKNOWN_LENGTH
+            }
+            if (size >= 0 && !fitsAttachmentSizeLimit(TAG, name, size)) return null
+            return context.assets.open(assetPath).use { readWithinLimit(it, name) }
+        }
+
+        /** The content at [uri], or `null` when it is over the limit (logged). */
+        private fun readUri(context: Context, uri: Uri, name: String): ByteArray? {
+            val descriptor = context.contentResolver.openAssetFileDescriptor(uri, "r")
+                ?: throw FileNotFoundException("no content at $uri")
+            return descriptor.use { afd ->
+                // The length the provider gave, else the size of the file behind the descriptor;
+                // UNKNOWN_LENGTH for a pipe.
+                val size = afd.length
+                if (size >= 0 && !fitsAttachmentSizeLimit(TAG, name, size)) return null
+                afd.createInputStream().use { readWithinLimit(it, name) }
+            }
+        }
+
+        /**
+         * Reads [stream] to its end, or returns `null` (logged) as soon as it gives more than
+         * [MAX_ATTACHMENT_BYTES]: for content of unknown size, or that grew since its size was read.
+         */
+        internal fun readWithinLimit(stream: InputStream, name: String): ByteArray? {
+            val out = ByteArrayOutputStream()
+            val buffer = ByteArray(64 * 1024)
+            var total = 0L
+            while (true) {
+                val count = stream.read(buffer)
+                if (count < 0) return out.toByteArray()
+                total += count
+                if (total > MAX_ATTACHMENT_BYTES) {
+                    Logger.w(
+                        TAG,
+                        "attachment '$name' is over the limit of $MAX_ATTACHMENT_BYTES bytes, so it is not added"
+                    )
+                    return null
+                }
+                out.write(buffer, 0, count)
             }
         }
 

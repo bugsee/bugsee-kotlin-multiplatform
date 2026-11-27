@@ -1,6 +1,6 @@
 package com.bugsee.kmp
 
-import com.bugsee.kmp.BugseeIOSUtils.Companion.MAX_ATTACHMENT_BYTES
+import com.bugsee.kmp.internal.MAX_ATTACHMENT_BYTES
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned

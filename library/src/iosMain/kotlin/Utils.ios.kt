@@ -1,6 +1,8 @@
 package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.MAX_ATTACHMENT_BYTES
+import com.bugsee.kmp.internal.fitsAttachmentSizeLimit
 import kotlinx.cinterop.*
 import swiftPMImport.com.bugsee.library.BugseeLifecycleEventType
 import platform.Foundation.NSBundle
@@ -16,15 +18,6 @@ private const val TAG = "Utils"
 
 internal class BugseeIOSUtils {
     internal companion object {
-
-        /**
-         * The largest attachment the iOS SDK keeps, in bytes: `BGSReportMaxAttachmentBytes` in its
-         * `BGSReport.h` (bugsee/bugsee-cocoa#354; `MAX_SIZE_ATTACHMENT` before). It drops a larger
-         * attachment, and an empty one. The wrapper checks both itself, so that it does not read
-         * or copy an attachment the SDK drops, and logs a warning for an empty one, which the SDK
-         * logs only to its internal log.
-         */
-        const val MAX_ATTACHMENT_BYTES: Long = 3L * 1024 * 1024
 
         fun convertLogLevel(logLevel: com.bugsee.kmp.BugseeLogLevel): ULong {
             return when (logLevel) {
@@ -160,20 +153,13 @@ internal class BugseeIOSUtils {
             }
         }
 
-        private fun fitsSdkLimits(name: String, size: Long): Boolean = when {
-            size == 0L -> {
+        // The iOS SDK also drops an empty attachment, and logs that only to its internal log.
+        private fun fitsSdkLimits(name: String, size: Long): Boolean {
+            if (size == 0L) {
                 Logger.w(TAG, "attachment '$name' is empty, and the iOS SDK drops empty attachments, so it is not added")
-                false
+                return false
             }
-            size > MAX_ATTACHMENT_BYTES -> {
-                Logger.w(
-                    TAG,
-                    "attachment '$name' is $size bytes, over the iOS SDK's limit of $MAX_ATTACHMENT_BYTES bytes, " +
-                        "so it is not added"
-                )
-                false
-            }
-            else -> true
+            return fitsAttachmentSizeLimit(TAG, name, size)
         }
 
         private fun nativeAttachment(
