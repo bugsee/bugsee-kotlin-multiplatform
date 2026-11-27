@@ -1,13 +1,20 @@
 package com.bugsee.kmp
 
 import com.bugsee.kmp.internal.Logger
+import com.bugsee.kmp.internal.MAX_ATTACHMENT_BYTES
+import com.bugsee.kmp.internal.fitsAttachmentSizeLimit
 import kotlinx.cinterop.*
 import swiftPMImport.com.bugsee.library.BugseeLifecycleEventType
 import platform.Foundation.NSBundle
 import platform.Foundation.NSData
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileSize
+import platform.Foundation.NSNumber
 import platform.Foundation.NSURL
 import platform.Foundation.create
 import platform.Foundation.dataWithContentsOfURL
+
+private const val TAG = "Utils"
 
 internal class BugseeIOSUtils {
     internal companion object {
@@ -77,54 +84,93 @@ internal class BugseeIOSUtils {
             )
         }
 
+        /**
+         * Converts [attachment] for the SDK. Returns `null`, and logs a warning, when the SDK would
+         * drop it: it has no data, or more than [MAX_ATTACHMENT_BYTES]. The size of a file is checked
+         * before the file is read, so a larger file is not read into memory.
+         */
         @OptIn(BetaInteropApi::class)
-        fun convertAttachment(attachment: BugseeAttachment): swiftPMImport.com.bugsee.library.BugseeAttachment {
-            val result = swiftPMImport.com.bugsee.library.BugseeAttachment()
-            try {
-                if (attachment.data != null) {
-                    val size = attachment.data.size
-                    // addressOf(0) throws on an empty ByteArray, so produce empty NSData directly.
-                    result.data = if (size == 0) {
-                        NSData()
-                    } else {
-                        attachment.data.usePinned { pinned ->
-                            NSData.create(
-                                bytes = pinned.addressOf(0),
-                                length = size.toULong()
-                            )
+        fun convertAttachment(attachment: BugseeAttachment): swiftPMImport.com.bugsee.library.BugseeAttachment? {
+            val name = attachment.name
+            return try {
+                val bytes = attachment.data
+                val filePath = attachment.filePath
+                when {
+                    bytes != null -> {
+                        if (!fitsSdkLimits(name, bytes.size.toLong())) return null
+                        val data = bytes.usePinned { pinned ->
+                            NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
                         }
+                        nativeAttachment(name, null, data)
                     }
-                } else if (!attachment.filePath.isNullOrEmpty()) {
-                    Logger.d("Utils", "convertAttachment filePath = ${attachment.filePath}")
-                    val url = when {
-                        // file:// URL (e.g. from Compose Resources Res.getUri())
-                        attachment.filePath.startsWith("file://") ->
-                            NSURL.URLWithString(attachment.filePath)
-                        // Absolute path (e.g. /tmp/generated_file.txt)
-                        attachment.filePath.startsWith("/") ->
-                            NSURL.fileURLWithPath(attachment.filePath)
-                        // Relative path — resolved against the app bundle's resource directory
-                        else ->
-                            NSURL.fileURLWithPath(
-                                NSBundle.mainBundle.resourcePath + "/" + attachment.filePath
-                            )
-                    }
-                    if (url != null) {
-                        val fileData = NSData.dataWithContentsOfURL(url)
-                        if (fileData != null) {
-                            result.data = fileData
-                            result.filename = attachment.filePath.substringAfterLast('/').ifEmpty { attachment.name }
-                        } else {
-                            Logger.d("Utils", "convertAttachment: could not read file at $url for '${attachment.name}'")
-                        }
+                    !filePath.isNullOrEmpty() -> convertFileAttachment(name, filePath)
+                    else -> {
+                        Logger.w(TAG, "attachment '$name' has neither data nor a file path, so it is not added")
+                        null
                     }
                 }
             } catch (e: Exception) {
-                Logger.e("Utils", "convertAttachment failed for '${attachment.name}'", e)
+                Logger.e(TAG, "convertAttachment failed for '$name'", e)
+                null
             }
+        }
 
-            // Ensure attachment name is set
-            result.name = attachment.name
+        private fun convertFileAttachment(
+            name: String,
+            filePath: String
+        ): swiftPMImport.com.bugsee.library.BugseeAttachment? {
+            Logger.d(TAG, "convertAttachment filePath = $filePath")
+            val url = when {
+                // file:// URL (e.g. from Compose Resources Res.getUri())
+                filePath.startsWith("file://") -> NSURL.URLWithString(filePath)
+                // Absolute path (e.g. /tmp/generated_file.txt)
+                filePath.startsWith("/") -> NSURL.fileURLWithPath(filePath)
+                // Relative path — resolved against the app bundle's resource directory
+                else -> NSURL.fileURLWithPath(NSBundle.mainBundle.resourcePath + "/" + filePath)
+            }
+            if (url == null) {
+                Logger.w(TAG, "attachment '$name': '$filePath' is not a valid file URL, so it is not added")
+                return null
+            }
+            val size = url.path?.let(::fileSize)
+            if (size != null && !fitsSdkLimits(name, size)) return null
+            val data = NSData.dataWithContentsOfURL(url)
+            if (data == null) {
+                Logger.w(TAG, "attachment '$name': cannot read $url, so it is not added")
+                return null
+            }
+            // The file may have changed since its size was read.
+            if (!fitsSdkLimits(name, data.length.toLong())) return null
+            return nativeAttachment(name, filePath.substringAfterLast('/').ifEmpty { name }, data)
+        }
+
+        internal fun fileSize(path: String): Long? {
+            val attributes = NSFileManager.defaultManager.attributesOfItemAtPath(path, null) ?: return null
+            return when (val size = attributes[NSFileSize]) {
+                is Number -> size.toLong()
+                is NSNumber -> size.longLongValue
+                else -> null
+            }
+        }
+
+        // The iOS SDK also drops an empty attachment, and logs that only to its internal log.
+        private fun fitsSdkLimits(name: String, size: Long): Boolean {
+            if (size == 0L) {
+                Logger.w(TAG, "attachment '$name' is empty, and the iOS SDK drops empty attachments, so it is not added")
+                return false
+            }
+            return fitsAttachmentSizeLimit(TAG, name, size)
+        }
+
+        private fun nativeAttachment(
+            name: String,
+            filename: String?,
+            data: NSData
+        ): swiftPMImport.com.bugsee.library.BugseeAttachment {
+            val result = swiftPMImport.com.bugsee.library.BugseeAttachment()
+            result.name = name
+            if (filename != null) result.filename = filename
+            result.data = data
             return result
         }
 
@@ -155,7 +201,8 @@ internal class BugseeIOSUtils {
 
         /**
          * Adds the provider's attachments to [report], skipping names already attached: the
-         * report handler is not guaranteed to run once per report.
+         * report handler is not guaranteed to run once per report. An attachment past the report's
+         * limit is dropped by the SDK, which logs it to the console (since bugsee/bugsee-cocoa#354).
          */
         fun addProviderAttachments(
             attachments: List<BugseeAttachment>,
@@ -165,10 +212,10 @@ internal class BugseeIOSUtils {
                 .mapNotNullTo(HashSet()) { (it as? swiftPMImport.com.bugsee.library.BugseeAttachment)?.name }
             for (attachment in attachments) {
                 if (attachment.name in existingNames) {
-                    Logger.d("Utils", "attachments provider: '${attachment.name}' is already attached — skipping")
+                    Logger.d(TAG, "attachments provider: '${attachment.name}' is already attached — skipping")
                     continue
                 }
-                report.addAttachment(convertAttachment(attachment))
+                convertAttachment(attachment)?.let { report.addAttachment(it) }
             }
         }
     }

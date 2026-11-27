@@ -87,11 +87,18 @@ public expect class BugseeExtendedReport {
     /**
      * Adds [attachment] to the report.
      *
+     * A report holds at most 5 attachments, counting those of [Bugsee.setReportAttachmentsProvider],
+     * each of at most 3 MB (3 145 728 bytes). An attachment over 3 MB is not added, and a warning is
+     * logged; a file over 3 MB is not read in full. On iOS an empty attachment is not added either,
+     * with a warning. An attachment past the fifth is dropped by the SDK:
+     * - on Android it is not added, and an error is logged;
+     * - on iOS it is dropped at upload, and the SDK logs it to the console.
+     *
      * On Android the call is synchronous: it stores the attachment in the report on the calling
      * thread, and the time it takes grows with the attachment's size.
      * - [BugseeAttachment.data] is written to a file.
-     * - A `content://`, `file://` or `file:///android_asset/` path is read into memory whole,
-     *   then written to a file.
+     * - A `content://`, `file://` or `file:///android_asset/` path is read into memory, then
+     *   written to a file.
      * - Any other path is copied as a file.
      *
      * The callbacks of [Bugsee.createReport] run on the main thread there, so do not add a large

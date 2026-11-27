@@ -240,6 +240,29 @@ public object Bugsee {
     }
 
     // Report attachments provider
+    /**
+     * Sets [provider], which returns attachments to add to a report after it is created, or removes
+     * it with `null`. An attachment named like one the report already has is not added.
+     *
+     * The provider and the report fields filters ([setReportFieldsPreFilter],
+     * [setReportFieldsPostFilter]) run on these threads:
+     * - On Android, on a background thread of the SDK. Only when the SDK cannot get one while it
+     *   handles a crash does it call them on the thread that finishes the report, which can be the
+     *   main thread.
+     * - On iOS, on the main thread for a report the running app raises, so keep them short and do
+     *   not wait in them for work that needs the main thread. The SDK waits for them at most
+     *   30 seconds, then goes on without the changes they make later. It skips a call that the main
+     *   thread could not start within that time, for example during a hang. For a report of a crash
+     *   or an abnormal exit, which iOS creates on the next launch, it calls them off the main thread
+     *   and waits at most about 3 seconds.
+     *
+     * A report holds at most 5 attachments, counting those added with
+     * [BugseeExtendedReport.addAttachment], each of at most 3 MB (3 145 728 bytes). An attachment
+     * over 3 MB is not added, and a warning is logged; a file over 3 MB is not read in full. On iOS
+     * an empty attachment is not added either, with a warning. An attachment past the fifth is
+     * dropped by the SDK: on Android an error is logged for it, on iOS the SDK logs it to the
+     * console.
+     */
     public fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
         bugseeInternal.setReportAttachmentsProvider(provider)
     }
@@ -291,10 +314,19 @@ public object Bugsee {
     }
 
     // Report fields filter
+    /**
+     * Sets [filler], which can change the fields of a report before the report is created, or
+     * removes it with `null`. [setReportAttachmentsProvider] describes the threads it runs on.
+     */
     public fun setReportFieldsPreFilter(filler: BugseeReportFieldsFiller?) {
         bugseeInternal.setReportFieldsPreFilter(filler)
     }
 
+    /**
+     * Sets [filter], which gets the fields of a report after the report is created and returns the
+     * fields to keep, or removes it with `null`. [setReportAttachmentsProvider] describes the
+     * threads it runs on.
+     */
     public fun setReportFieldsPostFilter(filter: BugseeReportFieldsFilter?) {
         bugseeInternal.setReportFieldsPostFilter(filter)
     }

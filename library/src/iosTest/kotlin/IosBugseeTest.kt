@@ -191,20 +191,17 @@ class IosBugseeTest {
     fun `test convertAttachment with byte data`() {
         val bytes = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47) // PNG magic bytes
         val attachment = BugseeAttachment.create("test.png", bytes)
-        val native = BugseeIOSUtils.convertAttachment(attachment)
+        val native = assertNotNull(BugseeIOSUtils.convertAttachment(attachment))
         assertEquals("test.png", native.name)
-        assertNotNull(native.data)
-        assertEquals(4uL, native.data!!.length)
+        assertEquals(4uL, native.data.length)
     }
 
     @Test
     fun `test convertAttachment with empty byte data`() {
+        // The SDK drops an empty attachment, so the wrapper does not pass it on.
         val bytes = byteArrayOf()
         val attachment = BugseeAttachment.create("empty.dat", bytes)
-        val native = BugseeIOSUtils.convertAttachment(attachment)
-        assertEquals("empty.dat", native.name)
-        assertNotNull(native.data)
-        assertEquals(0uL, native.data!!.length)
+        assertNull(BugseeIOSUtils.convertAttachment(attachment))
     }
 
     @Test
