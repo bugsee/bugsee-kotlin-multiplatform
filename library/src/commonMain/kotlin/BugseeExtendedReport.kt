@@ -97,10 +97,10 @@ public expect class BugseeExtendedReport {
      * The callbacks of [Bugsee.createReport] run on the main thread there, so do not add a large
      * attachment on that thread.
      *
-     * On iOS the SDK uploads at most 3 attachments added with this function, each of at most 3 MB
-     * (3 145 728 bytes). An empty attachment or one over 3 MB is not added, and a warning is
-     * logged; a file over 3 MB is not read. The SDK drops attachments past the first 3 at upload,
-     * and only its internal log says so.
+     * On iOS a report holds at most 5 attachments, counting those of
+     * [Bugsee.setReportAttachmentsProvider], each of at most 3 MB (3 145 728 bytes). An empty
+     * attachment or one over 3 MB is not added, and a warning is logged; a file over 3 MB is not
+     * read. At upload the SDK drops the attachments past the fifth and logs each to the console.
      */
     public fun addAttachment(attachment: BugseeAttachment)
 

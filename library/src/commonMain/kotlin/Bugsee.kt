@@ -256,10 +256,10 @@ public object Bugsee {
      *   or an abnormal exit, which iOS creates on the next launch, it calls them off the main thread
      *   and waits at most about 3 seconds.
      *
-     * On iOS the SDK keeps at most 3 of the attachments the provider returns, each of at most 3 MB
-     * (3 145 728 bytes). An empty attachment or one over 3 MB is not added, and a warning is logged;
-     * a file over 3 MB is not read. A warning is also logged for each attachment the SDK does not
-     * keep.
+     * On iOS a report holds at most 5 attachments, counting those added with
+     * [BugseeExtendedReport.addAttachment], each of at most 3 MB (3 145 728 bytes). An empty
+     * attachment or one over 3 MB is not added, and a warning is logged; a file over 3 MB is not
+     * read. The SDK drops the attachments past the fifth and logs each to the console.
      */
     public fun setReportAttachmentsProvider(provider: BugseeAttachmentsProvider?) {
         bugseeInternal.setReportAttachmentsProvider(provider)

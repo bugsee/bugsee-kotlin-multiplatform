@@ -18,8 +18,11 @@ internal class BugseeIOSUtils {
     internal companion object {
 
         /**
-         * The largest attachment the iOS SDK keeps, in bytes: `MAX_SIZE_ATTACHMENT` in its
-         * `BGSAttachment.h`. It drops a larger attachment, and an empty one, with only an internal log.
+         * The largest attachment the iOS SDK keeps, in bytes: `BGSReportMaxAttachmentBytes` in its
+         * `BGSReport.h` (bugsee/bugsee-cocoa#354; `MAX_SIZE_ATTACHMENT` before). It drops a larger
+         * attachment, and an empty one. The wrapper checks both itself, so that it does not read
+         * or copy an attachment the SDK drops, and logs a warning for an empty one, which the SDK
+         * logs only to its internal log.
          */
         const val MAX_ATTACHMENT_BYTES: Long = 3L * 1024 * 1024
 
@@ -212,34 +215,21 @@ internal class BugseeIOSUtils {
 
         /**
          * Adds the provider's attachments to [report], skipping names already attached: the
-         * report handler is not guaranteed to run once per report. `addAttachment` does not say
-         * whether the SDK kept the attachment, so a drop is found by the count of attachments.
+         * report handler is not guaranteed to run once per report. An attachment past the report's
+         * limit is dropped by the SDK, which logs it to the console (since bugsee/bugsee-cocoa#354).
          */
         fun addProviderAttachments(
             attachments: List<BugseeAttachment>,
             report: swiftPMImport.com.bugsee.library.BugseeReport
         ) {
-            val attached = report.attachments
-            val existingNames = attached
+            val existingNames = report.attachments
                 .mapNotNullTo(HashSet()) { (it as? swiftPMImport.com.bugsee.library.BugseeAttachment)?.name }
-            var count = attached.size
             for (attachment in attachments) {
                 if (attachment.name in existingNames) {
                     Logger.d(TAG, "attachments provider: '${attachment.name}' is already attached — skipping")
                     continue
                 }
-                val nativeAttachment = convertAttachment(attachment) ?: continue
-                report.addAttachment(nativeAttachment)
-                val newCount = report.attachments.size
-                if (newCount > count) {
-                    count = newCount
-                } else {
-                    Logger.w(
-                        TAG,
-                        "attachments provider: the iOS SDK did not add '${attachment.name}': the provider has " +
-                            "already given as many attachments as the SDK keeps, or the SDK stopped waiting for it"
-                    )
-                }
+                convertAttachment(attachment)?.let { report.addAttachment(it) }
             }
         }
     }
